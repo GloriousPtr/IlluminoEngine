@@ -13,6 +13,6 @@ namespace IlluminoEngine
 		void Run();
 
 	private:
-		Window* m_Window;
+		Ref<Window> m_Window;
 	};
 }

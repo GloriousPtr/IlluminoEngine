@@ -24,6 +24,7 @@ project "IlluminoEngine"
 	includedirs
 	{
 		"src",
+		"vendor/spdlog/include"
 	}
 
 	links

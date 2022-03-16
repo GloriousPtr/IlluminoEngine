@@ -7,3 +7,8 @@
 #include <memory>
 #include <functional>
 #include <algorithm>
+
+#include "Core/Core.h"
+
+#include "Core/Log.h"
+#include "Core/Assert.h"

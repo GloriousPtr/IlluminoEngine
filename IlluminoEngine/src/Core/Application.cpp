@@ -7,12 +7,13 @@ namespace IlluminoEngine
 {
 	Application::Application()
 	{
-		m_Window = new Window("Illumino Engine", 1920, 1080);
+		ILLUMINO_INFO("Application Started");
+		m_Window = CreateRef<Window>("Illumino Engine", 1920, 1080);
 	}
 
 	Application::~Application()
 	{
-		delete m_Window;
+		ILLUMINO_INFO("Application Ended");
 	}
 
 	void Application::Run()
