@@ -8,7 +8,7 @@ project "IlluminoEngine"
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
 	pchheader "ipch.h"
-	pchsource "ipch.cpp"
+	pchsource "src/ipch.cpp"
 
 	files
 	{
