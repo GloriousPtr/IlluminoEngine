@@ -1,3 +1,6 @@
 [submodule "IlluminoEngine/vendor/spdlog"]
 	path = IlluminoEngine/vendor/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "IlluminoEngine/vendor/optick"]
+	path = IlluminoEngine/vendor/optick
+	url = https://github.com/MohitSethi99/optick.git

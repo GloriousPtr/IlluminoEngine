@@ -24,15 +24,19 @@ project "IlluminoEngine"
 	includedirs
 	{
 		"src",
-		"vendor/spdlog/include"
+		"vendor/spdlog/include",
+
+		"%{IncludeDir.optick}"
 	}
 
 	links
-	{
+	{		
         "d3dcompiler",
         "dxguid",
         "d3d12",
-        "dxgi"
+        "dxgi",
+		
+		"optick"
 	}
 
 	filter "system:windows"

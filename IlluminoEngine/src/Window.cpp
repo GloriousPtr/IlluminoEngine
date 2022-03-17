@@ -5,6 +5,8 @@ namespace IlluminoEngine
 {
 	LRESULT HandleInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
+		OPTICK_EVENT();
+
 		auto ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 		auto window = reinterpret_cast<Window*>(ptr);
 
@@ -21,6 +23,8 @@ namespace IlluminoEngine
 	Window::Window(const char* name, uint32_t width, uint32_t height)
 		: m_Width(width), m_Height(height), m_Closed(false)
 	{
+		OPTICK_EVENT();
+
 		WNDCLASSA wc = {};
 		wc.style = 0;
 		wc.lpfnWndProc = &(IlluminoEngine::HandleInput);
@@ -45,20 +49,28 @@ namespace IlluminoEngine
 
 	Window::~Window()
 	{
+		OPTICK_EVENT();
+
 	}
 
 	void Window::Update()
 	{
+		OPTICK_EVENT();
+
 		MSG msg = {};
 		if (GetMessage(&msg, m_Hwnd, 0, 0) > 0)
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+
+		UpdateWindow(m_Hwnd);
 	}
 
 	void Window::OnClosed()
 	{
+		OPTICK_EVENT();
+
 		m_Closed = true;
 	}
 }

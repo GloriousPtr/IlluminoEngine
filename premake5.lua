@@ -16,5 +16,13 @@ workspace "Illumino"
 		"MultiProcessorCompile"
 	}
 
+-- Include directories relavtive to root folder (solution directory)
+IncludeDir = {}
+IncludeDir["optick"] = "%{wks.location}/IlluminoEngine/vendor/optick/src"
+
+group "Dependencies"
+	include "IlluminoEngine/vendor/optick"
+
+group ""
 
 include "IlluminoEngine"
