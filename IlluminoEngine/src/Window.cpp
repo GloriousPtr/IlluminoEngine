@@ -69,7 +69,7 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		MSG msg = {};
-		if (GetMessage(&msg, m_Hwnd, 0, 0) > 0)
+		if (PeekMessage(&msg, m_Hwnd, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
