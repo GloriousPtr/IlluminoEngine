@@ -14,14 +14,14 @@ namespace IlluminoEngine
 		{
 			case WM_CLOSE:
 				window->OnClosed();
-				return 0;
+				break;
 		}
 
 		return DefWindowProcA(hWnd, uMsg, wParam, lParam);
 	}
 
 	Window::Window(const char* name, uint32_t width, uint32_t height)
-		: m_Width(width), m_Height(height), m_Closed(false)
+		: m_Name(name), m_Width(width), m_Height(height), m_Closed(false), m_HInstance(GetModuleHandle(nullptr))
 	{
 		OPTICK_EVENT();
 
@@ -30,16 +30,26 @@ namespace IlluminoEngine
 		wc.lpfnWndProc = &(IlluminoEngine::HandleInput);
 		wc.cbClsExtra = 0;
 		wc.cbWndExtra = 0;
+		wc.hInstance = m_HInstance;
+		wc.lpszClassName = name;
+		wc.lpszMenuName = nullptr;
 		wc.hbrBackground = nullptr;
 		wc.hCursor = nullptr;
-		wc.hInstance = nullptr;
 		wc.hIcon = nullptr;
-		wc.lpszMenuName = nullptr;
-		wc.lpszClassName = name;
 		RegisterClassA(&wc);
 
 		DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_BORDER;
-		m_Hwnd = CreateWindowA(name, name, style, 0, 0, width, height, nullptr, nullptr, nullptr, nullptr);
+
+		RECT rect;
+		rect.left = 100;
+		rect.right = width + rect.left;
+		rect.top = 100;
+		rect.bottom = height + rect.top;
+		AdjustWindowRect(&rect, style, false);
+
+		m_Hwnd = CreateWindowA(name, name, style,
+			CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top,
+			nullptr, nullptr, m_HInstance, nullptr);
 
 		SetWindowLongPtr(m_Hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
@@ -51,6 +61,7 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		UnregisterClassA(m_Name.c_str(), m_HInstance);
 	}
 
 	void Window::Update()
@@ -72,5 +83,6 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		m_Closed = true;
+		PostQuitMessage(0);
 	}
 }

@@ -16,9 +16,11 @@ namespace IlluminoEngine
 		bool ShouldClose() { return m_Closed; }
 
 	private:
+		std::string m_Name;
 		uint32_t m_Width;
 		uint32_t m_Height;
 		bool m_Closed;
+		HINSTANCE m_HInstance;
 		HWND m_Hwnd;
 	};
 }
