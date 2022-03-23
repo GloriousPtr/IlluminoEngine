@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include <Core/GraphicsContext.h>
 
 namespace IlluminoEngine
 {
@@ -14,6 +15,9 @@ namespace IlluminoEngine
 		void OnClosed();
 
 		bool ShouldClose() { return m_Closed; }
+		uint32_t GetWidth() { return m_Width; }
+		uint32_t GetHeight() { return m_Height; }
+		HWND GetHwnd() { return m_Hwnd; }
 
 	private:
 		std::string m_Name;
@@ -22,5 +26,6 @@ namespace IlluminoEngine
 		bool m_Closed;
 		HINSTANCE m_HInstance;
 		HWND m_Hwnd;
+		Scope<GraphicsContext> m_Context;
 	};
 }

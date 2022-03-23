@@ -36,7 +36,8 @@ namespace IlluminoEngine
 		wc.hbrBackground = nullptr;
 		wc.hCursor = nullptr;
 		wc.hIcon = nullptr;
-		RegisterClassA(&wc);
+		bool success = RegisterClassA(&wc);
+		ILLUMINO_ASSERT(success, "Failed to register window class");
 
 		DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_BORDER;
 
@@ -55,6 +56,9 @@ namespace IlluminoEngine
 
 		ShowWindow(m_Hwnd, SW_SHOWDEFAULT);
 		UpdateWindow(m_Hwnd);
+
+		m_Context = GraphicsContext::Create(this);
+		m_Context->Init();
 	}
 
 	Window::~Window()
@@ -75,6 +79,7 @@ namespace IlluminoEngine
 			DispatchMessage(&msg);
 		}
 
+		m_Context->SwapBuffers();
 		UpdateWindow(m_Hwnd);
 	}
 
