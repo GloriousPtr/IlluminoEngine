@@ -6,7 +6,7 @@
 
 namespace IlluminoEngine
 {
-	Scope<GraphicsContext> IlluminoEngine::GraphicsContext::Create(void* window)
+	Scope<GraphicsContext> IlluminoEngine::GraphicsContext::Create(Window* window)
 	{
 		switch (RendererAPI::GetAPI())
 		{

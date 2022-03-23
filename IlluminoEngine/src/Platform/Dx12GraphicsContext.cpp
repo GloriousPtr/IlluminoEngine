@@ -4,30 +4,35 @@
 #include <dxgi1_4.h>;
 #include <comdef.h>
 
+#ifdef ILLUMINO_DEBUG
+#include <dxgidebug.h>
+#endif
+
+#include "Window.h"
+
 namespace IlluminoEngine
 {
-	Dx12GraphicsContext::Dx12GraphicsContext(void* window)
+	const static uint32_t s_QueueSlotCount = 3;
+
+	Dx12GraphicsContext::Dx12GraphicsContext(Window* window)
+		:m_Window(window)
 	{
-		Window* win = static_cast<Window*>(window);
-		CreateDeviceAndSwapChain(win);
+		OPTICK_EVENT();
+
+		CreateDeviceAndSwapChain();
 	}
 
 	void Dx12GraphicsContext::Init()
 	{
+		OPTICK_EVENT();
+
 	}
 
 	void Dx12GraphicsContext::SwapBuffers()
 	{
+		OPTICK_EVENT();
+
 	}
-
-	const static uint32_t s_QueueSlotCount = 3;
-
-	struct RenderEnvironment
-	{
-		Microsoft::WRL::ComPtr<ID3D12Device> Device;
-		Microsoft::WRL::ComPtr<ID3D12CommandQueue> Queue;
-		Microsoft::WRL::ComPtr<IDXGISwapChain> SwapChain;
-	};
 
 	static void GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter, D3D_FEATURE_LEVEL minFeatureLevel)
 	{
@@ -37,12 +42,9 @@ namespace IlluminoEngine
 			IDXGIAdapter1* pAdapter = nullptr;
 			if (DXGI_ERROR_NOT_FOUND == pFactory->EnumAdapters1(adapterIndex, &pAdapter))
 			{
-				// No more adapters to enumerate.
 				break;
 			}
 
-			// Check to see if the adapter supports Direct3D 12, but don't create the
-			// actual device yet.
 			if (SUCCEEDED(D3D12CreateDevice(pAdapter, minFeatureLevel, _uuidof(ID3D12Device), nullptr)))
 			{
 				*ppAdapter = pAdapter;
@@ -51,13 +53,46 @@ namespace IlluminoEngine
 			pAdapter->Release();
 		}
 	}
-
-	static RenderEnvironment CreateDeviceAndSwapChainHelper(D3D_FEATURE_LEVEL minFeatureLevel, DXGI_SWAP_CHAIN_DESC* swapChainDesc)
+	
+	static void DebugMessageCallback(D3D12_MESSAGE_CATEGORY Category, D3D12_MESSAGE_SEVERITY Severity, D3D12_MESSAGE_ID ID, LPCSTR pDescription, void* pContext)
 	{
-		RenderEnvironment result;
+		OPTICK_EVENT();
+
+	}
+
+	void Dx12GraphicsContext::CreateDeviceAndSwapChain()
+	{
+		OPTICK_EVENT();
+
+		UINT dxgiFactoryFlags = 0;
+#ifdef ILLUMINO_DEBUG
+		Microsoft::WRL::ComPtr<ID3D12Debug> debugController;
+		D3D12GetDebugInterface(IID_PPV_ARGS(&debugController));
+		debugController->EnableDebugLayer();
+
+		Microsoft::WRL::ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
+        DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiInfoQueue));
+        dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
+        dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+
+		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+
+#endif // ILLUMINO_DEBUG
+
+		D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_11_0;
+
+		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+		swapChainDesc.BufferCount = s_QueueSlotCount;
+		swapChainDesc.Width = m_Window->GetWidth();
+		swapChainDesc.Height = m_Window->GetHeight();
+		swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+		swapChainDesc.SampleDesc.Count = 1;
+
 
 		Microsoft::WRL::ComPtr<IDXGIFactory4> dxgiFactory;
-		HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory));
+		HRESULT hr = CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&dxgiFactory));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create DXGI Factory");
 		
 		Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter;
@@ -74,48 +109,18 @@ namespace IlluminoEngine
 			ILLUMINO_INFO("  DedicatedVideoMemory: {0}", adapterDesc.DedicatedVideoMemory / (1024.0f * 1024.0f * 1024.0f));
 		}
 		
-		hr = D3D12CreateDevice(adapter.Get(), minFeatureLevel, IID_PPV_ARGS(&result.Device));
+		hr = D3D12CreateDevice(adapter.Get(), minFeatureLevel, IID_PPV_ARGS(&m_Device));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to find a compatible device");
 
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 		queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-		hr = result.Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&result.Queue));
+		hr = m_Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create command queue");
 
-		DXGI_SWAP_CHAIN_DESC swapChainDescCopy = *swapChainDesc;
-		hr = dxgiFactory->CreateSwapChain(result.Device.Get(), &swapChainDescCopy, &result.SwapChain);
+		DXGI_SWAP_CHAIN_DESC1 swapChainDescCopy = swapChainDesc;
+		hr = dxgiFactory->CreateSwapChainForHwnd(m_CommandQueue.Get(), m_Window->GetHwnd(), &swapChainDescCopy, nullptr, nullptr, &m_SwapChain);
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create SwapChain");
-
-		return result;
-	}
-
-	void Dx12GraphicsContext::CreateDeviceAndSwapChain(Window* window)
-	{
-#ifdef ILLUMINO_DEBUG
-		Microsoft::WRL::ComPtr<ID3D12Debug> debugController;
-		D3D12GetDebugInterface(IID_PPV_ARGS (&debugController));
-		debugController->EnableDebugLayer();
-#endif // ILLUMINO_DEBUG
-
-		DXGI_SWAP_CHAIN_DESC swapChainDesc;
-		ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
-
-		swapChainDesc.BufferCount = s_QueueSlotCount;
-		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.BufferDesc.Width = window->GetWidth();
-		swapChainDesc.BufferDesc.Height = window->GetHeight();
-		swapChainDesc.OutputWindow = window->GetHwnd();
-		swapChainDesc.SampleDesc.Count = 1;
-		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-		swapChainDesc.Windowed = true;
-
-		auto renderEnv = CreateDeviceAndSwapChainHelper(D3D_FEATURE_LEVEL_11_0, &swapChainDesc);
-
-		m_Device = renderEnv.Device;
-		m_CommandQueue = renderEnv.Queue;
-		m_SwapChain = renderEnv.SwapChain;
 
 		m_RenderTargetViewDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 

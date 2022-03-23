@@ -1,10 +1,11 @@
 #pragma once
 
 #include <Windows.h>
-#include <Core/GraphicsContext.h>
 
 namespace IlluminoEngine
 {
+	class GraphicsContext;
+
 	class Window
 	{
 	public:
