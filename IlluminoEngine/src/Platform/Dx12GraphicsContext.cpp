@@ -3,6 +3,7 @@
 
 #include <dxgi1_4.h>;
 #include <comdef.h>
+#include "d3dx12.h"
 
 #ifdef ILLUMINO_DEBUG
 #include <dxgidebug.h>
@@ -12,8 +13,6 @@
 
 namespace IlluminoEngine
 {
-	const static uint32_t s_QueueSlotCount = 3;
-
 	Dx12GraphicsContext::Dx12GraphicsContext(const Window& window)
 	{
 		OPTICK_EVENT();
@@ -134,6 +133,7 @@ namespace IlluminoEngine
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 		queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+		queueDesc.NodeMask = 0;
 		hr = m_Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create command queue");
 
@@ -143,7 +143,40 @@ namespace IlluminoEngine
 
 		m_RenderTargetViewDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-		// Setting up SwapChain
-		
+		// Setting up Fences and SwapChain
+		m_CurrentFenceValue = 1;
+		for (size_t i = 0; i < s_QueueSlotCount; ++i)
+		{
+			m_FenceEvents[i] = CreateEvent(nullptr, false, false, nullptr);
+			m_FenceValues[i] = 0;
+			m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fences[i]));
+		}
+
+		for (size_t i = 0; i < s_QueueSlotCount; ++i)
+		{
+			m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[i]));
+		}
+
+		// Setup Render Targets
+		D3D12_DESCRIPTOR_HEAP_DESC heapDesc;
+		heapDesc.NumDescriptors = s_QueueSlotCount;
+		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		heapDesc.NodeMask = 0;
+		m_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_RenderTargetDescriptorHeap));
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle { m_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart() };
+
+		for (size_t i = 0; i < s_QueueSlotCount; ++i)
+		{
+			D3D12_RENDER_TARGET_VIEW_DESC viewDesc;
+			viewDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+			viewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+			viewDesc.Texture2D.MipSlice = 0;
+			viewDesc.Texture2D.PlaneSlice = 0;
+
+			m_Device->CreateRenderTargetView(m_RenderTargets[i].Get(), &viewDesc, rtvHandle);
+			rtvHandle.Offset(m_RenderTargetViewDescriptorSize);
+		}
 	}
 }
