@@ -14,12 +14,10 @@ namespace IlluminoEngine
 {
 	const static uint32_t s_QueueSlotCount = 3;
 
-	Dx12GraphicsContext::Dx12GraphicsContext(Window* window)
-		:m_Window(window)
+	Dx12GraphicsContext::Dx12GraphicsContext(const Window& window)
 	{
 		OPTICK_EVENT();
-
-		CreateDeviceAndSwapChain();
+		CreateDeviceAndSwapChain(window.GetWidth(), window.GetHeight(), window.GetHwnd());
 	}
 
 	void Dx12GraphicsContext::Init()
@@ -69,7 +67,7 @@ namespace IlluminoEngine
 		}
 	}
 
-	void Dx12GraphicsContext::CreateDeviceAndSwapChain()
+	void Dx12GraphicsContext::CreateDeviceAndSwapChain(uint32_t width, uint32_t height, HWND hwnd)
 	{
 		OPTICK_EVENT();
 
@@ -92,8 +90,8 @@ namespace IlluminoEngine
 
 		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 		swapChainDesc.BufferCount = s_QueueSlotCount;
-		swapChainDesc.Width = m_Window->GetWidth();
-		swapChainDesc.Height = m_Window->GetHeight();
+		swapChainDesc.Width = width;
+		swapChainDesc.Height = height;
 		swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
@@ -140,7 +138,7 @@ namespace IlluminoEngine
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create command queue");
 
 		DXGI_SWAP_CHAIN_DESC1 swapChainDescCopy = swapChainDesc;
-		hr = dxgiFactory->CreateSwapChainForHwnd(m_CommandQueue.Get(), m_Window->GetHwnd(), &swapChainDescCopy, nullptr, nullptr, &m_SwapChain);
+		hr = dxgiFactory->CreateSwapChainForHwnd(m_CommandQueue.Get(), hwnd, &swapChainDescCopy, nullptr, nullptr, &m_SwapChain);
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create SwapChain");
 
 		m_RenderTargetViewDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);

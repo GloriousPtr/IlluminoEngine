@@ -59,7 +59,7 @@ namespace IlluminoEngine
 		ShowWindow(m_Hwnd, SW_SHOWDEFAULT);
 		UpdateWindow(m_Hwnd);
 
-		m_Context = GraphicsContext::Create(this);
+		m_Context = GraphicsContext::Create(*this);
 		m_Context->Init();
 	}
 

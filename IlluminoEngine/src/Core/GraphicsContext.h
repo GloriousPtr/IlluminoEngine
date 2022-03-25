@@ -12,6 +12,6 @@ namespace IlluminoEngine
 		virtual void Init() = 0;
 		virtual void SwapBuffers() = 0;
 
-		static Scope<GraphicsContext> Create(Window* window);
+		static Scope<GraphicsContext> Create(const Window& window);
 	};
 }

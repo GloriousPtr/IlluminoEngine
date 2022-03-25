@@ -15,10 +15,10 @@ namespace IlluminoEngine
 		void Update();
 		void OnClosed();
 
-		bool ShouldClose() { return m_Closed; }
-		uint32_t GetWidth() { return m_Width; }
-		uint32_t GetHeight() { return m_Height; }
-		HWND GetHwnd() { return m_Hwnd; }
+		bool ShouldClose() const { return m_Closed; }
+		uint32_t GetWidth() const { return m_Width; }
+		uint32_t GetHeight() const { return m_Height; }
+		HWND GetHwnd() const { return m_Hwnd; }
 
 	private:
 		std::string m_Name;
