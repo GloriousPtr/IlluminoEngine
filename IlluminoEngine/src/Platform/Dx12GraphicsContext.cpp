@@ -53,11 +53,20 @@ namespace IlluminoEngine
 			pAdapter->Release();
 		}
 	}
-	
-	static void DebugMessageCallback(D3D12_MESSAGE_CATEGORY Category, D3D12_MESSAGE_SEVERITY Severity, D3D12_MESSAGE_ID ID, LPCSTR pDescription, void* pContext)
+
+	static void DebugMessageCallback(D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity, D3D12_MESSAGE_ID id, LPCSTR pDescription, void* pContext)
 	{
 		OPTICK_EVENT();
 
+		switch (severity)
+		{
+		case D3D12_MESSAGE_SEVERITY_CORRUPTION:		ILLUMINO_CRITICAL("DirectX 12: {0}", pDescription);
+													break;
+		case D3D12_MESSAGE_SEVERITY_ERROR:			ILLUMINO_ERROR("DirectX 12: {0}", pDescription);
+													break;
+		case D3D12_MESSAGE_SEVERITY_WARNING:		ILLUMINO_WARN("DirectX 12: {0}", pDescription);
+													break;
+		}
 	}
 
 	void Dx12GraphicsContext::CreateDeviceAndSwapChain()
@@ -111,6 +120,18 @@ namespace IlluminoEngine
 		
 		hr = D3D12CreateDevice(adapter.Get(), minFeatureLevel, IID_PPV_ARGS(&m_Device));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to find a compatible device");
+
+#ifdef ILLUMINO_DEBUG
+		Microsoft::WRL::ComPtr<ID3D12InfoQueue1> infoQueue;
+		m_Device.As(&infoQueue);
+
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+
+		DWORD cookie;
+		infoQueue->RegisterMessageCallback(DebugMessageCallback, D3D12_MESSAGE_CALLBACK_IGNORE_FILTERS, nullptr, &cookie);
+#endif // ILLUMINO_DEBUG
 
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 		queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
