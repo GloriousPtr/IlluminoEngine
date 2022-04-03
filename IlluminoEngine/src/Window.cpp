@@ -82,14 +82,17 @@ namespace IlluminoEngine
 		}
 
 		m_Context->SwapBuffers();
-		UpdateWindow(m_Hwnd);
 	}
 
 	void Window::OnClosed()
 	{
 		OPTICK_EVENT();
 
+		if (m_Closed)
+			return;
+
 		m_Closed = true;
+		m_Context->Shutdown();
 		PostQuitMessage(0);
 	}
 }
