@@ -1,7 +1,6 @@
 #include "ipch.h"
 #include "Dx12GraphicsContext.h"
 
-#include <dxgi1_4.h>;
 #include <comdef.h>
 #include <d3dcompiler.h>
 #include "d3dx12.h"
@@ -279,13 +278,13 @@ namespace IlluminoEngine
 #endif // ILLUMINO_DEBUG
 	}
 
-	static void GetHardwareAdapter(IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter, D3D_FEATURE_LEVEL minFeatureLevel)
+	static void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter1** ppAdapter, D3D_FEATURE_LEVEL minFeatureLevel)
 	{
 		*ppAdapter = nullptr;
 		for (UINT adapterIndex = 0; ; ++adapterIndex)
 		{
 			IDXGIAdapter1* pAdapter = nullptr;
-			if (DXGI_ERROR_NOT_FOUND == pFactory->EnumAdapters1(adapterIndex, &pAdapter))
+			if (DXGI_ERROR_NOT_FOUND == pFactory->EnumAdapterByGpuPreference(adapterIndex, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&pAdapter)))
 			{
 				break;
 			}
@@ -351,7 +350,7 @@ namespace IlluminoEngine
 		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
 
-		Microsoft::WRL::ComPtr<IDXGIFactory4> dxgiFactory;
+		Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory;
 		HRESULT hr = CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&dxgiFactory));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create DXGI Factory");
 		
