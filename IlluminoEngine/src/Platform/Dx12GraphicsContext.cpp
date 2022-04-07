@@ -271,10 +271,27 @@ namespace IlluminoEngine
 			CloseHandle(e);
 
 #ifdef ILLUMINO_DEBUG
-		Microsoft::WRL::ComPtr<ID3D12InfoQueue1> infoQueue;
-		m_Device.As(&infoQueue);
+		Microsoft::WRL::ComPtr<ID3D12InfoQueue1> infoQueue1;
+		HRESULT hr = m_Device.As(&infoQueue1);
 
-		infoQueue->UnregisterMessageCallback(s_DebugCallbackCookie);
+		if (SUCCEEDED(hr))
+		{
+			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, false);
+			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, false);
+			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+			
+			infoQueue1->UnregisterMessageCallback(s_DebugCallbackCookie);
+		}
+		else
+		{
+			infoQueue1->Release();
+			Microsoft::WRL::ComPtr<ID3D12InfoQueue> infoQueue;
+
+			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, false);
+			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, false);
+			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+		}
+
 #endif // ILLUMINO_DEBUG
 	}
 
@@ -372,14 +389,27 @@ namespace IlluminoEngine
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to find a compatible device");
 
 #ifdef ILLUMINO_DEBUG
-		Microsoft::WRL::ComPtr<ID3D12InfoQueue1> infoQueue;
-		m_Device.As(&infoQueue);
+		Microsoft::WRL::ComPtr<ID3D12InfoQueue1> infoQueue1;
+		hr = m_Device.As(&infoQueue1);
 
-		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-		//infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-		//infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+		if (SUCCEEDED(hr))
+		{
+			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+			
+			infoQueue1->RegisterMessageCallback(DebugMessageCallback, D3D12_MESSAGE_CALLBACK_IGNORE_FILTERS, nullptr, &s_DebugCallbackCookie);
+		}
+		else
+		{
+			infoQueue1->Release();
+			Microsoft::WRL::ComPtr<ID3D12InfoQueue> infoQueue;
 
-		infoQueue->RegisterMessageCallback(DebugMessageCallback, D3D12_MESSAGE_CALLBACK_IGNORE_FILTERS, nullptr, &s_DebugCallbackCookie);
+			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+		}
+		
 #endif // ILLUMINO_DEBUG
 
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
