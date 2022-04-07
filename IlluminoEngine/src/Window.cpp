@@ -23,6 +23,8 @@ namespace IlluminoEngine
 		return DefWindowProcA(hWnd, uMsg, wParam, lParam);
 	}
 
+	Scope<GraphicsContext> Window::s_Context = nullptr;
+
 	Window::Window(const char* name, uint32_t width, uint32_t height)
 		: m_Name(name), m_Width(width), m_Height(height), m_Closed(false), m_HInstance(GetModuleHandle(nullptr))
 	{
@@ -60,15 +62,15 @@ namespace IlluminoEngine
 		ShowWindow(m_Hwnd, SW_SHOWDEFAULT);
 		UpdateWindow(m_Hwnd);
 
-		m_Context = GraphicsContext::Create(*this);
-		m_Context->Init();
+		s_Context = GraphicsContext::Create(*this);
+		s_Context->Init();
 	}
 
 	Window::~Window()
 	{
 		OPTICK_EVENT();
 
-		m_Context->Shutdown();
+		s_Context->Shutdown();
 		UnregisterClassA(m_Name.c_str(), m_HInstance);
 	}
 
@@ -83,7 +85,7 @@ namespace IlluminoEngine
 			DispatchMessage(&msg);
 		}
 
-		m_Context->SwapBuffers();
+		s_Context->SwapBuffers();
 	}
 
 	void Window::OnClosed()

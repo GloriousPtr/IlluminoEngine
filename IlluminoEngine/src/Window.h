@@ -2,6 +2,8 @@
 
 #include <Windows.h>
 
+#include "Core/GraphicsContext.h"
+
 namespace IlluminoEngine
 {
 	class GraphicsContext;
@@ -20,6 +22,8 @@ namespace IlluminoEngine
 		uint32_t GetHeight() const { return m_Height; }
 		HWND GetHwnd() const { return m_Hwnd; }
 
+		static const Scope<GraphicsContext>& GetGraphicsContext() { return s_Context; }
+
 	private:
 		std::string m_Name;
 		uint32_t m_Width;
@@ -27,6 +31,7 @@ namespace IlluminoEngine
 		bool m_Closed;
 		HINSTANCE m_HInstance;
 		HWND m_Hwnd;
-		Scope<GraphicsContext> m_Context;
+
+		static Scope<GraphicsContext> s_Context;
 	};
 }

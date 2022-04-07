@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Core/GraphicsContext.h"
-
 #include <wrl.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
+
+#include "Core/GraphicsContext.h"
+#include "Core/Shader.h"
 
 namespace IlluminoEngine
 {
@@ -14,19 +15,22 @@ namespace IlluminoEngine
 	{
 	public:
 		Dx12GraphicsContext(const Window& window);
+		virtual ~Dx12GraphicsContext() override = default;
 
 		virtual void Init() override;
 		virtual void SwapBuffers() override;
 		virtual void Shutdown() override;
 		virtual void SetVsync(bool state) override { m_Vsync = state; }
 		
+		void CreateRootSignature(ID3DBlob* rootBlob, ID3D12RootSignature** rootSignature);
+		void CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& psoDesc, ID3D12PipelineState** pipelineState);
+
+		void BindShader(ID3D12PipelineState* pso, ID3D12RootSignature* rootSignature);
+
 	private:
 		void CreateDeviceAndSwapChain();
 		void CreateAllocatorsAndCommandLists();
 		void CreateViewportScissor();
-
-		void CreateRootSignature();
-		void CreatePipelineState();
 
 		void WaitForFence(Microsoft::WRL::ComPtr<ID3D12Fence> fence, uint64_t completionValue, HANDLE waitEvent);
 
@@ -57,14 +61,12 @@ namespace IlluminoEngine
 
 		int32_t m_CurrentBackBuffer = 0;
 
-
-		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;
-		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineStateObject;
-
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_UploadBuffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
+
+		Ref<Shader> m_Shader;
 	};
 }

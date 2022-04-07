@@ -11,8 +11,6 @@
 
 #include "Window.h"
 
-#include "Shaders.h"
-
 namespace IlluminoEngine
 {
 
@@ -35,8 +33,8 @@ namespace IlluminoEngine
 		CreateAllocatorsAndCommandLists();
 		CreateViewportScissor();
 
-		CreateRootSignature();
-		CreatePipelineState();
+		m_Shader = Shader::Create("Assets/Shaders/TestShader.hlsl");
+
 
 		// Create our upload fence, command list and command allocator
 		// This will be only used while creating the mesh buffer and the texture
@@ -214,10 +212,8 @@ namespace IlluminoEngine
 			OPTICK_EVENT("Render");
 
 			auto commandList = m_CommandLists[m_CurrentBackBuffer].Get();
-			// Set our state (shaders, etc.)
-			commandList->SetPipelineState(m_PipelineStateObject.Get());
-			// Set our root signature
-			commandList->SetGraphicsRootSignature(m_RootSignature.Get());
+			
+			m_Shader->Bind();
 
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
@@ -395,8 +391,8 @@ namespace IlluminoEngine
 		if (SUCCEEDED(hr))
 		{
 			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+//			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+//			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
 			
 			infoQueue1->RegisterMessageCallback(DebugMessageCallback, D3D12_MESSAGE_CALLBACK_IGNORE_FILTERS, nullptr, &s_DebugCallbackCookie);
 		}
@@ -406,8 +402,8 @@ namespace IlluminoEngine
 			Microsoft::WRL::ComPtr<ID3D12InfoQueue> infoQueue;
 
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+//			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+//			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
 		}
 		
 #endif // ILLUMINO_DEBUG
@@ -483,72 +479,16 @@ namespace IlluminoEngine
 		m_Viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
 	}
 
-	void Dx12GraphicsContext::CreateRootSignature()
+	void Dx12GraphicsContext::CreateRootSignature(ID3DBlob* rootBlob, ID3D12RootSignature** rootSignature)
 	{
-		CD3DX12_ROOT_PARAMETER parameters[1];
-		parameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-
-		CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
-		descRootSignature.Init(1, parameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-		Microsoft::WRL::ComPtr<ID3DBlob> rootBlob;
-		Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
-		D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &rootBlob, &errorBlob);
-
-		m_Device->CreateRootSignature(0, rootBlob->GetBufferPointer(), rootBlob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature));
+		HRESULT hr = m_Device->CreateRootSignature(0, rootBlob->GetBufferPointer(), rootBlob->GetBufferSize(), IID_PPV_ARGS(rootSignature));
+		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create root signature");
 	}
 
-	void Dx12GraphicsContext::CreatePipelineState()
+	void Dx12GraphicsContext::CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& psoDesc, ID3D12PipelineState** pipelineState)
 	{
-		static const D3D12_INPUT_ELEMENT_DESC layout[] =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-		};
-
-		static const D3D_SHADER_MACRO macros[] =
-		{
-			{ "D3D12_SAMPLE_BASIC", "1" },
-			{ nullptr, nullptr }
-		};
-
-		Microsoft::WRL::ComPtr<ID3DBlob> vertexShader;
-		D3DCompile(Shaders, sizeof(Shaders), "", macros, nullptr, "VS_main", "vs_5_0", 0, 0, &vertexShader, nullptr);
-
-		Microsoft::WRL::ComPtr<ID3DBlob> pixelShader;
-		D3DCompile(Shaders, sizeof(Shaders), "", macros, nullptr, "PS_main", "ps_5_0", 0, 0, &pixelShader, nullptr);
-
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-		psoDesc.VS.BytecodeLength = vertexShader->GetBufferSize();
-		psoDesc.VS.pShaderBytecode = vertexShader->GetBufferPointer();
-		psoDesc.PS.BytecodeLength = pixelShader->GetBufferSize();
-		psoDesc.PS.pShaderBytecode = pixelShader->GetBufferPointer();
-		psoDesc.pRootSignature = m_RootSignature.Get();
-		psoDesc.NumRenderTargets = 1;
-		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-		psoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
-		psoDesc.InputLayout.NumElements = std::extent<decltype(layout)>::value;
-		psoDesc.InputLayout.pInputElementDescs = layout;
-		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-
-		auto& renderTarget = psoDesc.BlendState.RenderTarget[0];
-		renderTarget.BlendEnable = true;
-		renderTarget.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-		renderTarget.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-		renderTarget.BlendOp = D3D12_BLEND_OP_ADD;
-		renderTarget.SrcBlendAlpha = D3D12_BLEND_ONE;
-		renderTarget.DestBlendAlpha = D3D12_BLEND_ZERO;
-		renderTarget.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-		renderTarget.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-		psoDesc.SampleDesc.Count = 1;
-		psoDesc.DepthStencilState.DepthEnable = false;
-		psoDesc.DepthStencilState.StencilEnable = false;
-		psoDesc.SampleMask = 0xFFFFFFFF;
-		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
-		m_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_PipelineStateObject));
+		HRESULT hr = m_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(pipelineState));
+		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create pipeline state");
 	}
 
 	void Dx12GraphicsContext::WaitForFence(
@@ -561,5 +501,13 @@ namespace IlluminoEngine
 			fence->SetEventOnCompletion(completionValue, waitEvent);
 			WaitForSingleObject(waitEvent, INFINITE);
 		}
+	}
+
+
+	void Dx12GraphicsContext::BindShader(ID3D12PipelineState* pso, ID3D12RootSignature* rootSignature)
+	{
+		auto commandList = m_CommandLists[m_CurrentBackBuffer].Get();
+		commandList->SetPipelineState(pso);
+		commandList->SetGraphicsRootSignature(rootSignature);
 	}
 }
