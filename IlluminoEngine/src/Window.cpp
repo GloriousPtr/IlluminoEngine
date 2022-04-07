@@ -16,6 +16,7 @@ namespace IlluminoEngine
 		{
 			case WM_CLOSE:
 				window->OnClosed();
+				PostQuitMessage(0);
 				break;
 		}
 
@@ -67,6 +68,7 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		m_Context->Shutdown();
 		UnregisterClassA(m_Name.c_str(), m_HInstance);
 	}
 
@@ -92,7 +94,5 @@ namespace IlluminoEngine
 			return;
 
 		m_Closed = true;
-		m_Context->Shutdown();
-		PostQuitMessage(0);
 	}
 }
