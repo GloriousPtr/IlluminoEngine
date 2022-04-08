@@ -1,6 +1,5 @@
 #pragma once
 
-#include <wrl.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
@@ -32,7 +31,7 @@ namespace IlluminoEngine
 		void CreateAllocatorsAndCommandLists();
 		void CreateViewportScissor();
 
-		void WaitForFence(Microsoft::WRL::ComPtr<ID3D12Fence> fence, uint64_t completionValue, HANDLE waitEvent);
+		void WaitForFence(ID3D12Fence* fence, uint64_t completionValue, HANDLE waitEvent);
 
 	private:
 		const static uint32_t s_QueueSlotCount = 3;
@@ -43,27 +42,27 @@ namespace IlluminoEngine
 		D3D12_VIEWPORT m_Viewport;
 		D3D12_RECT m_RectScissor;
 
-		Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
-		Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_CommandQueue;
-		Microsoft::WRL::ComPtr<IDXGISwapChain1> m_SwapChain;
+		ID3D12Device* m_Device;
+		ID3D12CommandQueue* m_CommandQueue;
+		IDXGISwapChain1* m_SwapChain;
 
 		uint64_t m_CurrentFenceValue;
 		uint64_t m_FenceValues[s_QueueSlotCount];
 		HANDLE m_FenceEvents[s_QueueSlotCount];
-		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fences[s_QueueSlotCount];
+		ID3D12Fence* m_Fences[s_QueueSlotCount];
 
 		uint32_t m_RenderTargetViewDescriptorSize;
-		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RenderTargetDescriptorHeap;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_RenderTargets[s_QueueSlotCount];
+		ID3D12DescriptorHeap* m_RenderTargetDescriptorHeap;
+		ID3D12Resource* m_RenderTargets[s_QueueSlotCount];
 
-		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CommandAllocators[s_QueueSlotCount];
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_CommandLists[s_QueueSlotCount];
+		ID3D12CommandAllocator* m_CommandAllocators[s_QueueSlotCount];
+		ID3D12GraphicsCommandList* m_CommandLists[s_QueueSlotCount];
 
 		int32_t m_CurrentBackBuffer = 0;
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_UploadBuffer;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer;
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
+		ID3D12Resource* m_UploadBuffer;
+		ID3D12Resource* m_VertexBuffer;
+		ID3D12Resource* m_IndexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
 

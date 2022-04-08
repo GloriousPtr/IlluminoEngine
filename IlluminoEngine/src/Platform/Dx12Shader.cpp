@@ -19,15 +19,19 @@ namespace IlluminoEngine
 	{
 		std::string source = ReadFile(filepath);
 
-		Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+		ID3DBlob* errorBlob;
 
-		Microsoft::WRL::ComPtr<ID3DBlob> vertexShader;
+		ID3DBlob* vertexShader;
 		HRESULT hr = D3DCompile(source.c_str(), source.size(), "", nullptr, nullptr, "VS_main", "vs_5_0", 0, 0, &vertexShader, &errorBlob);
 		ILLUMINO_ASSERT(SUCCEEDED(hr), (char*) errorBlob->GetBufferPointer());
+		if (errorBlob)
+			errorBlob->Release();
 
-		Microsoft::WRL::ComPtr<ID3DBlob> pixelShader;
+		ID3DBlob* pixelShader;
 		hr = D3DCompile(source.c_str(), source.size(), "", nullptr, nullptr, "PS_main", "ps_5_0", 0, 0, &pixelShader, &errorBlob);
 		ILLUMINO_ASSERT(SUCCEEDED(hr), (char*) errorBlob->GetBufferPointer());
+		if (errorBlob)
+			errorBlob->Release();
 
 		if (!s_Context)
 		{
@@ -42,11 +46,13 @@ namespace IlluminoEngine
 		CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
 		descRootSignature.Init(1, parameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-		Microsoft::WRL::ComPtr<ID3DBlob> rootBlob;
+		ID3DBlob* rootBlob;
 		hr = D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &rootBlob, &errorBlob);
 		ILLUMINO_ASSERT(SUCCEEDED(hr), (char*) errorBlob->GetBufferPointer());
+		if (errorBlob)
+			errorBlob->Release();
 
-		s_Context->CreateRootSignature(rootBlob.Get(), &m_RootSignature);
+		s_Context->CreateRootSignature(rootBlob, &m_RootSignature);
 
 		// Create buffer layout
 		static const D3D12_INPUT_ELEMENT_DESC layout[] =
@@ -61,7 +67,7 @@ namespace IlluminoEngine
 		psoDesc.VS.pShaderBytecode = vertexShader->GetBufferPointer();
 		psoDesc.PS.BytecodeLength = pixelShader->GetBufferSize();
 		psoDesc.PS.pShaderBytecode = pixelShader->GetBufferPointer();
-		psoDesc.pRootSignature = m_RootSignature.Get();
+		psoDesc.pRootSignature = m_RootSignature;
 		psoDesc.NumRenderTargets = 1;
 		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 		psoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
@@ -87,11 +93,21 @@ namespace IlluminoEngine
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 		s_Context->CreatePipelineState(psoDesc, &m_PipelineState);
+
+		rootBlob->Release();
+		pixelShader->Release();
+		vertexShader->Release();
+	}
+
+	Dx12Shader::~Dx12Shader()
+	{
+		m_PipelineState->Release();
+		m_RootSignature->Release();
 	}
 
 	void Dx12Shader::Bind()
 	{
-		s_Context->BindShader(m_PipelineState.Get(), m_RootSignature.Get());
+		s_Context->BindShader(m_PipelineState, m_RootSignature);
 	}
 
 	std::string Dx12Shader::ReadFile(const std::string& filepath)

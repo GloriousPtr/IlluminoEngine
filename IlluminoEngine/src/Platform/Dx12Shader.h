@@ -11,6 +11,7 @@ namespace IlluminoEngine
 	{
 	public:
 		Dx12Shader(const std::string& filepath);
+		virtual ~Dx12Shader() override;
 
 		virtual void Bind() override;
 
@@ -18,7 +19,7 @@ namespace IlluminoEngine
 		std::string ReadFile(const std::string& filepath);
 
 	private:
-		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;
-		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_PipelineState;
+		ID3D12RootSignature* m_RootSignature;
+		ID3D12PipelineState* m_PipelineState;
 	};
 }

@@ -39,14 +39,14 @@ namespace IlluminoEngine
 		// Create our upload fence, command list and command allocator
 		// This will be only used while creating the mesh buffer and the texture
 		// to upload data to the GPU.
-		Microsoft::WRL::ComPtr<ID3D12Fence> uploadFence;
+		ID3D12Fence* uploadFence;
 		m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&uploadFence));
 
-		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> uploadCommandAllocator;
+		ID3D12CommandAllocator* uploadCommandAllocator;
 		m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&uploadCommandAllocator));
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> uploadCommandList;
+		ID3D12GraphicsCommandList* uploadCommandList;
 		m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-									uploadCommandAllocator.Get(), nullptr,
+									uploadCommandAllocator, nullptr,
 									IID_PPV_ARGS(&uploadCommandList));
 
 		struct Vertex
@@ -123,18 +123,18 @@ namespace IlluminoEngine
 
 		// Copy data from upload buffer on CPU into the index/vertex buffer on 
 		// the GPU
-		uploadCommandList->CopyBufferRegion(m_VertexBuffer.Get(), 0,
-			m_UploadBuffer.Get(), 0, sizeof(vertices));
-		uploadCommandList->CopyBufferRegion(m_IndexBuffer.Get(), 0,
-			m_UploadBuffer.Get(), sizeof(vertices), sizeof(indices));
+		uploadCommandList->CopyBufferRegion(m_VertexBuffer, 0,
+			m_UploadBuffer, 0, sizeof(vertices));
+		uploadCommandList->CopyBufferRegion(m_IndexBuffer, 0,
+			m_UploadBuffer, sizeof(vertices), sizeof(indices));
 
 		// Barriers, batch them together
 		const CD3DX12_RESOURCE_BARRIER barriers[2] =
 		{
-			CD3DX12_RESOURCE_BARRIER::Transition(m_VertexBuffer.Get(),
+			CD3DX12_RESOURCE_BARRIER::Transition(m_VertexBuffer,
 												D3D12_RESOURCE_STATE_COPY_DEST,
 												D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER),
-			CD3DX12_RESOURCE_BARRIER::Transition(m_IndexBuffer.Get(),
+			CD3DX12_RESOURCE_BARRIER::Transition(m_IndexBuffer,
 												D3D12_RESOURCE_STATE_COPY_DEST,
 												D3D12_RESOURCE_STATE_INDEX_BUFFER)
 		};
@@ -147,9 +147,9 @@ namespace IlluminoEngine
 		uploadCommandList->Close();
 
 		// Execute the upload and finish the command list
-		ID3D12CommandList* commandLists [] = { uploadCommandList.Get() };
+		ID3D12CommandList* commandLists [] = { uploadCommandList };
 		m_CommandQueue->ExecuteCommandLists(std::extent<decltype(commandLists)>::value, commandLists);
-		m_CommandQueue->Signal(uploadFence.Get(), 1);
+		m_CommandQueue->Signal(uploadFence, 1);
 
 		auto waitEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
@@ -157,12 +157,16 @@ namespace IlluminoEngine
 			throw std::runtime_error("Could not create wait event.");
 		}
 
-		WaitForFence(uploadFence.Get(), 1, waitEvent);
+		WaitForFence(uploadFence, 1, waitEvent);
 
 		// Cleanup our upload handle
 		uploadCommandAllocator->Reset();
 
 		CloseHandle(waitEvent);
+
+		uploadCommandList->Release();
+		uploadCommandAllocator->Release();
+		uploadFence->Release();
 	}
 
 	void Dx12GraphicsContext::SwapBuffers()
@@ -180,8 +184,8 @@ namespace IlluminoEngine
 
 			m_CommandAllocators[m_CurrentBackBuffer]->Reset();
 
-			auto commandList = m_CommandLists[m_CurrentBackBuffer].Get();
-			commandList->Reset(m_CommandAllocators[m_CurrentBackBuffer].Get(), nullptr);
+			auto commandList = m_CommandLists[m_CurrentBackBuffer];
+			commandList->Reset(m_CommandAllocators[m_CurrentBackBuffer], nullptr);
 
 			D3D12_CPU_DESCRIPTOR_HANDLE renderTargetHandle;
 			CD3DX12_CPU_DESCRIPTOR_HANDLE::InitOffsetted(renderTargetHandle,
@@ -194,7 +198,7 @@ namespace IlluminoEngine
 
 			// Transition back buffer
 			D3D12_RESOURCE_BARRIER barrier;
-			barrier.Transition.pResource = m_RenderTargets[m_CurrentBackBuffer].Get();
+			barrier.Transition.pResource = m_RenderTargets[m_CurrentBackBuffer];
 			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
@@ -211,7 +215,7 @@ namespace IlluminoEngine
 		{
 			OPTICK_EVENT("Render");
 
-			auto commandList = m_CommandLists[m_CurrentBackBuffer].Get();
+			auto commandList = m_CommandLists[m_CurrentBackBuffer];
 			
 			m_Shader->Bind();
 
@@ -226,14 +230,14 @@ namespace IlluminoEngine
 
 			// Transition the swap chain back to present
 			D3D12_RESOURCE_BARRIER barrier;
-			barrier.Transition.pResource = m_RenderTargets[m_CurrentBackBuffer].Get();
+			barrier.Transition.pResource = m_RenderTargets[m_CurrentBackBuffer];
 			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 			barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
-			auto commandList = m_CommandLists[m_CurrentBackBuffer].Get();
+			auto commandList = m_CommandLists[m_CurrentBackBuffer];
 			commandList->ResourceBarrier(1, &barrier);
 
 			commandList->Close();
@@ -251,7 +255,7 @@ namespace IlluminoEngine
 			m_SwapChain->Present(syncInterval, presentFlags);
 
 			const uint64_t fenceValue = m_CurrentFenceValue;
-			m_CommandQueue->Signal(m_Fences[m_CurrentBackBuffer].Get(), fenceValue);
+			m_CommandQueue->Signal(m_Fences[m_CurrentBackBuffer], fenceValue);
 			m_FenceValues[m_CurrentBackBuffer] = fenceValue;
 			++m_CurrentFenceValue;
 			m_CurrentBackBuffer = (m_CurrentBackBuffer + 1) % s_QueueSlotCount;
@@ -267,28 +271,46 @@ namespace IlluminoEngine
 			CloseHandle(e);
 
 #ifdef ILLUMINO_DEBUG
-		Microsoft::WRL::ComPtr<ID3D12InfoQueue1> infoQueue1;
-		HRESULT hr = m_Device.As(&infoQueue1);
+		ID3D12InfoQueue1* infoQueue1;
+		HRESULT hr = m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue1));
 
 		if (SUCCEEDED(hr))
 		{
 			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, false);
 			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, false);
 			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
-			
 			infoQueue1->UnregisterMessageCallback(s_DebugCallbackCookie);
+			infoQueue1->Release();
 		}
 		else
 		{
-			Microsoft::WRL::ComPtr<ID3D12InfoQueue> infoQueue;
-			m_Device.As(&infoQueue);
-
+			ID3D12InfoQueue* infoQueue;
+			m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue));
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, false);
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, false);
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+			infoQueue->Release();
+		}
+#endif // ILLUMINO_DEBUG
+
+		m_IndexBuffer->Release();
+		m_VertexBuffer->Release();
+		m_UploadBuffer->Release();
+
+		for (size_t i = 0; i < s_QueueSlotCount; ++i)
+		{
+			m_CommandLists[i]->Release();
+			m_CommandAllocators[i]->Release();
+			m_RenderTargets[i]->Release();
+
+			m_Fences[i]->Release();
 		}
 
-#endif // ILLUMINO_DEBUG
+		m_RenderTargetDescriptorHeap->Release();
+
+		m_SwapChain->Release();
+		m_CommandQueue->Release();
+		m_Device->Release();
 	}
 
 	static void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter1** ppAdapter, D3D_FEATURE_LEVEL minFeatureLevel)
@@ -337,17 +359,18 @@ namespace IlluminoEngine
 
 		UINT dxgiFactoryFlags = 0;
 #ifdef ILLUMINO_DEBUG
-		Microsoft::WRL::ComPtr<ID3D12Debug> debugController;
+		ID3D12Debug* debugController;
 		D3D12GetDebugInterface(IID_PPV_ARGS(&debugController));
 		debugController->EnableDebugLayer();
+		debugController->Release();
 
-		Microsoft::WRL::ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
+		IDXGIInfoQueue* dxgiInfoQueue;
         DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiInfoQueue));
         dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
         dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+		dxgiInfoQueue->Release();
 
 		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-
 #endif // ILLUMINO_DEBUG
 
 		D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_11_0;
@@ -363,12 +386,12 @@ namespace IlluminoEngine
 		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
 
-		Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory;
+		IDXGIFactory7* dxgiFactory;
 		HRESULT hr = CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&dxgiFactory));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create DXGI Factory");
 		
-		Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter;
-		GetHardwareAdapter(dxgiFactory.Get(), &adapter, minFeatureLevel);
+		IDXGIAdapter1* adapter;
+		GetHardwareAdapter(dxgiFactory, &adapter, minFeatureLevel);
 		if (adapter != nullptr)
 		{
 			DXGI_ADAPTER_DESC adapterDesc;
@@ -381,29 +404,29 @@ namespace IlluminoEngine
 			ILLUMINO_INFO("  DedicatedVideoMemory: {0}", adapterDesc.DedicatedVideoMemory / (1024.0f * 1024.0f * 1024.0f));
 		}
 		
-		hr = D3D12CreateDevice(adapter.Get(), minFeatureLevel, IID_PPV_ARGS(&m_Device));
+		hr = D3D12CreateDevice(adapter, minFeatureLevel, IID_PPV_ARGS(&m_Device));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to find a compatible device");
 
 #ifdef ILLUMINO_DEBUG
-		Microsoft::WRL::ComPtr<ID3D12InfoQueue1> infoQueue1;
-		hr = m_Device.As(&infoQueue1);
+		ID3D12InfoQueue1* infoQueue1;
+		hr = m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue1));
 
 		if (SUCCEEDED(hr))
 		{
 			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
 			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
 			infoQueue1->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
-			
 			infoQueue1->RegisterMessageCallback(DebugMessageCallback, D3D12_MESSAGE_CALLBACK_IGNORE_FILTERS, nullptr, &s_DebugCallbackCookie);
+			infoQueue1->Release();
 		}
 		else
 		{
-			Microsoft::WRL::ComPtr<ID3D12InfoQueue> infoQueue;
-			m_Device.As(&infoQueue);
-
+			ID3D12InfoQueue* infoQueue;
+			m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue));
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+			infoQueue->Release();
 		}
 		
 #endif // ILLUMINO_DEBUG
@@ -416,7 +439,7 @@ namespace IlluminoEngine
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create command queue");
 
 		DXGI_SWAP_CHAIN_DESC1 swapChainDescCopy = swapChainDesc;
-		hr = dxgiFactory->CreateSwapChainForHwnd(m_CommandQueue.Get(), m_Window
+		hr = dxgiFactory->CreateSwapChainForHwnd(m_CommandQueue, m_Window
 			.GetHwnd(), &swapChainDescCopy, nullptr, nullptr, &m_SwapChain);
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create SwapChain");
 
@@ -454,9 +477,12 @@ namespace IlluminoEngine
 			viewDesc.Texture2D.MipSlice = 0;
 			viewDesc.Texture2D.PlaneSlice = 0;
 
-			m_Device->CreateRenderTargetView(m_RenderTargets[i].Get(), &viewDesc, rtvHandle);
+			m_Device->CreateRenderTargetView(m_RenderTargets[i], &viewDesc, rtvHandle);
 			rtvHandle.Offset(m_RenderTargetViewDescriptorSize);
 		}
+
+		adapter->Release();
+		dxgiFactory->Release();
 	}
 
 	void Dx12GraphicsContext::CreateAllocatorsAndCommandLists()
@@ -464,7 +490,7 @@ namespace IlluminoEngine
 		for (size_t i = 0; i < s_QueueSlotCount; ++i)
 		{
 			m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocators[i]));
-			m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandAllocators[i].Get(), nullptr, IID_PPV_ARGS(&m_CommandLists[i]));
+			m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandAllocators[i], nullptr, IID_PPV_ARGS(&m_CommandLists[i]));
 			_bstr_t wc(i);
 			m_CommandLists[i]->SetName(wc);
 			m_CommandLists[i]->Close();
@@ -492,7 +518,7 @@ namespace IlluminoEngine
 	}
 
 	void Dx12GraphicsContext::WaitForFence(
-		Microsoft::WRL::ComPtr<ID3D12Fence> fence,
+		ID3D12Fence* fence,
 		uint64_t completionValue,
 		HANDLE waitEvent)
 	{
@@ -506,7 +532,7 @@ namespace IlluminoEngine
 
 	void Dx12GraphicsContext::BindShader(ID3D12PipelineState* pso, ID3D12RootSignature* rootSignature)
 	{
-		auto commandList = m_CommandLists[m_CurrentBackBuffer].Get();
+		auto commandList = m_CommandLists[m_CurrentBackBuffer];
 		commandList->SetPipelineState(pso);
 		commandList->SetGraphicsRootSignature(rootSignature);
 	}
