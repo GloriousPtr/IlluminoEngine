@@ -33,8 +33,11 @@ namespace IlluminoEngine
 		CreateAllocatorsAndCommandLists();
 		CreateViewportScissor();
 
-		m_Shader = Shader::Create("Assets/Shaders/TestShader.hlsl");
-
+		m_Shader = Shader::Create("Assets/Shaders/TestShader.hlsl",
+			{
+				{"POSITION", ShaderDataType::Float3},
+				{"TEXCOORD", ShaderDataType::Float2}
+			});
 
 		// Create our upload fence, command list and command allocator
 		// This will be only used while creating the mesh buffer and the texture

@@ -15,9 +15,26 @@ namespace IlluminoEngine
 {
 	static Dx12GraphicsContext* s_Context = nullptr;
 
-	Dx12Shader::Dx12Shader(const std::string& filepath)
+	Dx12Shader::Dx12Shader(const char* filepath, const BufferLayout& layout)
+		: m_Filepath(filepath)
 	{
-		std::string source = ReadFile(filepath);
+		SetBufferLayout(layout);
+	}
+
+	Dx12Shader::~Dx12Shader()
+	{
+		m_PipelineState->Release();
+		m_RootSignature->Release();
+	}
+
+	void Dx12Shader::Bind()
+	{
+		s_Context->BindShader(m_PipelineState, m_RootSignature);
+	}
+
+	void Dx12Shader::SetBufferLayout(const BufferLayout& layout)
+	{
+		std::string source = ReadFile(m_Filepath);
 
 		ID3DBlob* errorBlob;
 
@@ -54,12 +71,61 @@ namespace IlluminoEngine
 
 		s_Context->CreateRootSignature(rootBlob, &m_RootSignature);
 
-		// Create buffer layout
-		static const D3D12_INPUT_ELEMENT_DESC layout[] =
+
+		std::vector<D3D12_INPUT_ELEMENT_DESC> d3d12BufferLayout;
+		d3d12BufferLayout.reserve(layout.GetCount());
+		for (const auto& element: layout)
 		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-		};
+			DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+			size_t slotCount = 0;
+			switch (element.Type)
+			{
+				case ShaderDataType::Float:		format = DXGI_FORMAT_R32_FLOAT;
+												slotCount = 1;
+												break;
+				case ShaderDataType::Float2:	format = DXGI_FORMAT_R32G32_FLOAT;
+												slotCount = 1;
+												break;
+				case ShaderDataType::Float3:	format = DXGI_FORMAT_R32G32B32_FLOAT;
+												slotCount = 1;
+												break;
+				case ShaderDataType::Float4:	format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+												slotCount = 1;
+												break;
+				case ShaderDataType::Mat3:		format = DXGI_FORMAT_R32G32B32_FLOAT;
+												slotCount = 3;
+												break;
+				case ShaderDataType::Mat4:		format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+												slotCount = 4;
+												break;
+				case ShaderDataType::Int:		format = DXGI_FORMAT_R32G32_SINT;
+												slotCount = 1;
+												break;
+				case ShaderDataType::Int2:		format = DXGI_FORMAT_R32G32_SINT;
+												slotCount = 1;
+												break;
+				case ShaderDataType::Int3:		format = DXGI_FORMAT_R32G32B32_SINT;
+												slotCount = 1;
+												break;
+				case ShaderDataType::Int4:		format = DXGI_FORMAT_R32G32B32A32_SINT;
+												slotCount = 1;
+												break;
+				case ShaderDataType::Bool:		format = DXGI_FORMAT_R32_SINT;
+												slotCount = 1;
+												break;
+			}
+
+			ILLUMINO_ASSERT(format != DXGI_FORMAT_UNKNOWN, "Unknown DXGI_FORMAT type");
+			ILLUMINO_ASSERT(slotCount != 0, "Slot count cannot be zero");
+
+			auto classification = element.Classification == ShaderDataClassification::Vertex
+									? D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA
+									: D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
+			UINT offset = element.Offset / slotCount;
+
+			for (UINT inputSlot = 0; inputSlot < slotCount; ++inputSlot)
+				d3d12BufferLayout.push_back({ element.Name, 0, format, inputSlot, offset, classification, 0 });
+		}
 
 		// Create pipeline state object
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
@@ -71,8 +137,8 @@ namespace IlluminoEngine
 		psoDesc.NumRenderTargets = 1;
 		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 		psoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
-		psoDesc.InputLayout.NumElements = std::extent<decltype(layout)>::value;
-		psoDesc.InputLayout.pInputElementDescs = layout;
+		psoDesc.InputLayout.NumElements = d3d12BufferLayout.size();
+		psoDesc.InputLayout.pInputElementDescs = &(d3d12BufferLayout[0]);
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 
@@ -99,18 +165,7 @@ namespace IlluminoEngine
 		vertexShader->Release();
 	}
 
-	Dx12Shader::~Dx12Shader()
-	{
-		m_PipelineState->Release();
-		m_RootSignature->Release();
-	}
-
-	void Dx12Shader::Bind()
-	{
-		s_Context->BindShader(m_PipelineState, m_RootSignature);
-	}
-
-	std::string Dx12Shader::ReadFile(const std::string& filepath)
+	std::string Dx12Shader::ReadFile(const char* filepath)
 	{
 		OPTICK_EVENT();
 

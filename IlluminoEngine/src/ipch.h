@@ -13,3 +13,5 @@
 #include "Core/Log.h"
 #include "Core/Assert.h"
 #include "optick.h"
+
+#include "Core/String.h"

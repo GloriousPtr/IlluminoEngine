@@ -1,24 +1,26 @@
-struct VertexShaderOutput
+struct VertexIn
+{
+	float4 position : POSITION;
+	float2 uv : TEXCOORD;
+};
+
+struct VertexOut
 {
 	float4 position : SV_POSITION;
 	float2 uv : TEXCOORD;
 };
 
-VertexShaderOutput VS_main(
-	float4 position : POSITION,
-	float2 uv : TEXCOORD)
+VertexOut VS_main(VertexIn v)
 {
-	VertexShaderOutput output;
+	VertexOut output;
 
-	output.position = position;
-	output.uv = uv;
+	output.position = v.position;
+	output.uv = v.uv;
 
 	return output;
 }
 
-float4 PS_main (float4 position : SV_POSITION,
-				float2 uv : TEXCOORD) : SV_TARGET
+float4 PS_main(VertexOut i) : SV_TARGET
 {
-	return float4(uv, 0, 1);
+	return float4(i.uv, 0, 1);
 }
-
