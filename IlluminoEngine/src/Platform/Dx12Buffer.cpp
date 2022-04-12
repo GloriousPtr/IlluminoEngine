@@ -26,7 +26,7 @@ namespace IlluminoEngine
 									uploadCommandAllocator, nullptr,
 									IID_PPV_ARGS(&uploadCommandList));
 
-		const int uploadBufferSize = verticesSize + indicesSize;
+		const size_t uploadBufferSize = verticesSize + indicesSize;
 		const auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 		const auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
 
@@ -61,11 +61,11 @@ namespace IlluminoEngine
 
 		// Create buffer views
 		m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
-		m_VertexBufferView.SizeInBytes = verticesSize;
-		m_VertexBufferView.StrideInBytes = strideSize;
+		m_VertexBufferView.SizeInBytes = static_cast<UINT>(verticesSize);
+		m_VertexBufferView.StrideInBytes = static_cast<UINT>(strideSize);
 
 		m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
-		m_IndexBufferView.SizeInBytes = indicesSize;
+		m_IndexBufferView.SizeInBytes = static_cast<UINT>(indicesSize);
 		m_IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
 
 		// Copy data on CPU into the upload buffer

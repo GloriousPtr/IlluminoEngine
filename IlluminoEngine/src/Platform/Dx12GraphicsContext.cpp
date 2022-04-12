@@ -344,7 +344,7 @@ namespace IlluminoEngine
 			m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fences[i]));
 		}
 
-		for (size_t i = 0; i < s_QueueSlotCount; ++i)
+		for (UINT i = 0; i < s_QueueSlotCount; ++i)
 		{
 			m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[i]));
 		}

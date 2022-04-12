@@ -43,6 +43,6 @@ namespace IlluminoEngine
 
 	private:
 		char* m_Data;
-		uint32_t m_Size;
+		size_t m_Size;
 	};
 }

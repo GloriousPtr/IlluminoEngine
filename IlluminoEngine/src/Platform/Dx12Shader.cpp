@@ -77,7 +77,7 @@ namespace IlluminoEngine
 		for (const auto& element: layout)
 		{
 			DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
-			size_t slotCount = 0;
+			UINT slotCount = 0;
 			switch (element.Type)
 			{
 				case ShaderDataType::Float:		format = DXGI_FORMAT_R32_FLOAT;
@@ -121,7 +121,7 @@ namespace IlluminoEngine
 			auto classification = element.Classification == ShaderDataClassification::Vertex
 									? D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA
 									: D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
-			UINT offset = element.Offset / slotCount;
+			UINT offset = static_cast<UINT>(element.Offset) / slotCount;
 
 			for (UINT inputSlot = 0; inputSlot < slotCount; ++inputSlot)
 				d3d12BufferLayout.push_back({ element.Name, 0, format, inputSlot, offset, classification, 0 });
@@ -137,7 +137,7 @@ namespace IlluminoEngine
 		psoDesc.NumRenderTargets = 1;
 		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 		psoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
-		psoDesc.InputLayout.NumElements = d3d12BufferLayout.size();
+		psoDesc.InputLayout.NumElements = static_cast<UINT>(d3d12BufferLayout.size());
 		psoDesc.InputLayout.pInputElementDescs = &(d3d12BufferLayout[0]);
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
