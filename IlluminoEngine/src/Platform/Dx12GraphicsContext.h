@@ -20,6 +20,10 @@ namespace IlluminoEngine
 		virtual void SwapBuffers() override;
 		virtual void Shutdown() override;
 		virtual void SetVsync(bool state) override { m_Vsync = state; }
+		virtual void* GetDevice() override { return m_Device; }
+		virtual void* GetCommandQueue() override { return m_CommandQueue; }
+		virtual void WaitForFence(void* fence, uint64_t completionValue, HANDLE waitEvent) override;
+		virtual void BindMeshBuffer(MeshBuffer& mesh) override;
 		
 		void CreateRootSignature(ID3DBlob* rootBlob, ID3D12RootSignature** rootSignature);
 		void CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& psoDesc, ID3D12PipelineState** pipelineState);
@@ -30,8 +34,6 @@ namespace IlluminoEngine
 		void CreateDeviceAndSwapChain();
 		void CreateAllocatorsAndCommandLists();
 		void CreateViewportScissor();
-
-		void WaitForFence(ID3D12Fence* fence, uint64_t completionValue, HANDLE waitEvent);
 
 	private:
 		const static uint32_t s_QueueSlotCount = 3;
@@ -60,12 +62,7 @@ namespace IlluminoEngine
 
 		int32_t m_CurrentBackBuffer = 0;
 
-		ID3D12Resource* m_UploadBuffer;
-		ID3D12Resource* m_VertexBuffer;
-		ID3D12Resource* m_IndexBuffer;
-		D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
-		D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
-
 		Ref<Shader> m_Shader;
+		Ref<MeshBuffer> m_Mesh;
 	};
 }

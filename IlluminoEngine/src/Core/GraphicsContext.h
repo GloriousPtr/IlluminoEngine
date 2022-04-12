@@ -3,6 +3,7 @@
 namespace IlluminoEngine
 {
 	class Window;
+	class MeshBuffer;
 
 	class GraphicsContext
 	{
@@ -13,6 +14,10 @@ namespace IlluminoEngine
 		virtual void SwapBuffers() = 0;
 		virtual void Shutdown() = 0;
 		virtual void SetVsync(bool state) = 0;
+		virtual void* GetDevice() = 0;
+		virtual void* GetCommandQueue() = 0;
+		virtual void WaitForFence(void* fence, uint64_t completionValue, HANDLE waitEvent) = 0;
+		virtual void BindMeshBuffer(MeshBuffer& mesh) = 0;
 
 		static Scope<GraphicsContext> Create(const Window& window);
 	};

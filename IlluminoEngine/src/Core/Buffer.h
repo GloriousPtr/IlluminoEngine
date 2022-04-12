@@ -110,4 +110,16 @@ namespace IlluminoEngine
 		std::vector<BufferElement> m_Elements;
 		uint32_t m_Stride;
 	};
+
+	class MeshBuffer
+	{
+	public:
+		virtual ~MeshBuffer() = default;
+
+		virtual void* GetVertexBufferView() = 0;
+		virtual void* GetIndexBufferView() = 0;
+		virtual void Bind() = 0;
+
+		static Ref<MeshBuffer> Create(float* vertexData, uint32_t* indexData, size_t verticesSize, size_t indicesSize, size_t strideSize);
+	};
 }

@@ -39,18 +39,6 @@ namespace IlluminoEngine
 				{"TEXCOORD", ShaderDataType::Float2}
 			});
 
-		// Create our upload fence, command list and command allocator
-		// This will be only used while creating the mesh buffer and the texture
-		// to upload data to the GPU.
-		ID3D12Fence* uploadFence;
-		m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&uploadFence));
-
-		ID3D12CommandAllocator* uploadCommandAllocator;
-		m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&uploadCommandAllocator));
-		ID3D12GraphicsCommandList* uploadCommandList;
-		m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-									uploadCommandAllocator, nullptr,
-									IID_PPV_ARGS(&uploadCommandList));
 
 		struct Vertex
 		{
@@ -58,10 +46,7 @@ namespace IlluminoEngine
 			float uv[2];
 		};
 
-		// Declare upload buffer data as 'static' so it persists after returning from this function.
-		// Otherwise, we would need to explicitly wait for the GPU to copy data from the upload buffer
-		// to vertex/index default buffers due to how the GPU processes commands asynchronously. 
-		static const Vertex vertices[4] =
+		Vertex vertices[4] =
 		{
 			{ { -1.0f,  1.0f, 0.0f }, { 0.0f, 0.0f } },		// Upper Left
 			{ {  1.0f,  1.0f, 0.0f }, { 1.0f, 0.0f } },		// Upper Right
@@ -69,107 +54,13 @@ namespace IlluminoEngine
 			{ { -1.0f, -1.0f, 0.0f }, { 0.0f, 1.0f } }		// Bottom left
 		};
 
-		static const int indices[6] =
+		uint32_t indices[6] =
 		{
 			0, 1, 2,
 			2, 3, 0
 		};
 
-		static const int uploadBufferSize = sizeof(vertices) + sizeof(indices);
-		static const auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-		static const auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
-
-		// Create upload buffer on CPU
-		m_Device->CreateCommittedResource(&uploadHeapProperties,
-											D3D12_HEAP_FLAG_NONE,
-											&uploadBufferDesc,
-											D3D12_RESOURCE_STATE_GENERIC_READ,
-											nullptr,
-											IID_PPV_ARGS(&m_UploadBuffer));
-
-		// Create vertex & index buffer on the GPU
-		// HEAP_TYPE_DEFAULT is on GPU, we also initialize with COPY_DEST state
-		// so we don't have to transition into this before copying into them
-		static const auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-		static const auto vertexBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(vertices));
-		m_Device->CreateCommittedResource(&defaultHeapProperties,
-											D3D12_HEAP_FLAG_NONE,
-											&vertexBufferDesc,
-											D3D12_RESOURCE_STATE_COPY_DEST,
-											nullptr,
-											IID_PPV_ARGS(&m_VertexBuffer));
-
-		static const auto indexBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(indices));
-		m_Device->CreateCommittedResource(&defaultHeapProperties,
-											D3D12_HEAP_FLAG_NONE,
-											&indexBufferDesc,
-											D3D12_RESOURCE_STATE_COPY_DEST,
-											nullptr,
-											IID_PPV_ARGS(&m_IndexBuffer));
-
-		// Create buffer views
-		m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
-		m_VertexBufferView.SizeInBytes = sizeof(vertices);
-		m_VertexBufferView.StrideInBytes = sizeof(Vertex);
-
-		m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
-		m_IndexBufferView.SizeInBytes = sizeof(indices);
-		m_IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-
-		// Copy data on CPU into the upload buffer
-		void* p;
-		m_UploadBuffer->Map(0, nullptr, &p);
-		memcpy(p, vertices, sizeof(vertices));
-		memcpy(static_cast<unsigned char*>(p) + sizeof(vertices), indices, sizeof(indices));
-		m_UploadBuffer->Unmap(0, nullptr);
-
-		// Copy data from upload buffer on CPU into the index/vertex buffer on 
-		// the GPU
-		uploadCommandList->CopyBufferRegion(m_VertexBuffer, 0,
-			m_UploadBuffer, 0, sizeof(vertices));
-		uploadCommandList->CopyBufferRegion(m_IndexBuffer, 0,
-			m_UploadBuffer, sizeof(vertices), sizeof(indices));
-
-		// Barriers, batch them together
-		const CD3DX12_RESOURCE_BARRIER barriers[2] =
-		{
-			CD3DX12_RESOURCE_BARRIER::Transition(m_VertexBuffer,
-												D3D12_RESOURCE_STATE_COPY_DEST,
-												D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER),
-			CD3DX12_RESOURCE_BARRIER::Transition(m_IndexBuffer,
-												D3D12_RESOURCE_STATE_COPY_DEST,
-												D3D12_RESOURCE_STATE_INDEX_BUFFER)
-		};
-
-		uploadCommandList->ResourceBarrier(2, barriers);
-
-
-
-
-		uploadCommandList->Close();
-
-		// Execute the upload and finish the command list
-		ID3D12CommandList* commandLists [] = { uploadCommandList };
-		m_CommandQueue->ExecuteCommandLists(std::extent<decltype(commandLists)>::value, commandLists);
-		m_CommandQueue->Signal(uploadFence, 1);
-
-		auto waitEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-
-		if (waitEvent == NULL) {
-			throw std::runtime_error("Could not create wait event.");
-		}
-
-		WaitForFence(uploadFence, 1, waitEvent);
-
-		// Cleanup our upload handle
-		uploadCommandAllocator->Reset();
-
-		CloseHandle(waitEvent);
-
-		uploadCommandList->Release();
-		uploadCommandAllocator->Release();
-		uploadFence->Release();
+		m_Mesh = MeshBuffer::Create((float*) vertices, indices, sizeof(vertices), sizeof(indices), sizeof(Vertex));
 	}
 
 	void Dx12GraphicsContext::SwapBuffers()
@@ -220,11 +111,11 @@ namespace IlluminoEngine
 
 			auto commandList = m_CommandLists[m_CurrentBackBuffer];
 			
-			m_Shader->Bind();
-
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
-			commandList->IASetIndexBuffer(&m_IndexBufferView);
+			
+			m_Shader->Bind();
+			m_Mesh->Bind();
+
 			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 		}
 
@@ -295,10 +186,6 @@ namespace IlluminoEngine
 			infoQueue->Release();
 		}
 #endif // ILLUMINO_DEBUG
-
-		m_IndexBuffer->Release();
-		m_VertexBuffer->Release();
-		m_UploadBuffer->Release();
 
 		for (size_t i = 0; i < s_QueueSlotCount; ++i)
 		{
@@ -521,13 +408,16 @@ namespace IlluminoEngine
 	}
 
 	void Dx12GraphicsContext::WaitForFence(
-		ID3D12Fence* fence,
+		void* fence,
 		uint64_t completionValue,
 		HANDLE waitEvent)
 	{
-		if (fence->GetCompletedValue() < completionValue)
+		ILLUMINO_ASSERT(fence != nullptr, "Fence is null");
+
+		ID3D12Fence* d3d12Fence = reinterpret_cast<ID3D12Fence*>(fence);
+		if (d3d12Fence->GetCompletedValue() < completionValue)
 		{
-			fence->SetEventOnCompletion(completionValue, waitEvent);
+			d3d12Fence->SetEventOnCompletion(completionValue, waitEvent);
 			WaitForSingleObject(waitEvent, INFINITE);
 		}
 	}
@@ -538,5 +428,12 @@ namespace IlluminoEngine
 		auto commandList = m_CommandLists[m_CurrentBackBuffer];
 		commandList->SetPipelineState(pso);
 		commandList->SetGraphicsRootSignature(rootSignature);
+	}
+
+	void Dx12GraphicsContext::BindMeshBuffer(MeshBuffer& mesh)
+	{
+		auto commandList = m_CommandLists[m_CurrentBackBuffer];
+		commandList->IASetVertexBuffers(0, 1, reinterpret_cast<D3D12_VERTEX_BUFFER_VIEW*>(mesh.GetVertexBufferView()));
+		commandList->IASetIndexBuffer(reinterpret_cast<D3D12_INDEX_BUFFER_VIEW*>(mesh.GetIndexBufferView()));
 	}
 }
