@@ -77,54 +77,58 @@ namespace IlluminoEngine
 		for (const auto& element: layout)
 		{
 			DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
-			UINT slotCount = 0;
+			UINT semanticCount = 0;
 			switch (element.Type)
 			{
 				case ShaderDataType::Float:		format = DXGI_FORMAT_R32_FLOAT;
-												slotCount = 1;
+												semanticCount = 1;
 												break;
 				case ShaderDataType::Float2:	format = DXGI_FORMAT_R32G32_FLOAT;
-												slotCount = 1;
+												semanticCount = 1;
 												break;
 				case ShaderDataType::Float3:	format = DXGI_FORMAT_R32G32B32_FLOAT;
-												slotCount = 1;
+												semanticCount = 1;
 												break;
 				case ShaderDataType::Float4:	format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-												slotCount = 1;
+												semanticCount = 1;
 												break;
 				case ShaderDataType::Mat3:		format = DXGI_FORMAT_R32G32B32_FLOAT;
-												slotCount = 3;
+												semanticCount = 3;
 												break;
 				case ShaderDataType::Mat4:		format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-												slotCount = 4;
+												semanticCount = 4;
 												break;
 				case ShaderDataType::Int:		format = DXGI_FORMAT_R32G32_SINT;
-												slotCount = 1;
+												semanticCount = 1;
 												break;
 				case ShaderDataType::Int2:		format = DXGI_FORMAT_R32G32_SINT;
-												slotCount = 1;
+												semanticCount = 1;
 												break;
 				case ShaderDataType::Int3:		format = DXGI_FORMAT_R32G32B32_SINT;
-												slotCount = 1;
+												semanticCount = 1;
 												break;
 				case ShaderDataType::Int4:		format = DXGI_FORMAT_R32G32B32A32_SINT;
-												slotCount = 1;
+												semanticCount = 1;
 												break;
 				case ShaderDataType::Bool:		format = DXGI_FORMAT_R32_SINT;
-												slotCount = 1;
+												semanticCount = 1;
 												break;
 			}
 
 			ILLUMINO_ASSERT(format != DXGI_FORMAT_UNKNOWN, "Unknown DXGI_FORMAT type");
-			ILLUMINO_ASSERT(slotCount != 0, "Slot count cannot be zero");
+			ILLUMINO_ASSERT(semanticCount != 0, "semanticCount cannot be zero");
 
 			auto classification = element.Classification == ShaderDataClassification::Vertex
 									? D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA
 									: D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
-			UINT offset = static_cast<UINT>(element.Offset) / slotCount;
 
-			for (UINT inputSlot = 0; inputSlot < slotCount; ++inputSlot)
-				d3d12BufferLayout.push_back({ element.Name, 0, format, inputSlot, offset, classification, 0 });
+			UINT step = static_cast<UINT>(element.Size) / semanticCount;
+
+			for (UINT inputSemantic = 0; inputSemantic < semanticCount; ++inputSemantic)
+			{
+				UINT offset = static_cast<UINT>(element.Offset) + inputSemantic * step;
+				d3d12BufferLayout.push_back({ element.Name, inputSemantic, format, 0, offset, classification, 0 });
+			}
 		}
 
 		// Create pipeline state object
