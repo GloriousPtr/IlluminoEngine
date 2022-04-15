@@ -18,11 +18,15 @@ namespace IlluminoEngine
 	Dx12Shader::Dx12Shader(const char* filepath, const BufferLayout& layout)
 		: m_Filepath(filepath)
 	{
+		OPTICK_EVENT();
+
 		SetBufferLayout(layout);
 	}
 
 	Dx12Shader::~Dx12Shader()
 	{
+		OPTICK_EVENT();
+
 		m_PipelineState->Release();
 		m_RootSignature->Release();
 
@@ -34,11 +38,15 @@ namespace IlluminoEngine
 
 	void Dx12Shader::Bind()
 	{
+		OPTICK_EVENT();
+
 		s_Context->BindShader(m_PipelineState, m_RootSignature);
 	}
 
 	void Dx12Shader::UploadBuffer(String&& name, void* data, size_t bytes)
 	{
+		OPTICK_EVENT();
+
 		ID3D12Resource* constantBuffer = GetConstantBuffer((String&&)name, bytes);
 		void* p;
 		constantBuffer->Map(0, nullptr, &p);
@@ -52,6 +60,8 @@ namespace IlluminoEngine
 
 	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name, size_t bytes)
 	{
+		OPTICK_EVENT();
+
 		if (m_ConstantBuffers.find(name) != m_ConstantBuffers.end())
 			return m_ConstantBuffers[name];
 
@@ -62,6 +72,8 @@ namespace IlluminoEngine
 
 	void Dx12Shader::SetBufferLayout(const BufferLayout& layout)
 	{
+		OPTICK_EVENT();
+
 		std::string source = ReadFile(m_Filepath);
 
 		ID3DBlob* errorBlob;

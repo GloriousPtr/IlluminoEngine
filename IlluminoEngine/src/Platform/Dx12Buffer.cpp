@@ -7,7 +7,10 @@
 namespace IlluminoEngine
 {
 	Dx12MeshBuffer::Dx12MeshBuffer(float* vertexData, uint32_t* indexData, size_t verticesSize, size_t indicesSize, size_t strideSize)
+		: m_VertexCount(verticesSize / sizeof(float)), m_IndexCount(indicesSize / sizeof(uint32_t))
 	{
+		OPTICK_EVENT();
+
 		auto& context = Window::GetGraphicsContext();
 		
 		ID3D12Device* device = (ID3D12Device*) context->GetDevice();
@@ -118,6 +121,8 @@ namespace IlluminoEngine
 
 	Dx12MeshBuffer::~Dx12MeshBuffer()
 	{
+		OPTICK_EVENT();
+
 		m_IndexBuffer->Release();
 		m_VertexBuffer->Release();
 		m_UploadBuffer->Release();
@@ -125,6 +130,8 @@ namespace IlluminoEngine
 
 	void Dx12MeshBuffer::Bind()
 	{
+		OPTICK_EVENT();
+
 		Window::GetGraphicsContext()->BindMeshBuffer(*this);
 	}
 }

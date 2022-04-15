@@ -35,7 +35,7 @@ namespace IlluminoEngine
 		void CreateDeviceAndSwapChain();
 		void CreateAllocatorsAndCommandLists();
 		void CreateViewportScissor();
-
+		void PrepareRender();
 	private:
 		const static uint32_t s_QueueSlotCount = 3;
 

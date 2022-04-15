@@ -16,11 +16,16 @@ namespace IlluminoEngine
 		virtual void* GetIndexBufferView() override { return &m_IndexBufferView; }
 		virtual void Bind() override;
 
+		virtual uint32_t GetVertexCount() override { return m_VertexCount; }
+		virtual uint32_t GetIndexCount() override { return m_IndexCount; }
+
 	private:
 		ID3D12Resource* m_UploadBuffer;
 		ID3D12Resource* m_VertexBuffer;
 		ID3D12Resource* m_IndexBuffer;
 
+		uint32_t m_VertexCount;
+		uint32_t m_IndexCount;
 		D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
 	};

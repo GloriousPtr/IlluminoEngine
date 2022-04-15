@@ -10,8 +10,8 @@
 #endif
 
 #include "Window.h"
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
+#include "Dx12RendererAPI.h"
+#include "Core/RenderCommand.h"
 
 namespace IlluminoEngine
 {
@@ -20,6 +20,8 @@ namespace IlluminoEngine
 	static DWORD s_DebugCallbackCookie;
 #endif
 	
+	static Dx12RendererAPI* s_RendererAPI;
+
 	Dx12GraphicsContext::Dx12GraphicsContext(const Window& window)
 		: m_Window(window), m_Vsync(true)
 	{
@@ -35,108 +37,18 @@ namespace IlluminoEngine
 		CreateAllocatorsAndCommandLists();
 		CreateViewportScissor();
 
-		m_Shader = Shader::Create("Assets/Shaders/TestShader.hlsl",
-			{
-				{"POSITION", ShaderDataType::Float3},
-				{"TEXCOORD", ShaderDataType::Float2}
-			});
+		s_RendererAPI = reinterpret_cast<Dx12RendererAPI*>(RenderCommand::s_RendererAPI.get());
+		s_RendererAPI->m_Device = m_Device;
+		s_RendererAPI->m_CommandQueue = m_CommandQueue;
+		s_RendererAPI->m_CommandList = m_CommandLists[m_CurrentBackBuffer];
 
-
-		struct Vertex
-		{
-			float position[3];
-			float uv[2];
-		};
-
-		Vertex vertices[4] =
-		{
-			{ { -0.5f,  0.5f, 0.0f }, { 0.0f, 0.0f } },		// Upper Left
-			{ {  0.5f,  0.5f, 0.0f }, { 1.0f, 0.0f } },		// Upper Right
-			{ {  0.5f, -0.5f, 0.0f }, { 1.0f, 1.0f } },		// Bottom right
-			{ { -0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f } }		// Bottom left
-		};
-
-		uint32_t indices[6] =
-		{
-			0, 1, 2,
-			2, 3, 0
-		};
-
-		m_Mesh = MeshBuffer::Create((float*) vertices, indices, sizeof(vertices), sizeof(indices), sizeof(Vertex));
+		WaitForFence(m_Fences[m_CurrentBackBuffer], m_FenceValues[m_CurrentBackBuffer], m_FenceEvents[m_CurrentBackBuffer]);
+		PrepareRender();
 	}
 
 	void Dx12GraphicsContext::SwapBuffers()
 	{
 		OPTICK_EVENT();
-
-		{
-			OPTICK_EVENT("Wait For Fence");
-			
-			WaitForFence(m_Fences[m_CurrentBackBuffer], m_FenceValues[m_CurrentBackBuffer], m_FenceEvents[m_CurrentBackBuffer]);
-		}
-
-		{
-			OPTICK_EVENT("Prepare Render");
-
-			m_CommandAllocators[m_CurrentBackBuffer]->Reset();
-
-			auto commandList = m_CommandLists[m_CurrentBackBuffer];
-			commandList->Reset(m_CommandAllocators[m_CurrentBackBuffer], nullptr);
-
-			D3D12_CPU_DESCRIPTOR_HANDLE renderTargetHandle;
-			CD3DX12_CPU_DESCRIPTOR_HANDLE::InitOffsetted(renderTargetHandle,
-					m_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-					m_CurrentBackBuffer, m_RenderTargetViewDescriptorSize);
-
-			commandList->OMSetRenderTargets(1, &renderTargetHandle, true, nullptr);
-			commandList->RSSetViewports(1, &m_Viewport);
-			commandList->RSSetScissorRects(1, &m_RectScissor);
-
-			// Transition back buffer
-			D3D12_RESOURCE_BARRIER barrier;
-			barrier.Transition.pResource = m_RenderTargets[m_CurrentBackBuffer];
-			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-			barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-			commandList->ResourceBarrier(1, &barrier);
-
-			static const float clearColor [] = { 0.042f, 0.042f, 0.042f, 1.0f };
-
-			commandList->ClearRenderTargetView(renderTargetHandle, clearColor, 0, nullptr);
-		}
-
-		{
-			OPTICK_EVENT("Render");
-
-			auto commandList = m_CommandLists[m_CurrentBackBuffer];
-			
-			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			
-			m_Shader->Bind();
-
-			static int counter = 0;
-			counter++;
-
-			glm::mat4 perspective = glm::perspective(90.0f, 1920.0f / 1080.0f, 0.03f, 1000.0f);
-
-			struct
-			{
-				glm::mat4 u_MVP;
-				glm::vec4 u_Color = { 0.0f, 0.0f, 0.0f, 1.0f };
-			} buffer;
-
-			float tmp = glm::abs(glm::sin(static_cast<float>(counter) / 64.0f));
-			buffer.u_MVP = perspective * glm::translate(glm::vec3(0.0, 0.0f, -tmp));
-			buffer.u_Color.r = tmp;
-			m_Shader->UploadBuffer("Properties", &buffer, sizeof(buffer));
-
-			m_Mesh->Bind();
-
-			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
-		}
 
 		{
 			OPTICK_EVENT("Finalize Render");
@@ -174,6 +86,9 @@ namespace IlluminoEngine
 			++m_CurrentFenceValue;
 			m_CurrentBackBuffer = (m_CurrentBackBuffer + 1) % s_QueueSlotCount;
 		}
+
+		WaitForFence(m_Fences[m_CurrentBackBuffer], m_FenceValues[m_CurrentBackBuffer], m_FenceEvents[m_CurrentBackBuffer]);
+		PrepareRender();
 	}
 
 	void Dx12GraphicsContext::Shutdown()
@@ -409,6 +324,8 @@ namespace IlluminoEngine
 
 	void Dx12GraphicsContext::CreateViewportScissor()
 	{
+		OPTICK_EVENT();
+
 		int width = m_Window.GetWidth();
 		int height = m_Window.GetHeight();
 		m_RectScissor = { 0, 0, width, height };
@@ -417,12 +334,16 @@ namespace IlluminoEngine
 
 	void Dx12GraphicsContext::CreateRootSignature(ID3DBlob* rootBlob, ID3D12RootSignature** rootSignature)
 	{
+		OPTICK_EVENT();
+
 		HRESULT hr = m_Device->CreateRootSignature(0, rootBlob->GetBufferPointer(), rootBlob->GetBufferSize(), IID_PPV_ARGS(rootSignature));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create root signature");
 	}
 
 	void Dx12GraphicsContext::CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& psoDesc, ID3D12PipelineState** pipelineState)
 	{
+		OPTICK_EVENT();
+
 		HRESULT hr = m_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(pipelineState));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create pipeline state");
 	}
@@ -432,6 +353,8 @@ namespace IlluminoEngine
 		uint64_t completionValue,
 		HANDLE waitEvent)
 	{
+		OPTICK_EVENT();
+
 		ILLUMINO_ASSERT(fence != nullptr, "Fence is null");
 
 		ID3D12Fence* d3d12Fence = reinterpret_cast<ID3D12Fence*>(fence);
@@ -442,16 +365,54 @@ namespace IlluminoEngine
 		}
 	}
 
+	void Dx12GraphicsContext::PrepareRender()
+	{
+		OPTICK_EVENT();
+
+		m_CommandAllocators[m_CurrentBackBuffer]->Reset();
+
+		auto commandList = m_CommandLists[m_CurrentBackBuffer];
+		commandList->Reset(m_CommandAllocators[m_CurrentBackBuffer], nullptr);
+
+		D3D12_CPU_DESCRIPTOR_HANDLE renderTargetHandle;
+		CD3DX12_CPU_DESCRIPTOR_HANDLE::InitOffsetted(renderTargetHandle,
+				m_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+				m_CurrentBackBuffer, m_RenderTargetViewDescriptorSize);
+
+		commandList->OMSetRenderTargets(1, &renderTargetHandle, true, nullptr);
+		commandList->RSSetViewports(1, &m_Viewport);
+		commandList->RSSetScissorRects(1, &m_RectScissor);
+
+		// Transition back buffer
+		D3D12_RESOURCE_BARRIER barrier;
+		barrier.Transition.pResource = m_RenderTargets[m_CurrentBackBuffer];
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+		commandList->ResourceBarrier(1, &barrier);
+
+		s_RendererAPI->m_CommandList = m_CommandLists[m_CurrentBackBuffer];
+		s_RendererAPI->m_RenderTarget = renderTargetHandle;
+	}
+
 
 	void Dx12GraphicsContext::BindShader(ID3D12PipelineState* pso, ID3D12RootSignature* rootSignature)
 	{
+		OPTICK_EVENT();
+
 		auto commandList = m_CommandLists[m_CurrentBackBuffer];
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		commandList->SetPipelineState(pso);
 		commandList->SetGraphicsRootSignature(rootSignature);
 	}
 
 	void Dx12GraphicsContext::BindMeshBuffer(MeshBuffer& mesh)
 	{
+		OPTICK_EVENT();
+
 		auto commandList = m_CommandLists[m_CurrentBackBuffer];
 		commandList->IASetVertexBuffers(0, 1, reinterpret_cast<D3D12_VERTEX_BUFFER_VIEW*>(mesh.GetVertexBufferView()));
 		commandList->IASetIndexBuffer(reinterpret_cast<D3D12_INDEX_BUFFER_VIEW*>(mesh.GetIndexBufferView()));
@@ -459,6 +420,8 @@ namespace IlluminoEngine
 
 	ID3D12Resource* Dx12GraphicsContext::CreateConstantBuffer(size_t sizeAligned)
 	{
+		OPTICK_EVENT();
+
 		D3D12_HEAP_PROPERTIES heapDesc = {};
 		heapDesc.Type = D3D12_HEAP_TYPE_UPLOAD;
 		heapDesc.CreationNodeMask = 1;

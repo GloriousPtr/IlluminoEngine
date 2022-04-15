@@ -120,6 +120,9 @@ namespace IlluminoEngine
 		virtual void* GetIndexBufferView() = 0;
 		virtual void Bind() = 0;
 
+		virtual uint32_t GetVertexCount() = 0;
+		virtual uint32_t GetIndexCount() = 0;
+
 		static Ref<MeshBuffer> Create(float* vertexData, uint32_t* indexData, size_t verticesSize, size_t indicesSize, size_t strideSize);
 	};
 }
