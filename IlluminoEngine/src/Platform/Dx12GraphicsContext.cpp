@@ -10,6 +10,7 @@
 #endif
 
 #include "Window.h"
+#include <glm/glm.hpp>
 
 namespace IlluminoEngine
 {
@@ -120,10 +121,10 @@ namespace IlluminoEngine
 
 			struct
 			{
-				float u_Transform[4][4];
-				float u_Color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+				glm::mat4 u_Transform;
+				glm::vec4 u_Color = { 0.0f, 0.0f, 0.0f, 1.0f };
 			} buffer;
-			buffer.u_Color[0] = std::abs (std::sin (static_cast<float> (counter) / 64.0f));
+			buffer.u_Color.r = glm::abs(glm::sin(static_cast<float>(counter) / 64.0f));
 			m_Shader->UploadBuffer("Properties", &buffer, sizeof(buffer));
 
 			m_Mesh->Bind();

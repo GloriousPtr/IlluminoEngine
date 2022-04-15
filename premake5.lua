@@ -19,6 +19,7 @@ workspace "Illumino"
 -- Include directories relavtive to root folder (solution directory)
 IncludeDir = {}
 IncludeDir["optick"] = "%{wks.location}/IlluminoEngine/vendor/optick/src"
+IncludeDir["glm"] = "%{wks.location}/IlluminoEngine/vendor/glm"
 
 group "Dependencies"
 	include "IlluminoEngine/vendor/optick"

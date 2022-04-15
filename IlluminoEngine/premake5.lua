@@ -14,6 +14,8 @@ project "IlluminoEngine"
 	{
 		"src/**.h",
 		"src/**.cpp",
+		"vendor/glm/glm/**.hpp",
+		"vendor/glm/glm/**.inl",
 	}
 
 	defines
@@ -26,7 +28,8 @@ project "IlluminoEngine"
 		"src",
 		"vendor/spdlog/include",
 
-		"%{IncludeDir.optick}"
+		"%{IncludeDir.optick}",
+		"%{IncludeDir.glm}",
 	}
 
 	links
