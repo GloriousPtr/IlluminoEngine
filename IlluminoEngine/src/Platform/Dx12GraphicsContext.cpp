@@ -114,10 +114,18 @@ namespace IlluminoEngine
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			
 			m_Shader->Bind();
+
 			static int counter = 0;
 			counter++;
-			float color = std::abs (std::sin (static_cast<float> (counter) / 64.0f));
-			m_Shader->UploadFloat("colorR", color);
+
+			struct
+			{
+				float u_Transform[4][4];
+				float u_Color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+			} buffer;
+			buffer.u_Color[0] = std::abs (std::sin (static_cast<float> (counter) / 64.0f));
+			m_Shader->UploadBuffer("Properties", &buffer, sizeof(buffer));
+
 			m_Mesh->Bind();
 
 			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);

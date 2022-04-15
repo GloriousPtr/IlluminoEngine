@@ -11,7 +11,7 @@ namespace IlluminoEngine
 
 		virtual void Bind() = 0;
 
-		virtual void UploadFloat(String&& name, float value) = 0;
+		virtual void UploadBuffer(String&& name, void* data, size_t bytes) = 0;
 
 		static Ref<Shader> Create(const char* filepath, const BufferLayout& layout);
 	};

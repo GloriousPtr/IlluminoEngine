@@ -10,9 +10,10 @@ struct VertexOut
 	float2 uv : TEXCOORD;
 };
 
-cbuffer Uniforms : register (b0)
+cbuffer Properties : register (b0)
 {
-	float4 colorR;
+	float4x4 u_Transform;
+	float4 u_Color;
 }
 
 VertexOut VS_main(VertexIn v)
@@ -27,6 +28,5 @@ VertexOut VS_main(VertexIn v)
 
 float4 PS_main(VertexOut i) : SV_TARGET
 {
-	return float4(colorR.r, 0, 0, 1);
-//	return float4(i.uv, 0, 1);
+	return float4(u_Color.rgb, 1);
 }

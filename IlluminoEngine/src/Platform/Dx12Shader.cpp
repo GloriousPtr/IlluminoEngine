@@ -2,12 +2,12 @@
 #include "Dx12Shader.h"
 
 #include <fstream>
-#include <wrl.h>
 #include <d3d12.h>
 #include <d3dcompiler.h>
 
 #include "d3dx12.h"
 
+#include "Core/Core.h"
 #include "Window.h"
 #include "Dx12GraphicsContext.h"
 
@@ -37,29 +37,27 @@ namespace IlluminoEngine
 		s_Context->BindShader(m_PipelineState, m_RootSignature);
 	}
 
-#define ALIGN(alignment, value) (((value + alignment - 1) / alignment) * alignment)
-
-	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name)
+	void Dx12Shader::UploadBuffer(String&& name, void* data, size_t bytes)
 	{
-		if (m_ConstantBuffers.find(name) != m_ConstantBuffers.end())
-			return m_ConstantBuffers[name];
-
-		ID3D12Resource* buffer = s_Context->CreateConstantBuffer(ALIGN(256, 16));
-		m_ConstantBuffers[name] = buffer;
-		return buffer;
-	}
-
-	void Dx12Shader::UploadFloat(String&& name, float value)
-	{
-		ID3D12Resource* constantBuffer = GetConstantBuffer(std::move(name));
+		ID3D12Resource* constantBuffer = GetConstantBuffer((String&&)name, bytes);
 		void* p;
 		constantBuffer->Map(0, nullptr, &p);
 		float* f = static_cast<float*>(p);
-		f[0] = value;
+		memcpy(f, data, bytes);
 		constantBuffer->Unmap(0, nullptr);
 		
 		ID3D12GraphicsCommandList* commandList = reinterpret_cast<ID3D12GraphicsCommandList*>(s_Context->GetCommandList());
 		commandList->SetGraphicsRootConstantBufferView (0, constantBuffer->GetGPUVirtualAddress());
+	}
+
+	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name, size_t bytes)
+	{
+		if (m_ConstantBuffers.find(name) != m_ConstantBuffers.end())
+			return m_ConstantBuffers[name];
+
+		ID3D12Resource* buffer = s_Context->CreateConstantBuffer(ALIGN(256, bytes));
+		m_ConstantBuffers[name] = buffer;
+		return buffer;
 	}
 
 	void Dx12Shader::SetBufferLayout(const BufferLayout& layout)

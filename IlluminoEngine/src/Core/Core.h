@@ -24,5 +24,7 @@ namespace IlluminoEngine
 	}
 }
 
+#define ALIGN(alignment, value) (((value + alignment - 1) / alignment) * alignment)
+
 #include "Log.h"
 #include "Assert.h"
