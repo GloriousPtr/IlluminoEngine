@@ -2,7 +2,7 @@
 
 #include <Windows.h>
 
-#include "Core/GraphicsContext.h"
+#include "Illumino/Renderer/GraphicsContext.h"
 
 namespace IlluminoEngine
 {

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "String.h"
-#include "Core/Core.h"
+#include "Illumino/Core/Core.h"
 
 namespace IlluminoEngine
 {

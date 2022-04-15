@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Shader.h"
+#include "Illumino/Renderer/Shader.h"
 
 #include <d3d12.h>
 #include <map>

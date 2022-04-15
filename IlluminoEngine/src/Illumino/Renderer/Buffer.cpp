@@ -2,7 +2,7 @@
 #include "Buffer.h"
 
 #include "RendererAPI.h"
-#include "Platform/Dx12Buffer.h"
+#include "Platform/D3D12/Dx12Buffer.h"
 
 namespace IlluminoEngine
 {

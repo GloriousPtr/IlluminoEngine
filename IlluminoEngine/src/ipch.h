@@ -8,10 +8,10 @@
 #include <functional>
 #include <algorithm>
 
-#include "Core/Core.h"
+#include "Illumino/Core/Core.h"
 
-#include "Core/Log.h"
-#include "Core/Assert.h"
+#include "Illumino/Core/Log.h"
+#include "Illumino/Core/Assert.h"
 #include "optick.h"
 
-#include "Core/String.h"
+#include "Illumino/Core/String.h"

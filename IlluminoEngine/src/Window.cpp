@@ -1,8 +1,6 @@
 #include "ipch.h"
 #include "Window.h"
 
-#include "Core/GraphicsContext.h"
-
 namespace IlluminoEngine
 {
 	LRESULT HandleInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

@@ -2,7 +2,7 @@
 #include "Shader.h"
 
 #include "RendererAPI.h"
-#include "Platform/Dx12Shader.h"
+#include "Platform/D3D12/Dx12Shader.h"
 
 namespace IlluminoEngine
 {

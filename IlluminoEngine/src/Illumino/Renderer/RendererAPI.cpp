@@ -1,7 +1,7 @@
 #include "ipch.h"
 #include "RendererAPI.h"
 
-#include "Platform/Dx12RendererAPI.h"
+#include "Platform/D3D12/Dx12RendererAPI.h"
 
 namespace IlluminoEngine
 {

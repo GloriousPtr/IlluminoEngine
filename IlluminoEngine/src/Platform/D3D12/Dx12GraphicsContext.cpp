@@ -11,7 +11,7 @@
 
 #include "Window.h"
 #include "Dx12RendererAPI.h"
-#include "Core/RenderCommand.h"
+#include "Illumino/Renderer/RenderCommand.h"
 
 namespace IlluminoEngine
 {

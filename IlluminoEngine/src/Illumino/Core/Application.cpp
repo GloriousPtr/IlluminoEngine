@@ -1,10 +1,11 @@
 #include "ipch.h"
 #include "Application.h"
 
-#include "Window.h"
-#include "RenderCommand.h"
-#include "SceneRenderer.h"
 #include <glm/gtx/transform.hpp>
+
+#include "Window.h"
+#include "Illumino/Renderer/RenderCommand.h"
+#include "Illumino/Renderer/SceneRenderer.h"
 
 namespace IlluminoEngine
 {

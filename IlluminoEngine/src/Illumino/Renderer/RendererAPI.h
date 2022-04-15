@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-#include "Core/Buffer.h"
+#include "Buffer.h"
 
 namespace IlluminoEngine
 {

@@ -2,7 +2,7 @@
 #include "GraphicsContext.h"
 
 #include "RendererAPI.h"
-#include "Platform/Dx12GraphicsContext.h"
+#include "Platform/D3D12/Dx12GraphicsContext.h"
 
 namespace IlluminoEngine
 {

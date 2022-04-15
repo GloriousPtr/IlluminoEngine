@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Log.h"
+#include "Illumino/Core/Log.h"
 
 #include <filesystem>
 

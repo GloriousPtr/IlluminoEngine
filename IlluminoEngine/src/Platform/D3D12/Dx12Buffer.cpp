@@ -2,7 +2,7 @@
 #include "Dx12Buffer.h"
 
 #include "Window.h"
-#include "Core/GraphicsContext.h"
+#include "Illumino/Renderer/GraphicsContext.h"
 
 namespace IlluminoEngine
 {

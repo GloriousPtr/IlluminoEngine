@@ -7,7 +7,6 @@
 
 #include "d3dx12.h"
 
-#include "Core/Core.h"
 #include "Window.h"
 #include "Dx12GraphicsContext.h"
 

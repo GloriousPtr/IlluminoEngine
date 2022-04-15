@@ -3,8 +3,8 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
-#include "Core/GraphicsContext.h"
-#include "Core/Shader.h"
+#include "Illumino/Renderer/GraphicsContext.h"
+#include "Illumino/Renderer/Shader.h"
 
 namespace IlluminoEngine
 {

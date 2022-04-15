@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Buffer.h"
+#include "Illumino/Renderer/Buffer.h"
 
 #include "d3dx12.h"
 
