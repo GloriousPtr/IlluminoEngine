@@ -11,6 +11,7 @@
 
 #include "Window.h"
 #include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
 
 namespace IlluminoEngine
 {
@@ -49,10 +50,10 @@ namespace IlluminoEngine
 
 		Vertex vertices[4] =
 		{
-			{ { -1.0f,  1.0f, 0.0f }, { 0.0f, 0.0f } },		// Upper Left
-			{ {  1.0f,  1.0f, 0.0f }, { 1.0f, 0.0f } },		// Upper Right
-			{ {  1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f } },		// Bottom right
-			{ { -1.0f, -1.0f, 0.0f }, { 0.0f, 1.0f } }		// Bottom left
+			{ { -0.5f,  0.5f, 0.0f }, { 0.0f, 0.0f } },		// Upper Left
+			{ {  0.5f,  0.5f, 0.0f }, { 1.0f, 0.0f } },		// Upper Right
+			{ {  0.5f, -0.5f, 0.0f }, { 1.0f, 1.0f } },		// Bottom right
+			{ { -0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f } }		// Bottom left
 		};
 
 		uint32_t indices[6] =
@@ -119,12 +120,17 @@ namespace IlluminoEngine
 			static int counter = 0;
 			counter++;
 
+			glm::mat4 perspective = glm::perspective(90.0f, 1920.0f / 1080.0f, 0.03f, 1000.0f);
+
 			struct
 			{
-				glm::mat4 u_Transform;
+				glm::mat4 u_MVP;
 				glm::vec4 u_Color = { 0.0f, 0.0f, 0.0f, 1.0f };
 			} buffer;
-			buffer.u_Color.r = glm::abs(glm::sin(static_cast<float>(counter) / 64.0f));
+
+			float tmp = glm::abs(glm::sin(static_cast<float>(counter) / 64.0f));
+			buffer.u_MVP = perspective * glm::translate(glm::vec3(0.0, 0.0f, -tmp));
+			buffer.u_Color.r = tmp;
 			m_Shader->UploadBuffer("Properties", &buffer, sizeof(buffer));
 
 			m_Mesh->Bind();
