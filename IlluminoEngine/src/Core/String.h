@@ -46,3 +46,11 @@ namespace IlluminoEngine
 		size_t m_Size;
 	};
 }
+
+template<> struct std::less<IlluminoEngine::String>
+{
+    bool operator() (const IlluminoEngine::String& lhs, const IlluminoEngine::String& rhs) const
+    {
+        return strcmp(lhs, rhs);
+    }
+};

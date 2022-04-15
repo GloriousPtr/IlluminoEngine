@@ -22,6 +22,7 @@ namespace IlluminoEngine
 		virtual void SetVsync(bool state) override { m_Vsync = state; }
 		virtual void* GetDevice() override { return m_Device; }
 		virtual void* GetCommandQueue() override { return m_CommandQueue; }
+		virtual void* GetCommandList() override { return m_CommandLists[m_CurrentBackBuffer]; }
 		virtual void WaitForFence(void* fence, uint64_t completionValue, HANDLE waitEvent) override;
 		virtual void BindMeshBuffer(MeshBuffer& mesh) override;
 		
@@ -29,7 +30,7 @@ namespace IlluminoEngine
 		void CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& psoDesc, ID3D12PipelineState** pipelineState);
 
 		void BindShader(ID3D12PipelineState* pso, ID3D12RootSignature* rootSignature);
-
+		ID3D12Resource* CreateConstantBuffer(size_t sizeAligned);
 	private:
 		void CreateDeviceAndSwapChain();
 		void CreateAllocatorsAndCommandLists();

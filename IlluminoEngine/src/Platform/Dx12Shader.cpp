@@ -32,6 +32,31 @@ namespace IlluminoEngine
 		s_Context->BindShader(m_PipelineState, m_RootSignature);
 	}
 
+#define ALIGN(alignment, value) (((value + alignment - 1) / alignment) * alignment)
+
+	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name)
+	{
+		if (m_ConstantBuffers.find(name) != m_ConstantBuffers.end())
+			return m_ConstantBuffers[name];
+
+		ID3D12Resource* buffer = s_Context->CreateConstantBuffer(ALIGN(256, 16));
+		m_ConstantBuffers[name] = buffer;
+		return buffer;
+	}
+
+	void Dx12Shader::UploadFloat(String&& name, float value)
+	{
+		ID3D12Resource* constantBuffer = GetConstantBuffer(std::move(name));
+		void* p;
+		constantBuffer->Map(0, nullptr, &p);
+		float* f = static_cast<float*>(p);
+		f[0] = value;
+		constantBuffer->Unmap(0, nullptr);
+		
+		ID3D12GraphicsCommandList* commandList = reinterpret_cast<ID3D12GraphicsCommandList*>(s_Context->GetCommandList());
+		commandList->SetGraphicsRootConstantBufferView (0, constantBuffer->GetGPUVirtualAddress());
+	}
+
 	void Dx12Shader::SetBufferLayout(const BufferLayout& layout)
 	{
 		std::string source = ReadFile(m_Filepath);
@@ -58,7 +83,7 @@ namespace IlluminoEngine
 
 		// Create root signature
 		CD3DX12_ROOT_PARAMETER parameters[1];
-		parameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+		parameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
 
 		CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
 		descRootSignature.Init(1, parameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);

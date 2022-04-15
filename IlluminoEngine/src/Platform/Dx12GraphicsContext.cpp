@@ -114,6 +114,10 @@ namespace IlluminoEngine
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			
 			m_Shader->Bind();
+			static int counter = 0;
+			counter++;
+			float color = std::abs (std::sin (static_cast<float> (counter) / 64.0f));
+			m_Shader->UploadFloat("colorR", color);
 			m_Mesh->Bind();
 
 			commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
@@ -146,7 +150,8 @@ namespace IlluminoEngine
 
 			uint32_t syncInterval = m_Vsync ? 1 : 0;
 			uint32_t presentFlags = m_Vsync ? 0 : DXGI_PRESENT_ALLOW_TEARING;
-			m_SwapChain->Present(syncInterval, presentFlags);
+			HRESULT hr = m_SwapChain->Present(syncInterval, presentFlags);
+			ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to present the swapchain");
 
 			const uint64_t fenceValue = m_CurrentFenceValue;
 			m_CommandQueue->Signal(m_Fences[m_CurrentBackBuffer], fenceValue);
@@ -435,5 +440,31 @@ namespace IlluminoEngine
 		auto commandList = m_CommandLists[m_CurrentBackBuffer];
 		commandList->IASetVertexBuffers(0, 1, reinterpret_cast<D3D12_VERTEX_BUFFER_VIEW*>(mesh.GetVertexBufferView()));
 		commandList->IASetIndexBuffer(reinterpret_cast<D3D12_INDEX_BUFFER_VIEW*>(mesh.GetIndexBufferView()));
+	}
+
+	ID3D12Resource* Dx12GraphicsContext::CreateConstantBuffer(size_t sizeAligned)
+	{
+		D3D12_HEAP_PROPERTIES heapDesc = {};
+		heapDesc.Type = D3D12_HEAP_TYPE_UPLOAD;
+		heapDesc.CreationNodeMask = 1;
+		heapDesc.VisibleNodeMask = 1;
+
+		D3D12_RESOURCE_DESC resourceDesc = {};
+		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		resourceDesc.Alignment = 0;
+		resourceDesc.Height = 1;
+		resourceDesc.DepthOrArraySize = 1;
+		resourceDesc.MipLevels = 1;
+		resourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+		resourceDesc.SampleDesc.Count = 1;
+		resourceDesc.SampleDesc.Quality = 0;
+		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		resourceDesc.Width = sizeAligned;
+		resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+		ID3D12Resource* ret = nullptr;
+		HRESULT hr = m_Device->CreateCommittedResource(&heapDesc, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&ret));
+		ILLUMINO_ASSERT(SUCCEEDED(hr), "Could not create constant buffer");
+		return ret;
 	}
 }
