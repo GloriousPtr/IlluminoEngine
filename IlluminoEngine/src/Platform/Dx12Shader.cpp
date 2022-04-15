@@ -25,6 +25,11 @@ namespace IlluminoEngine
 	{
 		m_PipelineState->Release();
 		m_RootSignature->Release();
+
+		for (auto buffer: m_ConstantBuffers)
+		{
+			buffer.second->Release();
+		}
 	}
 
 	void Dx12Shader::Bind()
