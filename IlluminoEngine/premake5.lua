@@ -30,6 +30,7 @@ project "IlluminoEngine"
 
 		"%{IncludeDir.optick}",
 		"%{IncludeDir.glm}",
+		"%{IncludeDir.assimp}",
 	}
 
 	links
@@ -39,7 +40,8 @@ project "IlluminoEngine"
         "d3d12",
         "dxgi",
 		
-		"optick"
+		"optick",
+		"assimp",
 	}
 
 	filter "system:windows"

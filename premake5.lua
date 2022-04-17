@@ -20,9 +20,11 @@ workspace "Illumino"
 IncludeDir = {}
 IncludeDir["optick"] = "%{wks.location}/IlluminoEngine/vendor/optick/src"
 IncludeDir["glm"] = "%{wks.location}/IlluminoEngine/vendor/glm"
+IncludeDir["assimp"] = "%{wks.location}/IlluminoEngine/vendor/assimp/include"
 
 group "Dependencies"
 	include "IlluminoEngine/vendor/optick"
+	include "IlluminoEngine/vendor/assimp"
 
 group ""
 

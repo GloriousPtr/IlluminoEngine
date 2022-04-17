@@ -23,6 +23,8 @@ namespace IlluminoEngine
 		virtual void* GetDevice() override { return m_Device; }
 		virtual void* GetCommandQueue() override { return m_CommandQueue; }
 		virtual void* GetCommandList() override { return m_CommandLists[m_CurrentBackBuffer]; }
+		virtual uint32_t GetCurrentBackBufferIndex() override { return m_CurrentBackBuffer; }
+		virtual uint32_t GetFrameCount() override { return s_QueueSlotCount; }
 		virtual void WaitForFence(void* fence, uint64_t completionValue, HANDLE waitEvent) override;
 		virtual void BindMeshBuffer(MeshBuffer& mesh) override;
 		

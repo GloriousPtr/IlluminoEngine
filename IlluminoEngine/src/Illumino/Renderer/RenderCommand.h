@@ -28,6 +28,11 @@ namespace IlluminoEngine
 			s_RendererAPI->DrawIndexed(meshBuffer);
 		}
 
+		inline static void SetConstantBufferView(void* cb, size_t offsetAligned)
+		{
+			s_RendererAPI->SetConstantBufferView(cb, offsetAligned);
+		}
+
 	private:
 		friend class Dx12GraphicsContext;
 

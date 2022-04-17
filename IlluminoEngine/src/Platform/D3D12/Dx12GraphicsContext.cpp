@@ -394,6 +394,7 @@ namespace IlluminoEngine
 
 		commandList->ResourceBarrier(1, &barrier);
 
+		s_RendererAPI->m_BackBufferIndex = m_CurrentBackBuffer;
 		s_RendererAPI->m_CommandList = m_CommandLists[m_CurrentBackBuffer];
 		s_RendererAPI->m_RenderTarget = renderTargetHandle;
 	}

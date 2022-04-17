@@ -19,6 +19,14 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		auto context = Window::GetGraphicsContext().get();
+		s_Context = reinterpret_cast<Dx12GraphicsContext*>(context);
+
+		uint32_t frameCount = s_Context->GetFrameCount();
+		m_ConstantBuffers.reserve(frameCount);
+		for (size_t i = 0; i < frameCount; ++i)
+			m_ConstantBuffers.push_back(std::map<String, ID3D12Resource*>());
+
 		SetBufferLayout(layout);
 	}
 
@@ -31,7 +39,10 @@ namespace IlluminoEngine
 
 		for (auto buffer: m_ConstantBuffers)
 		{
-			buffer.second->Release();
+			for (auto b : buffer)
+			{
+				b.second->Release();
+			}
 		}
 	}
 
@@ -42,30 +53,43 @@ namespace IlluminoEngine
 		s_Context->BindShader(m_PipelineState, m_RootSignature);
 	}
 
-	void Dx12Shader::UploadBuffer(String&& name, void* data, size_t bytes)
+	void* Dx12Shader::CreateBuffer(String&& name, size_t sizeAligned)
 	{
-		OPTICK_EVENT();
+		uint32_t backBuffer = s_Context->GetCurrentBackBufferIndex();
+		auto& constantBuffer = m_ConstantBuffers[backBuffer];
 
-		ID3D12Resource* constantBuffer = GetConstantBuffer((String&&)name, bytes);
-		void* p;
-		constantBuffer->Map(0, nullptr, &p);
-		float* f = static_cast<float*>(p);
-		memcpy(f, data, bytes);
-		constantBuffer->Unmap(0, nullptr);
-		
-		ID3D12GraphicsCommandList* commandList = reinterpret_cast<ID3D12GraphicsCommandList*>(s_Context->GetCommandList());
-		commandList->SetGraphicsRootConstantBufferView (0, constantBuffer->GetGPUVirtualAddress());
+		if (constantBuffer.find(name) != constantBuffer.end())
+			return constantBuffer[name];
+
+		ID3D12Resource* buffer = s_Context->CreateConstantBuffer(sizeAligned);
+		constantBuffer[name] = buffer;
+		return buffer;
 	}
 
-	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name, size_t bytes)
+	void Dx12Shader::UploadBuffer(String&& name, void* data, size_t size, size_t offsetAligned)
 	{
 		OPTICK_EVENT();
 
-		if (m_ConstantBuffers.find(name) != m_ConstantBuffers.end())
-			return m_ConstantBuffers[name];
+		ID3D12Resource* constantBuffer = GetConstantBuffer((String&&)name, size);
+		void** p;
+		constantBuffer->Map(0, nullptr, reinterpret_cast<void**>(&p));
+		void** dst = p + offsetAligned;
+		memcpy(dst, data, size);
+		constantBuffer->Unmap(0, nullptr);
+	}
 
-		ID3D12Resource* buffer = s_Context->CreateConstantBuffer(ALIGN(256, bytes));
-		m_ConstantBuffers[name] = buffer;
+	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name, size_t size)
+	{
+		OPTICK_EVENT();
+
+		uint32_t backBuffer = s_Context->GetCurrentBackBufferIndex();
+		auto& constantBuffer = m_ConstantBuffers[backBuffer];
+
+		if (constantBuffer.find(name) != constantBuffer.end())
+			return constantBuffer[name];
+
+		ID3D12Resource* buffer = s_Context->CreateConstantBuffer(ALIGN(256, size));
+		constantBuffer[name] = buffer;
 		return buffer;
 	}
 
@@ -89,15 +113,15 @@ namespace IlluminoEngine
 		if (errorBlob)
 			errorBlob->Release();
 
-		if (!s_Context)
-		{
-			auto context = Window::GetGraphicsContext().get();
-			s_Context = reinterpret_cast<Dx12GraphicsContext*>(context);
-		}
-
 		// Create root signature
+		D3D12_ROOT_DESCRIPTOR rootCBVDescriptor;
+		rootCBVDescriptor.RegisterSpace = 0;
+		rootCBVDescriptor.ShaderRegister = 0;
+
 		CD3DX12_ROOT_PARAMETER parameters[1];
-		parameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
+		parameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		parameters[0].Descriptor = rootCBVDescriptor;
+		parameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 		CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
 		descRootSignature.Init(1, parameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);

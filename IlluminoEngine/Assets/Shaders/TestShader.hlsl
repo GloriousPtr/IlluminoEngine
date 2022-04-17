@@ -28,5 +28,5 @@ VertexOut VS_main(VertexIn v)
 
 float4 PS_main(VertexOut i) : SV_TARGET
 {
-	return float4(u_Color.rgb, 1);
+	return float4(i.uv, 0, 1);
 }

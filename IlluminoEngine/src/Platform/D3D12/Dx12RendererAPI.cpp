@@ -34,4 +34,11 @@ namespace IlluminoEngine
 
 		m_CommandList->DrawIndexedInstanced(meshBuffer->GetIndexCount(), 1, 0, 0, 0);
 	}
+
+	void Dx12RendererAPI::SetConstantBufferView(void* cb, size_t offsetAligned)
+	{
+		OPTICK_EVENT();
+
+		m_CommandList->SetGraphicsRootConstantBufferView(0, reinterpret_cast<ID3D12Resource*>(cb)->GetGPUVirtualAddress() + offsetAligned);
+	}
 }

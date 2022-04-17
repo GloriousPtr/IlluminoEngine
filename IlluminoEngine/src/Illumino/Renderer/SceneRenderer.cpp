@@ -36,7 +36,7 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		// TODO: setup camera, lights, etc data
-		s_Projection = glm::perspective(90.0f, 1920.0f / 1080.0f, 0.03f, 1000.0f);
+		s_Projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.001f, 1000.0f);
 	}
 
 	void SceneRenderer::EndScene()
@@ -63,20 +63,28 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		for (auto& meshData : s_Meshes)
+		RenderCommand::ClearColor({ 0.042f, 0.042f, 0.042f, 1.0f });
+
+		s_Shader->Bind();
+		
+		struct CB
 		{
-			s_Shader->Bind();
+			glm::mat4 u_MVP;
+			glm::vec4 u_Color = { 1.0f, 0.0f, 0.0f, 1.0f };
+		};
 
-			struct
-			{
-				glm::mat4 u_MVP;
-				glm::vec4 u_Color = { 1.0f, 0.0f, 0.0f, 1.0f };
-			} buffer;
+		void* cb = s_Shader->CreateBuffer("Properties", ALIGN(256, sizeof(CB)));
 
+		for (size_t i = 0; i < s_Meshes.size(); ++i)
+		{
+			auto& meshData = s_Meshes[i];
+
+			CB buffer;
 			buffer.u_MVP = s_Projection * meshData.Transform;
-			s_Shader->UploadBuffer("Properties", &buffer, sizeof(buffer));
+			
+			s_Shader->UploadBuffer("Properties", &buffer, sizeof(CB), 0);
+			RenderCommand::SetConstantBufferView(cb, 0);
 			meshData.Mesh->Bind();
-
 			RenderCommand::DrawIndexed(meshData.Mesh);
 		}
 
