@@ -1,8 +1,9 @@
 #include "ipch.h"
 #include "Dx12Buffer.h"
 
-#include "Window.h"
+#include "Illumino/Core/Application.h"
 #include "Illumino/Renderer/GraphicsContext.h"
+#include "Window.h"
 
 namespace IlluminoEngine
 {
@@ -11,7 +12,7 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		auto& context = Window::GetGraphicsContext();
+		auto& context = Application::GetApplication()->GetWindow()->GetGraphicsContext();
 		
 		ID3D12Device* device = (ID3D12Device*) context->GetDevice();
 		ID3D12CommandQueue* commandQueue = (ID3D12CommandQueue*) context->GetCommandQueue();
@@ -132,6 +133,6 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		Window::GetGraphicsContext()->BindMeshBuffer(*this);
+		Application::GetApplication()->GetWindow()->GetGraphicsContext()->BindMeshBuffer(*this);
 	}
 }

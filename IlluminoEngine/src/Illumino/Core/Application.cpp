@@ -4,6 +4,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include "Window.h"
+#include "Illumino/ImGui/ImGuiLayer.h"
 #include "Illumino/Renderer/RenderCommand.h"
 #include "Illumino/Renderer/SceneRenderer.h"
 #include "Illumino/Renderer/MeshLoader.h"
@@ -28,6 +29,9 @@ namespace IlluminoEngine
 		SceneRenderer::Init();
 
 		MeshLoader::LoadMesh("Assets/Meshes/primitives/cube.fbx", s_Meshes);
+
+		m_ImGuiLayer = new ImGuiLayer();
+		m_ImGuiLayer->OnAttach();
 	}
 
 	Application::~Application()
@@ -35,6 +39,8 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		SceneRenderer::Shutdown();
+		m_ImGuiLayer->OnDetach();
+		delete m_ImGuiLayer;
 
 		ILLUMINO_INFO("Application Ended");
 	}
@@ -45,8 +51,12 @@ namespace IlluminoEngine
 		{
 			OPTICK_FRAME("MainThread");
 
-			SceneRenderer::BeginScene();
+			m_Window->ProcessInput();
 
+			m_ImGuiLayer->Begin();
+
+			SceneRenderer::BeginScene();
+			
 			static uint32_t counter = 0;
 			counter++;
 			float temp = glm::abs(glm::sin(static_cast<float>(counter) / 64.0f));
@@ -56,8 +66,10 @@ namespace IlluminoEngine
 					* glm::rotate(counter * glm::radians(90.0f) / 60, glm::vec3(temp, 1.0 - temp, temp));
 				SceneRenderer::SubmitMesh(s_Meshes[i], t);
 			}
-
+			
 			SceneRenderer::EndScene();
+			
+			m_ImGuiLayer->End();
 
 			m_Window->Update();
 		}

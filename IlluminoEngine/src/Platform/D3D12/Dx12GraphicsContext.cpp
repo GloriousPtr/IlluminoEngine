@@ -297,7 +297,7 @@ namespace IlluminoEngine
 		for (size_t i = 0; i < s_QueueSlotCount; ++i)
 		{
 			D3D12_RENDER_TARGET_VIEW_DESC viewDesc;
-			viewDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+			viewDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			viewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 			viewDesc.Texture2D.MipSlice = 0;
 			viewDesc.Texture2D.PlaneSlice = 0;
@@ -305,6 +305,14 @@ namespace IlluminoEngine
 			m_Device->CreateRenderTargetView(m_RenderTargets[i], &viewDesc, rtvHandle);
 			rtvHandle.Offset(m_RenderTargetViewDescriptorSize);
 		}
+
+
+		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc;
+		srvHeapDesc.NumDescriptors = 1;
+		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		srvHeapDesc.NodeMask = 0;
+		m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVDescriptorHeap));
 
 		adapter->Release();
 		dxgiFactory->Release();
@@ -380,6 +388,7 @@ namespace IlluminoEngine
 				m_CurrentBackBuffer, m_RenderTargetViewDescriptorSize);
 
 		commandList->OMSetRenderTargets(1, &renderTargetHandle, true, nullptr);
+        commandList->SetDescriptorHeaps(1, &m_SRVDescriptorHeap);
 		commandList->RSSetViewports(1, &m_Viewport);
 		commandList->RSSetScissorRects(1, &m_RectScissor);
 

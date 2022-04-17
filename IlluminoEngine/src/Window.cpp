@@ -1,11 +1,18 @@
 #include "ipch.h"
 #include "Window.h"
 
+#include <imgui.h>
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 namespace IlluminoEngine
 {
 	LRESULT HandleInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		OPTICK_EVENT();
+
+		if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
+			return true;
 
 		auto ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 		auto window = reinterpret_cast<Window*>(ptr);
@@ -20,8 +27,6 @@ namespace IlluminoEngine
 
 		return DefWindowProcA(hWnd, uMsg, wParam, lParam);
 	}
-
-	Scope<GraphicsContext> Window::s_Context = nullptr;
 
 	Window::Window(const char* name, uint32_t width, uint32_t height)
 		: m_Name(name), m_Width(width), m_Height(height), m_Closed(false), m_HInstance(GetModuleHandle(nullptr))
@@ -60,19 +65,26 @@ namespace IlluminoEngine
 		ShowWindow(m_Hwnd, SW_SHOWDEFAULT);
 		UpdateWindow(m_Hwnd);
 
-		s_Context = GraphicsContext::Create(*this);
-		s_Context->Init();
+		m_Context = GraphicsContext::Create(*this);
+		m_Context->Init();
 	}
 
 	Window::~Window()
 	{
 		OPTICK_EVENT();
 
-		s_Context->Shutdown();
+		m_Context->Shutdown();
 		UnregisterClassA(m_Name.c_str(), m_HInstance);
 	}
 
 	void Window::Update()
+	{
+		OPTICK_EVENT();
+
+		m_Context->SwapBuffers();
+	}
+
+	void Window::ProcessInput()
 	{
 		OPTICK_EVENT();
 
@@ -82,8 +94,6 @@ namespace IlluminoEngine
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-
-		s_Context->SwapBuffers();
 	}
 
 	void Window::OnClosed()

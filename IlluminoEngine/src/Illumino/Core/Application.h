@@ -3,6 +3,7 @@
 namespace IlluminoEngine
 {
 	class Window;
+	class ImGuiLayer;
 
 	class Application
 	{
@@ -11,7 +12,7 @@ namespace IlluminoEngine
 		virtual ~Application();
 
 		void Run();
-		Ref<Window> GetWindow() { return m_Window; }
+		Ref<Window>& GetWindow() { return m_Window; }
 		
 		static Application* GetApplication() { return s_Instance; }
 
@@ -19,6 +20,7 @@ namespace IlluminoEngine
 		static Application* s_Instance;
 
 		Ref<Window> m_Window;
+		ImGuiLayer* m_ImGuiLayer;
 	};
 
 	// Should be defined in client

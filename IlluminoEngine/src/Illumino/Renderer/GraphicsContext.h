@@ -17,6 +17,7 @@ namespace IlluminoEngine
 		virtual void* GetDevice() = 0;
 		virtual void* GetCommandQueue() = 0;
 		virtual void* GetCommandList() = 0;
+		virtual void* GetSRVDescriptorHeap() = 0;
 		virtual uint32_t GetCurrentBackBufferIndex() = 0;
 		virtual uint32_t GetFrameCount() = 0;
 		virtual void WaitForFence(void* fence, uint64_t completionValue, HANDLE waitEvent) = 0;

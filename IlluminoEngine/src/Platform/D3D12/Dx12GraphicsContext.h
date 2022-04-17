@@ -23,6 +23,7 @@ namespace IlluminoEngine
 		virtual void* GetDevice() override { return m_Device; }
 		virtual void* GetCommandQueue() override { return m_CommandQueue; }
 		virtual void* GetCommandList() override { return m_CommandLists[m_CurrentBackBuffer]; }
+		virtual void* GetSRVDescriptorHeap() override { return m_SRVDescriptorHeap; }
 		virtual uint32_t GetCurrentBackBufferIndex() override { return m_CurrentBackBuffer; }
 		virtual uint32_t GetFrameCount() override { return s_QueueSlotCount; }
 		virtual void WaitForFence(void* fence, uint64_t completionValue, HANDLE waitEvent) override;
@@ -59,6 +60,8 @@ namespace IlluminoEngine
 		uint32_t m_RenderTargetViewDescriptorSize;
 		ID3D12DescriptorHeap* m_RenderTargetDescriptorHeap;
 		ID3D12Resource* m_RenderTargets[s_QueueSlotCount];
+
+		ID3D12DescriptorHeap* m_SRVDescriptorHeap;
 
 		ID3D12CommandAllocator* m_CommandAllocators[s_QueueSlotCount];
 		ID3D12GraphicsCommandList* m_CommandLists[s_QueueSlotCount];

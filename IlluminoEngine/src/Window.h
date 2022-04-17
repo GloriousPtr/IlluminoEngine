@@ -15,6 +15,7 @@ namespace IlluminoEngine
 		virtual ~Window();
 
 		void Update();
+		void ProcessInput();
 		void OnClosed();
 
 		bool ShouldClose() const { return m_Closed; }
@@ -22,7 +23,7 @@ namespace IlluminoEngine
 		uint32_t GetHeight() const { return m_Height; }
 		HWND GetHwnd() const { return m_Hwnd; }
 
-		static const Scope<GraphicsContext>& GetGraphicsContext() { return s_Context; }
+		const Scope<GraphicsContext>& GetGraphicsContext() { return m_Context; }
 
 	private:
 		std::string m_Name;
@@ -31,7 +32,6 @@ namespace IlluminoEngine
 		bool m_Closed;
 		HINSTANCE m_HInstance;
 		HWND m_Hwnd;
-
-		static Scope<GraphicsContext> s_Context;
+		Scope<GraphicsContext> m_Context;
 	};
 }
