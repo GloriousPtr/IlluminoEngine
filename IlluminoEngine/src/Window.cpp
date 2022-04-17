@@ -19,8 +19,7 @@ namespace IlluminoEngine
 
 		switch (uMsg)
 		{
-			case WM_CLOSE:
-				window->OnClosed();
+			case WM_DESTROY:
 				PostQuitMessage(0);
 				break;
 		}
@@ -57,7 +56,7 @@ namespace IlluminoEngine
 		AdjustWindowRect(&rect, style, false);
 
 		m_Hwnd = CreateWindowA(name, name, style,
-			CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top,
+			100, 100, rect.right - rect.left, rect.bottom - rect.top,
 			nullptr, nullptr, m_HInstance, nullptr);
 
 		SetWindowLongPtr(m_Hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
@@ -89,10 +88,13 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		MSG msg = {};
-		if (PeekMessage(&msg, m_Hwnd, 0, 0, PM_REMOVE))
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+
+			if (msg.message == WM_QUIT)
+				OnClosed();
 		}
 	}
 

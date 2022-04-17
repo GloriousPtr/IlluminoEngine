@@ -13,7 +13,7 @@ namespace IlluminoEngine
 		virtual void OnAttach() override;
 		virtual void OnDetach() override;
 
-		virtual void Begin();
-		virtual void End();
+		void Begin();
+		void End();
 	};
 }

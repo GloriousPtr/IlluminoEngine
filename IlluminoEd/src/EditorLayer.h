@@ -14,5 +14,8 @@ namespace IlluminoEngine
 		virtual void OnDetach() override;
 		virtual void OnUpdate(Timestep ts) override;
 		virtual void OnImGuiRender() override;
+
+	private:
+		void SetTheme();
 	};
 }
