@@ -1,5 +1,7 @@
 #include "Illumino/Core/EntryPoint.h"
 
+#include "EditorLayer.h"
+
 namespace IlluminoEngine
 {
 	class IlluminoEd : public Application
@@ -8,6 +10,7 @@ namespace IlluminoEngine
 		IlluminoEd()
 			: Application()
 		{
+			PushLayer(new EditorLayer());
 		}
 
 		~IlluminoEd()

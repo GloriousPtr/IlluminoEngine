@@ -1,16 +1,19 @@
 #pragma once
 
-#include <d3d12.h>
-#include <dxgi1_4.h>
+#include "Illumino/Core/Layer.h"
 
 namespace IlluminoEngine
 {
-	class ImGuiLayer
+	class ImGuiLayer : public Layer
 	{
 	public:
-		void OnAttach();
-		void OnDetach();
-		void Begin();
-		void End();
+		ImGuiLayer();
+		virtual ~ImGuiLayer() override;
+
+		virtual void OnAttach() override;
+		virtual void OnDetach() override;
+
+		virtual void Begin();
+		virtual void End();
 	};
 }

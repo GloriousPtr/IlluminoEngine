@@ -131,6 +131,7 @@ namespace IlluminoEngine
 			m_Fences[i]->Release();
 		}
 
+		m_SRVDescriptorHeap->Release();
 		m_RenderTargetDescriptorHeap->Release();
 
 		m_SwapChain->Release();

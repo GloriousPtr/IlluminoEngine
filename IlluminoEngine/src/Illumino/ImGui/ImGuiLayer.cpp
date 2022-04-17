@@ -4,14 +4,26 @@
 #include <imgui.h>
 #include <backends/imgui_impl_win32.h>
 #include <backends/imgui_impl_dx12.h>
+#include <d3d12.h>
 
 #include "Illumino/Core/Application.h"
 #include "Window.h"
 
 namespace IlluminoEngine
 {
+	ImGuiLayer::ImGuiLayer()
+		: Layer("ImGuiLayer")
+	{
+	}
+
+	ImGuiLayer::~ImGuiLayer()
+	{
+	}
+
 	void ImGuiLayer::OnAttach()
 	{
+		OPTICK_EVENT();
+
 		Ref<Window> window = Application::GetApplication()->GetWindow();
 		GraphicsContext* context = window->GetGraphicsContext().get();
 
@@ -44,6 +56,8 @@ namespace IlluminoEngine
 
 	void ImGuiLayer::OnDetach()
 	{
+		OPTICK_EVENT();
+
 		ImGui_ImplDX12_Shutdown();
 		ImGui_ImplWin32_Shutdown();
 		ImGui::DestroyContext();
@@ -51,16 +65,17 @@ namespace IlluminoEngine
 
 	void ImGuiLayer::Begin()
 	{
+		OPTICK_EVENT();
+
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-
-		bool b = true;
-		ImGui::ShowDemoWindow(&b);
 	}
 
 	void ImGuiLayer::End()
 	{
+		OPTICK_EVENT();
+
 		Ref<Window> window = Application::GetApplication()->GetWindow();
 		GraphicsContext* context = window->GetGraphicsContext().get();
 		ID3D12GraphicsCommandList* commandList = reinterpret_cast<ID3D12GraphicsCommandList*>(context->GetCommandList());

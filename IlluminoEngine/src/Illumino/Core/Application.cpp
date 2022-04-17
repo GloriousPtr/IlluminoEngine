@@ -1,21 +1,16 @@
 #include "ipch.h"
 #include "Application.h"
 
-#include <glm/gtx/transform.hpp>
-
 #include "Window.h"
+#include "Timestep.h"
 #include "Illumino/ImGui/ImGuiLayer.h"
 #include "Illumino/Renderer/RenderCommand.h"
 #include "Illumino/Renderer/SceneRenderer.h"
-#include "Illumino/Renderer/MeshLoader.h"
-
-#include <glm/gtx/quaternion.hpp>
 
 namespace IlluminoEngine
 {
-	static std::vector<Ref<MeshBuffer>> s_Meshes;
-
 	Application* Application::s_Instance;
+
 	Application::Application()
 	{
 		OPTICK_EVENT();
@@ -28,10 +23,8 @@ namespace IlluminoEngine
 		RenderCommand::Init();
 		SceneRenderer::Init();
 
-		MeshLoader::LoadMesh("Assets/Meshes/primitives/cube.fbx", s_Meshes);
-
 		m_ImGuiLayer = new ImGuiLayer();
-		m_ImGuiLayer->OnAttach();
+		PushOverlay(m_ImGuiLayer);
 	}
 
 	Application::~Application()
@@ -39,10 +32,26 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		SceneRenderer::Shutdown();
-		m_ImGuiLayer->OnDetach();
-		delete m_ImGuiLayer;
 
 		ILLUMINO_INFO("Application Ended");
+
+		OPTICK_SHUTDOWN();
+	}
+
+	void Application::PushLayer(Layer* layer)
+	{
+		OPTICK_EVENT();
+
+		m_LayerStack.PushLayer(layer);
+		layer->OnAttach();
+	}
+
+	void Application::PushOverlay(Layer* overlay)
+	{
+		OPTICK_EVENT();
+
+		m_LayerStack.PushOverlay(overlay);
+		overlay->OnAttach();
 	}
 
 	void Application::Run()
@@ -51,24 +60,26 @@ namespace IlluminoEngine
 		{
 			OPTICK_FRAME("MainThread");
 
+			auto time = std::chrono::high_resolution_clock::now();
+			Timestep timestep = std::chrono::duration<float>(time - m_LastFrameTime).count();
+			m_LastFrameTime = time;
+			
 			m_Window->ProcessInput();
 
-			m_ImGuiLayer->Begin();
-
-			SceneRenderer::BeginScene();
-			
-			static uint32_t counter = 0;
-			counter++;
-			float temp = glm::abs(glm::sin(static_cast<float>(counter) / 64.0f));
-			for (size_t i = 0; i < s_Meshes.size(); ++i)
 			{
-				glm::mat4 t = glm::mat4(1.0f) * glm::translate(glm::vec3(0.0f, 0.0f, -10.0f))
-					* glm::rotate(counter * glm::radians(90.0f) / 60, glm::vec3(temp, 1.0 - temp, temp));
-				SceneRenderer::SubmitMesh(s_Meshes[i], t);
+				OPTICK_EVENT("LayerStack OnUpdate");
+
+				for (Layer* layer : m_LayerStack)
+					layer->OnUpdate(timestep);
 			}
-			
-			SceneRenderer::EndScene();
-			
+
+			m_ImGuiLayer->Begin();
+			{
+				OPTICK_EVENT("LayerStack OnImGuiRender");
+
+				for (Layer* layer : m_LayerStack)
+					layer->OnImGuiRender();
+			}
 			m_ImGuiLayer->End();
 
 			m_Window->Update();

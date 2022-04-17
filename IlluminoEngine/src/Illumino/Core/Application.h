@@ -1,5 +1,7 @@
 #pragma once
 
+#include "LayerStack.h"
+
 namespace IlluminoEngine
 {
 	class Window;
@@ -10,6 +12,9 @@ namespace IlluminoEngine
 	public:
 		Application();
 		virtual ~Application();
+		
+		void PushLayer(Layer* layer);
+		void PushOverlay(Layer* overlay);
 
 		void Run();
 		Ref<Window>& GetWindow() { return m_Window; }
@@ -19,6 +24,8 @@ namespace IlluminoEngine
 	private:
 		static Application* s_Instance;
 
+		std::chrono::steady_clock::time_point m_LastFrameTime;
+		LayerStack m_LayerStack;
 		Ref<Window> m_Window;
 		ImGuiLayer* m_ImGuiLayer;
 	};
