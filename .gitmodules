@@ -10,3 +10,6 @@
 [submodule "IlluminoEngine/vendor/assimp"]
 	path = IlluminoEngine/vendor/assimp
 	url = https://github.com/MohitSethi99/assimp.git
+[submodule "IlluminoEngine/vendor/imgui"]
+	path = IlluminoEngine/vendor/imgui
+	url = https://github.com/MohitSethi99/imgui.git
