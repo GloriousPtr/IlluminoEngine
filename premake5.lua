@@ -1,6 +1,6 @@
 workspace "Illumino"
     architecture "x64"
-	startproject "IlluminoEngine"
+	startproject "IlluminoEd"
     
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}";
 
@@ -29,3 +29,4 @@ group "Dependencies"
 group ""
 
 include "IlluminoEngine"
+include "IlluminoEd"

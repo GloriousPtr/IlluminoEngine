@@ -3,11 +3,13 @@
 #include "Log.h"
 #include "Application.h"
 
+extern IlluminoEngine::Application* IlluminoEngine::CreateApplication();
+
 int main()
 {
 	IlluminoEngine::Log::Init();
 
-	IlluminoEngine::Application* application = new IlluminoEngine::Application();
+	IlluminoEngine::Application* application = IlluminoEngine::CreateApplication();
 
 	application->Run();
 

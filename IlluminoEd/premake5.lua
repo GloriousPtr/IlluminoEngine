@@ -1,5 +1,5 @@
-project "IlluminoEngine"
-	kind "StaticLib"
+project "IlluminoEd"
+	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
 	staticruntime "on"
@@ -7,41 +7,25 @@ project "IlluminoEngine"
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
-	pchheader "ipch.h"
-	pchsource "src/ipch.cpp"
-
 	files
 	{
 		"src/**.h",
-		"src/**.cpp",
-		"vendor/glm/glm/**.hpp",
-		"vendor/glm/glm/**.inl",
-	}
-
-	defines
-	{
-		"_CRT_SECURE_NO_WARNINGS",
+		"src/**.cpp"
 	}
 
 	includedirs
 	{
-		"src",
-		"vendor/spdlog/include",
-
+		"%{wks.location}/IlluminoEngine/vendor/spdlog/include",
+		"%{wks.location}/IlluminoEngine/src",
+		"%{wks.location}/IlluminoEngine/vendor",
 		"%{IncludeDir.optick}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.assimp}",
 	}
 
 	links
-	{		
-        "d3dcompiler",
-        "dxguid",
-        "d3d12",
-        "dxgi",
-		
-		"optick",
-		"assimp",
+	{
+		"IlluminoEngine"
 	}
 
 	filter "system:windows"
@@ -53,11 +37,11 @@ project "IlluminoEngine"
 		symbols "on"
 
 	filter "configurations:Release"
-		defines "ILLUMINO_RELEASE"
+		defines "ILLUMINO_DEBUG"
 		runtime "Release"
 		optimize "on"
 
 	filter "configurations:Dist"
-		defines "ILLUMINO_DIST"
+		defines "ILLUMINO_DEBUG"
 		runtime "Release"
-		optimize "on"
+        optimize "on"

@@ -14,9 +14,13 @@ namespace IlluminoEngine
 {
 	static std::vector<Ref<MeshBuffer>> s_Meshes;
 
+	Application* Application::s_Instance;
 	Application::Application()
 	{
 		OPTICK_EVENT();
+
+		ILLUMINO_ASSERT(!s_Instance, "Application already exists!");
+		s_Instance = this;
 
 		ILLUMINO_INFO("Application Started");
 		m_Window = CreateRef<Window>("Illumino Engine", 1920, 1080);
