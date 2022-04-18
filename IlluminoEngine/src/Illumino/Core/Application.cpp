@@ -32,6 +32,8 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		SceneRenderer::Shutdown();
+		m_LayerStack.PopOverlay(m_ImGuiLayer);
+		delete m_ImGuiLayer;
 
 		ILLUMINO_INFO("Application Ended");
 
