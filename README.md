@@ -2,6 +2,9 @@
   <a href="https://github.com/MohitSethi99/IlluminoEngine/">Illumino Game Engine</a>
 </h1>
 
+[![Build Status](https://github.com/MohitSethi99/IlluminoEngine/workflows/build/badge.svg)](https://github.com/MohitSethi99/IlluminoEngine/actions?workflow=build)
+[![CodeQL](https://github.com/MohitSethi99/IlluminoEngine/workflows/CodeQL/badge.svg)](https://github.com/MohitSethi99/IlluminoEngine/actions?workflow=CodeQL)
+
 <p align="center">
   <img alt="platforms" src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square"/>
   <img alt="GitHub" src="https://img.shields.io/github/license/MohitSethi99/IlluminoEngine?color=blue&style=flat-square">
