@@ -23,9 +23,8 @@ namespace IlluminoEngine
 		GraphicsContext* context = Application::GetApplication()->GetWindow()->GetGraphicsContext().get();
 		s_Context = reinterpret_cast<Dx12GraphicsContext*>(context);
 
-		uint32_t frameCount = s_Context->GetFrameCount();
-		m_ConstantBuffers.reserve(frameCount);
-		for (size_t i = 0; i < frameCount; ++i)
+		m_ConstantBuffers.reserve(g_QueueSlotCount);
+		for (size_t i = 0; i < g_QueueSlotCount; ++i)
 			m_ConstantBuffers.push_back(std::map<String, ID3D12Resource*>());
 
 		SetBufferLayout(layout);

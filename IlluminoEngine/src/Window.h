@@ -14,6 +14,7 @@ namespace IlluminoEngine
 		Window(const char* name, uint32_t width, uint32_t height);
 		virtual ~Window();
 
+		void Init();
 		void Update();
 		void ProcessInput();
 		void OnClosed();

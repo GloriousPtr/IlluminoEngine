@@ -20,6 +20,7 @@ namespace IlluminoEngine
 
 		ILLUMINO_INFO("Application Started");
 		m_Window = CreateRef<Window>("Illumino Engine", 1920, 1080);
+		m_Window->Init();
 		RenderCommand::Init();
 		SceneRenderer::Init();
 

@@ -29,7 +29,6 @@ namespace IlluminoEngine
 
 		HWND hWnd = window->GetHwnd();
 		ID3D12Device* device = reinterpret_cast<ID3D12Device*>(context->GetDevice());
-		uint32_t framebufferCount = context->GetFrameCount();
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -60,7 +59,7 @@ namespace IlluminoEngine
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuSrvHandle;
 		gpuSrvHandle.ptr = srvHeap->GetGPUDescriptorHandleForHeapStart().ptr;
 		ImGui_ImplWin32_Init(hWnd);
-		ImGui_ImplDX12_Init(device, context->GetFrameCount(),
+		ImGui_ImplDX12_Init(device, g_QueueSlotCount,
 			DXGI_FORMAT_R8G8B8A8_UNORM, srvHeap,
 			cpuSrvHandle,
 			gpuSrvHandle);

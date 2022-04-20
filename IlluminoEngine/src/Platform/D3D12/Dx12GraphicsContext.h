@@ -5,6 +5,7 @@
 
 #include "Illumino/Renderer/GraphicsContext.h"
 #include "Illumino/Renderer/Shader.h"
+#include "Dx12Resources.h"
 
 namespace IlluminoEngine
 {
@@ -25,7 +26,8 @@ namespace IlluminoEngine
 		virtual void* GetCommandList() override { return m_CommandLists[m_CurrentBackBuffer]; }
 		virtual void* GetSRVDescriptorHeap() override { return m_SRVDescriptorHeap; }
 		virtual uint32_t GetCurrentBackBufferIndex() override { return m_CurrentBackBuffer; }
-		virtual uint32_t GetFrameCount() override { return s_QueueSlotCount; }
+
+		virtual void SetDeferredReleasesFlag() override { m_DeferredReleasesFlag[m_CurrentBackBuffer] = 1; }
 		virtual void WaitForFence(void* fence, uint64_t completionValue, HANDLE waitEvent) override;
 		virtual void BindMeshBuffer(MeshBuffer& mesh) override;
 		
@@ -34,13 +36,14 @@ namespace IlluminoEngine
 
 		void BindShader(ID3D12PipelineState* pso, ID3D12RootSignature* rootSignature);
 		ID3D12Resource* CreateConstantBuffer(size_t sizeAligned);
+
 	private:
 		void CreateDeviceAndSwapChain();
 		void CreateAllocatorsAndCommandLists();
 		void CreateViewportScissor();
 		void PrepareRender();
+		void ProcessDeferredReleases(const uint32_t frameIndex);
 	private:
-		const static uint32_t s_QueueSlotCount = 3;
 
 		const Window& m_Window;
 
@@ -53,22 +56,27 @@ namespace IlluminoEngine
 		IDXGISwapChain1* m_SwapChain;
 
 		uint64_t m_CurrentFenceValue;
-		uint64_t m_FenceValues[s_QueueSlotCount];
-		HANDLE m_FenceEvents[s_QueueSlotCount];
-		ID3D12Fence* m_Fences[s_QueueSlotCount];
+		uint64_t m_FenceValues[g_QueueSlotCount];
+		HANDLE m_FenceEvents[g_QueueSlotCount];
+		ID3D12Fence* m_Fences[g_QueueSlotCount];
 
 		uint32_t m_RenderTargetViewDescriptorSize;
 		ID3D12DescriptorHeap* m_RenderTargetDescriptorHeap;
-		ID3D12Resource* m_RenderTargets[s_QueueSlotCount];
+		ID3D12Resource* m_RenderTargets[g_QueueSlotCount];
 
 		ID3D12DescriptorHeap* m_SRVDescriptorHeap;
 
-		ID3D12CommandAllocator* m_CommandAllocators[s_QueueSlotCount];
-		ID3D12GraphicsCommandList* m_CommandLists[s_QueueSlotCount];
+		ID3D12CommandAllocator* m_CommandAllocators[g_QueueSlotCount];
+		ID3D12GraphicsCommandList* m_CommandLists[g_QueueSlotCount];
 
 		int32_t m_CurrentBackBuffer = 0;
+		uint32_t m_DeferredReleasesFlag[g_QueueSlotCount];
 
-		Ref<Shader> m_Shader;
-		Ref<MeshBuffer> m_Mesh;
+		DescriptorHeap m_RTVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV };
+		DescriptorHeap m_DSVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_DSV };
+//		DescriptorHeap m_SRVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV };
+		DescriptorHeap m_UAVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV };
+
+		std::mutex m_Mutex;
 	};
 }

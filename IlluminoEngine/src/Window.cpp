@@ -65,7 +65,6 @@ namespace IlluminoEngine
 		UpdateWindow(m_Hwnd);
 
 		m_Context = GraphicsContext::Create(*this);
-		m_Context->Init();
 	}
 
 	Window::~Window()
@@ -74,6 +73,11 @@ namespace IlluminoEngine
 
 		m_Context->Shutdown();
 		UnregisterClassA(m_Name.c_str(), m_HInstance);
+	}
+
+	void Window::Init()
+	{
+		m_Context->Init();
 	}
 
 	void Window::Update()

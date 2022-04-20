@@ -34,6 +34,14 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		CreateDeviceAndSwapChain();
+
+		bool result = true;
+		result &= m_RTVDescriptorHeap.Init(512, false);
+		result &= m_DSVDescriptorHeap.Init(512, false);
+//		result &= m_SRVDescriptorHeap.Init(4096, true);
+		result &= m_UAVDescriptorHeap.Init(512, true);
+		ILLUMINO_ASSERT(result, "Failed to create some descriptor heap allocations");
+
 		CreateAllocatorsAndCommandLists();
 		CreateViewportScissor();
 
@@ -84,7 +92,7 @@ namespace IlluminoEngine
 			m_CommandQueue->Signal(m_Fences[m_CurrentBackBuffer], fenceValue);
 			m_FenceValues[m_CurrentBackBuffer] = fenceValue;
 			++m_CurrentFenceValue;
-			m_CurrentBackBuffer = (m_CurrentBackBuffer + 1) % s_QueueSlotCount;
+			m_CurrentBackBuffer = (m_CurrentBackBuffer + 1) % g_QueueSlotCount;
 		}
 
 		WaitForFence(m_Fences[m_CurrentBackBuffer], m_FenceValues[m_CurrentBackBuffer], m_FenceEvents[m_CurrentBackBuffer]);
@@ -93,7 +101,7 @@ namespace IlluminoEngine
 
 	void Dx12GraphicsContext::Shutdown()
 	{
-		for (size_t i = 0; i < s_QueueSlotCount; ++i)
+		for (size_t i = 0; i < g_QueueSlotCount; ++i)
 			WaitForFence(m_Fences[i], m_FenceValues[i], m_FenceEvents[i]);
 
 		for (auto e : m_FenceEvents)
@@ -122,7 +130,7 @@ namespace IlluminoEngine
 		}
 #endif // ILLUMINO_DEBUG
 
-		for (size_t i = 0; i < s_QueueSlotCount; ++i)
+		for (size_t i = 0; i < g_QueueSlotCount; ++i)
 		{
 			m_CommandLists[i]->Release();
 			m_CommandAllocators[i]->Release();
@@ -131,12 +139,23 @@ namespace IlluminoEngine
 			m_Fences[i]->Release();
 		}
 
+		for (uint32_t i = 0; i < g_QueueSlotCount; ++i)
+			ProcessDeferredReleases(i);
+
+
+		m_RTVDescriptorHeap.Release();
+		m_DSVDescriptorHeap.Release();
+//		m_SRVDescriptorHeap.Release();
+		m_UAVDescriptorHeap.Release();
+
 		m_SRVDescriptorHeap->Release();
 		m_RenderTargetDescriptorHeap->Release();
 
 		m_SwapChain->Release();
 		m_CommandQueue->Release();
 		m_Device->Release();
+
+		ProcessDeferredReleases(0);
 	}
 
 	static void GetHardwareAdapter(IDXGIFactory7* pFactory, IDXGIAdapter1** ppAdapter, D3D_FEATURE_LEVEL minFeatureLevel)
@@ -202,7 +221,7 @@ namespace IlluminoEngine
 		D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
 		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-		swapChainDesc.BufferCount = s_QueueSlotCount;
+		swapChainDesc.BufferCount = g_QueueSlotCount;
 		swapChainDesc.Width = m_Window.GetWidth();
 		swapChainDesc.Height = m_Window.GetHeight();
 		swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -273,21 +292,21 @@ namespace IlluminoEngine
 
 		// Setting up Fences and SwapChain
 		m_CurrentFenceValue = 1;
-		for (size_t i = 0; i < s_QueueSlotCount; ++i)
+		for (size_t i = 0; i < g_QueueSlotCount; ++i)
 		{
 			m_FenceEvents[i] = CreateEvent(nullptr, false, false, nullptr);
 			m_FenceValues[i] = 0;
 			m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fences[i]));
 		}
 
-		for (UINT i = 0; i < s_QueueSlotCount; ++i)
+		for (UINT i = 0; i < g_QueueSlotCount; ++i)
 		{
 			m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[i]));
 		}
 
 		// Setup Render Targets
 		D3D12_DESCRIPTOR_HEAP_DESC heapDesc;
-		heapDesc.NumDescriptors = s_QueueSlotCount;
+		heapDesc.NumDescriptors = g_QueueSlotCount;
 		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 		heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 		heapDesc.NodeMask = 0;
@@ -295,7 +314,7 @@ namespace IlluminoEngine
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle { m_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart() };
 
-		for (size_t i = 0; i < s_QueueSlotCount; ++i)
+		for (size_t i = 0; i < g_QueueSlotCount; ++i)
 		{
 			D3D12_RENDER_TARGET_VIEW_DESC viewDesc;
 			viewDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -321,7 +340,7 @@ namespace IlluminoEngine
 
 	void Dx12GraphicsContext::CreateAllocatorsAndCommandLists()
 	{
-		for (size_t i = 0; i < s_QueueSlotCount; ++i)
+		for (size_t i = 0; i < g_QueueSlotCount; ++i)
 		{
 			m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocators[i]));
 			m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_CommandAllocators[i], nullptr, IID_PPV_ARGS(&m_CommandLists[i]));
@@ -378,6 +397,11 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		if (m_DeferredReleasesFlag[m_CurrentBackBuffer])
+		{
+			ProcessDeferredReleases(m_CurrentBackBuffer);
+		}
+
 		m_CommandAllocators[m_CurrentBackBuffer]->Reset();
 
 		auto commandList = m_CommandLists[m_CurrentBackBuffer];
@@ -409,6 +433,17 @@ namespace IlluminoEngine
 		s_RendererAPI->m_RenderTarget = renderTargetHandle;
 	}
 
+	void Dx12GraphicsContext::ProcessDeferredReleases(const uint32_t frameIndex)
+	{
+		std::lock_guard { m_Mutex };
+
+		m_DeferredReleasesFlag[frameIndex] = 0;
+
+		m_RTVDescriptorHeap.ProcessDeferredFree(frameIndex);
+		m_DSVDescriptorHeap.ProcessDeferredFree(frameIndex);
+//		m_SRVDescriptorHeap.ProcessDeferredFree(frameIndex);
+		m_UAVDescriptorHeap.ProcessDeferredFree(frameIndex);
+	}
 
 	void Dx12GraphicsContext::BindShader(ID3D12PipelineState* pso, ID3D12RootSignature* rootSignature)
 	{
