@@ -53,89 +53,85 @@ namespace IlluminoEngine
 	void EditorLayer::SetTheme()
 	{
 		ImGuiIO& io = ImGui::GetIO();
-		io.FontDefault = io.Fonts->AddFontFromFileTTF("Assets/Fonts/opensans/OpenSans-Regular.ttf", 20.0f);
-		io.Fonts->AddFontFromFileTTF("Assets/Fonts/opensans/OpenSans-Bold.ttf", 20.0f);
+		io.FontDefault = io.Fonts->AddFontFromFileTTF("Assets/Fonts/opensans/OpenSans-Regular.ttf", 18.0f);
+		io.Fonts->AddFontFromFileTTF("Assets/Fonts/opensans/OpenSans-Bold.ttf", 18.0f);
 		io.Fonts->Build();
 		
-		auto& style = ImGui::GetStyle();
-		auto& colors = ImGui::GetStyle().Colors;
+		ImVec4* colors = ImGui::GetStyle().Colors;
 
-		//========================================================
-		/// Colours
+		colors[ImGuiCol_Text] = ImVec4(0.82f, 0.82f, 0.82f, 1.00f);
+		colors[ImGuiCol_TextDisabled] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
+		colors[ImGuiCol_WindowBg] = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+		colors[ImGuiCol_ChildBg] = ImVec4(0.17f, 0.18f, 0.20f, 1.00f);
+		colors[ImGuiCol_PopupBg] = ImVec4(0.22f, 0.24f, 0.25f, 1.00f);
+		colors[ImGuiCol_Border] = ImVec4(0.16f, 0.17f, 0.18f, 1.00f);
+		colors[ImGuiCol_BorderShadow] = ImVec4(0.16f, 0.17f, 0.18f, 1.00f);
+		colors[ImGuiCol_FrameBg] = ImVec4(0.14f, 0.15f, 0.16f, 1.00f);
+		colors[ImGuiCol_FrameBgHovered] = ImVec4(0.84f, 0.34f, 0.17f, 1.00f);
+		colors[ImGuiCol_FrameBgActive] = ImVec4(0.59f, 0.24f, 0.12f, 1.00f);
+		colors[ImGuiCol_TitleBg] = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+		colors[ImGuiCol_TitleBgActive] = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+		colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+		colors[ImGuiCol_MenuBarBg] = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+		colors[ImGuiCol_ScrollbarBg] = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+		colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+		colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.75f, 0.30f, 0.15f, 1.00f);
+		colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+		colors[ImGuiCol_CheckMark] = ImVec4(0.90f, 0.90f, 0.90f, 0.50f);
+		colors[ImGuiCol_SliderGrab] = ImVec4(1.00f, 1.00f, 1.00f, 0.30f);
+		colors[ImGuiCol_SliderGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+		colors[ImGuiCol_Button] = ImVec4(0.19f, 0.20f, 0.22f, 1.00f);
+		colors[ImGuiCol_ButtonHovered] = ImVec4(0.84f, 0.34f, 0.17f, 1.00f);
+		colors[ImGuiCol_ButtonActive] = ImVec4(0.59f, 0.24f, 0.12f, 1.00f);
+		colors[ImGuiCol_Header] = ImVec4(0.22f, 0.23f, 0.25f, 1.00f);
+		colors[ImGuiCol_HeaderHovered] = ImVec4(0.84f, 0.34f, 0.17f, 1.00f);
+		colors[ImGuiCol_HeaderActive] = ImVec4(0.59f, 0.24f, 0.12f, 1.00f);
+		colors[ImGuiCol_Separator] = ImVec4(0.2f, 0.21f, 0.23f, 1.00f);
+		colors[ImGuiCol_SeparatorHovered] = ImVec4(0.75f, 0.30f, 0.15f, 1.00f);
+		colors[ImGuiCol_SeparatorActive] = ImVec4(0.59f, 0.24f, 0.12f, 1.00f);
+		colors[ImGuiCol_ResizeGrip] = ImVec4(0.84f, 0.34f, 0.17f, 0.14f);
+		colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.84f, 0.34f, 0.17f, 1.00f);
+		colors[ImGuiCol_ResizeGripActive] = ImVec4(0.59f, 0.24f, 0.12f, 1.00f);
+		colors[ImGuiCol_Tab] = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+		colors[ImGuiCol_TabHovered] = ImVec4(0.84f, 0.34f, 0.17f, 1.00f);
+		colors[ImGuiCol_TabActive] = ImVec4(0.68f, 0.28f, 0.14f, 1.00f);
+		colors[ImGuiCol_TabUnfocused] = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+		colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.17f, 0.18f, 0.20f, 1.00f);
+		colors[ImGuiCol_DockingPreview] = ImVec4(0.19f, 0.20f, 0.22f, 1.00f);
+		colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+		colors[ImGuiCol_PlotLines] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+		colors[ImGuiCol_PlotLinesHovered] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+		colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+		colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+		colors[ImGuiCol_TextSelectedBg] = ImVec4(0.75f, 0.30f, 0.15f, 1.00f);
+		colors[ImGuiCol_DragDropTarget] = ImVec4(0.75f, 0.30f, 0.15f, 1.00f);
+		colors[ImGuiCol_NavHighlight] = ImVec4(0.75f, 0.30f, 0.15f, 1.00f);
+		colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+		colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+		colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
 
-		// Headers
-		colors[ImGuiCol_Header]				= ImGui::ColorConvertU32ToFloat4(Colours::Theme::groupHeader);
-		colors[ImGuiCol_HeaderHovered]		= ImGui::ColorConvertU32ToFloat4(Colours::Theme::groupHeader);
-		colors[ImGuiCol_HeaderActive]		= ImGui::ColorConvertU32ToFloat4(Colours::Theme::groupHeader);
+		ImGuiStyle* style = &ImGui::GetStyle();
 
-		// Buttons
-		colors[ImGuiCol_Button]				= ImColor(56, 56, 56, 200);
-		colors[ImGuiCol_ButtonHovered]		= ImColor(70, 70, 70, 255);
-		colors[ImGuiCol_ButtonActive]		= ImColor(56, 56, 56, 150);
+		style->WindowMenuButtonPosition = 0;
 
-		// Frame BG
-		colors[ImGuiCol_FrameBg]			= ImGui::ColorConvertU32ToFloat4(Colours::Theme::propertyField);
-		colors[ImGuiCol_FrameBgHovered]		= ImGui::ColorConvertU32ToFloat4(Colours::Theme::propertyField);
-		colors[ImGuiCol_FrameBgActive]		= ImGui::ColorConvertU32ToFloat4(Colours::Theme::propertyField);
+		style->WindowPadding = ImVec2(4.0f, 3.0f);
+		style->FramePadding = ImVec2(4.0f, 4.0f);
+		style->ItemSpacing = ImVec2(6.0f, 3.0f);
+		style->IndentSpacing = 12;
+		style->ScrollbarSize = 12;
+		style->GrabMinSize = 9;
 
-		// Tabs
-		colors[ImGuiCol_Tab]				= ImGui::ColorConvertU32ToFloat4(Colours::Theme::titlebar);
-		colors[ImGuiCol_TabHovered]			= ImColor(255, 225, 135, 30);
-		colors[ImGuiCol_TabActive]			= ImColor(255, 225, 135, 60);
-		colors[ImGuiCol_TabUnfocused]		= ImGui::ColorConvertU32ToFloat4(Colours::Theme::titlebar);
-		colors[ImGuiCol_TabUnfocusedActive] = colors[ImGuiCol_TabHovered];
-
-		// Title
-		colors[ImGuiCol_TitleBg]			= ImGui::ColorConvertU32ToFloat4(Colours::Theme::titlebar);
-		colors[ImGuiCol_TitleBgActive]		= ImGui::ColorConvertU32ToFloat4(Colours::Theme::titlebar);
-		colors[ImGuiCol_TitleBgCollapsed]	= ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
-
-		// Resize Grip
-		colors[ImGuiCol_ResizeGrip]			= ImVec4(0.91f, 0.91f, 0.91f, 0.25f);
-		colors[ImGuiCol_ResizeGripHovered]	= ImVec4(0.81f, 0.81f, 0.81f, 0.67f);
-		colors[ImGuiCol_ResizeGripActive]	= ImVec4(0.46f, 0.46f, 0.46f, 0.95f);
-
-		// Scrollbar
-		colors[ImGuiCol_ScrollbarBg]		= ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
-		colors[ImGuiCol_ScrollbarGrab]		= ImVec4(0.31f, 0.31f, 0.31f, 1.0f);
-		colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.0f);
-		colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.0f);
-
-		// Check Mark
-		colors[ImGuiCol_CheckMark]			= ImColor(200, 200, 200, 255);
-
-		// Slider
-		colors[ImGuiCol_SliderGrab]			= ImVec4(0.51f, 0.51f, 0.51f, 0.7f);
-		colors[ImGuiCol_SliderGrabActive]	= ImVec4(0.66f, 0.66f, 0.66f, 1.0f);
-
-		// Text
-		colors[ImGuiCol_Text]				= ImGui::ColorConvertU32ToFloat4(Colours::Theme::text);
-
-		// Checkbox
-		colors[ImGuiCol_CheckMark]			= ImGui::ColorConvertU32ToFloat4(Colours::Theme::text);
-
-		// Separator
-		colors[ImGuiCol_Separator]			= ImGui::ColorConvertU32ToFloat4(Colours::Theme::backgroundDark);
-		colors[ImGuiCol_SeparatorActive]	= ImGui::ColorConvertU32ToFloat4(Colours::Theme::highlight);
-		colors[ImGuiCol_SeparatorHovered]	= ImColor(39, 185, 242, 150);
-
-		// Window Background
-		colors[ImGuiCol_WindowBg]			= ImGui::ColorConvertU32ToFloat4(Colours::Theme::titlebar);
-		colors[ImGuiCol_ChildBg]			= ImGui::ColorConvertU32ToFloat4(Colours::Theme::background);
-		colors[ImGuiCol_PopupBg]			= ImGui::ColorConvertU32ToFloat4(Colours::Theme::backgroundPopup);
-		colors[ImGuiCol_Border]				= ImGui::ColorConvertU32ToFloat4(Colours::Theme::backgroundDark);
-
-		// Tables
-		colors[ImGuiCol_TableHeaderBg]		= ImGui::ColorConvertU32ToFloat4(Colours::Theme::groupHeader);
-		colors[ImGuiCol_TableBorderLight]	= ImGui::ColorConvertU32ToFloat4(Colours::Theme::backgroundDark);
-
-		// Menubar
-		colors[ImGuiCol_MenuBarBg]			= ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f };
-
-		//========================================================
-		/// Style
-		style.FrameRounding = 2.5f;
-		style.FrameBorderSize = 1.0f;
-		style.IndentSpacing = 11.0f;
+		style->WindowBorderSize = 1.0f;
+		style->ChildBorderSize = 1.0f;
+		style->PopupBorderSize = 3.0f;
+		style->FrameBorderSize = 1.0f;
+		style->TabBorderSize = 1.0f;
+		style->WindowRounding = 6.0f;
+		style->ChildRounding = 0.0f;
+		style->FrameRounding = 4.0f;
+		style->PopupRounding = 4.0f;
+		style->ScrollbarRounding = 12.0f;
+		style->GrabRounding = 2.0f;
+		style->TabRounding = 6.0f;
 	}
 }

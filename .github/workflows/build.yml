@@ -2,9 +2,16 @@ name: build
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+    paths-ignore:
+      - '**/**.md'
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+    paths-ignore:
+      - '**/**.md'
+  workflow_dispatch:
 
 env:
   SOLUTION_FILE_PATH: .
@@ -36,6 +43,4 @@ jobs:
       
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      # Add additional options to the MSBuild command line here (like platform or verbosity level).
-      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:Configuration=${{matrix.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}} /t:Clean
