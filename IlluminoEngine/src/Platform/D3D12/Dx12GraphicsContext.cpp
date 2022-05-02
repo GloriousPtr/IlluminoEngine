@@ -139,14 +139,13 @@ namespace IlluminoEngine
 			m_Fences[i]->Release();
 		}
 
-		for (uint32_t i = 0; i < g_QueueSlotCount; ++i)
-			ProcessDeferredReleases(i);
-
-
 		m_RTVDescriptorHeap.Release();
 		m_DSVDescriptorHeap.Release();
 //		m_SRVDescriptorHeap.Release();
 		m_UAVDescriptorHeap.Release();
+
+		for (uint32_t i = 0; i < g_QueueSlotCount; ++i)
+			ProcessDeferredReleases(i);
 
 		m_SRVDescriptorHeap->Release();
 		m_RenderTargetDescriptorHeap->Release();
@@ -433,9 +432,16 @@ namespace IlluminoEngine
 		s_RendererAPI->m_RenderTarget = renderTargetHandle;
 	}
 
+	void Dx12GraphicsContext::DeferredRelease(IUnknown* resource)
+	{
+		std::lock_guard lock{ m_Mutex };
+		m_DeferredReleases[m_CurrentBackBuffer].push_back(resource);
+		SetDeferredReleasesFlag();
+	}
+
 	void Dx12GraphicsContext::ProcessDeferredReleases(const uint32_t frameIndex)
 	{
-		std::lock_guard { m_Mutex };
+		std::lock_guard lock{ m_Mutex };
 
 		m_DeferredReleasesFlag[frameIndex] = 0;
 
@@ -443,6 +449,15 @@ namespace IlluminoEngine
 		m_DSVDescriptorHeap.ProcessDeferredFree(frameIndex);
 //		m_SRVDescriptorHeap.ProcessDeferredFree(frameIndex);
 		m_UAVDescriptorHeap.ProcessDeferredFree(frameIndex);
+
+		auto& resources = m_DeferredReleases[frameIndex];
+		if (!resources.empty())
+		{
+			for (auto& r : resources)
+				r->Release();
+
+			resources.clear();
+		}
 	}
 
 	void Dx12GraphicsContext::BindShader(ID3D12PipelineState* pso, ID3D12RootSignature* rootSignature)

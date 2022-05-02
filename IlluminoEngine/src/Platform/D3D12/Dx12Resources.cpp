@@ -22,7 +22,8 @@ namespace IlluminoEngine
 			m_Type == D3D12_DESCRIPTOR_HEAP_TYPE_RTV)
 			isShaderVisible = false;
 
-		Release();
+		if (m_Heap)
+			Release();
 
 		ID3D12Device* device = reinterpret_cast<ID3D12Device*>(context->GetDevice());
 		ILLUMINO_ASSERT(device);
@@ -61,7 +62,7 @@ namespace IlluminoEngine
 
 	void DescriptorHeap::ProcessDeferredFree(uint32_t frameIndex)
 	{
-		std::lock_guard { m_Mutex };
+		std::lock_guard lock{ m_Mutex };
 
 		ILLUMINO_ASSERT(frameIndex < g_QueueSlotCount);
 
@@ -81,6 +82,11 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		ILLUMINO_ASSERT(!m_Size);
+
+		Dx12GraphicsContext* context = (Dx12GraphicsContext*) Application::GetApplication()->GetWindow()->GetGraphicsContext().get();
+
+		context->DeferredRelease(m_Heap);
 	}
 
 	DescriptorHandle DescriptorHeap::Allocate()

@@ -36,7 +36,6 @@ namespace IlluminoEngine
 
 		~DescriptorHeap()
 		{
-			ILLUMINO_ASSERT(!m_Heap);
 		}
 
 		DescriptorHeap(const DescriptorHeap& other) = delete;
@@ -59,7 +58,7 @@ namespace IlluminoEngine
 		const bool IsShaderVisible() const { return m_GPUStart.ptr != 0; }
 
 	private:
-		ID3D12DescriptorHeap* m_Heap;
+		ID3D12DescriptorHeap* m_Heap = nullptr;
 		D3D12_CPU_DESCRIPTOR_HANDLE m_CPUStart;
 		D3D12_GPU_DESCRIPTOR_HANDLE m_GPUStart;
 		Scope<uint32_t[]> m_FreeHandles;
