@@ -6,6 +6,7 @@
 #include "Illumino/Renderer/GraphicsContext.h"
 #include "Illumino/Renderer/Shader.h"
 #include "Dx12Resources.h"
+#include "Dx12RenderSurface.h"
 
 namespace IlluminoEngine
 {
@@ -24,10 +25,17 @@ namespace IlluminoEngine
 		virtual void* GetDevice() override { return m_Device; }
 		virtual void* GetCommandQueue() override { return m_CommandQueue; }
 		virtual void* GetCommandList() override { return m_CommandLists[m_CurrentBackBuffer]; }
-		virtual void* GetSRVDescriptorHeap() override { return &m_SRVDescriptorHeap; }
+
+		void* GetRTVDescriptorHeap() { return &m_RTVDescriptorHeap; }
+		void* GetDSVDescriptorHeap() { return &m_DSVDescriptorHeap; }
+		void* GetSRVDescriptorHeap() { return &m_SRVDescriptorHeap; }
+		void* GetUAVDescriptorHeap() { return &m_UAVDescriptorHeap; }
+
 		virtual uint32_t GetCurrentBackBufferIndex() override { return m_CurrentBackBuffer; }
 
-		virtual void SetDeferredReleasesFlag() override { m_DeferredReleasesFlag[m_CurrentBackBuffer] = 1; }
+		virtual void SetDeferredReleasesFlag() override {
+			m_DeferredReleasesFlag[m_CurrentBackBuffer] = 1;
+		}
 		virtual void WaitForFence(void* fence, uint64_t completionValue, HANDLE waitEvent) override;
 		virtual void BindMeshBuffer(MeshBuffer& mesh) override;
 		
@@ -40,7 +48,8 @@ namespace IlluminoEngine
 		void DeferredRelease(IUnknown* resource);
 
 	private:
-		void CreateDeviceAndSwapChain();
+		void CreateDevice(IDXGIFactory7* factory);
+		void CreateRenderSurface(IDXGIFactory7* factory);
 		void CreateAllocatorsAndCommandLists();
 		void CreateViewportScissor();
 		void PrepareRender();
@@ -56,7 +65,7 @@ namespace IlluminoEngine
 
 		ID3D12Device* m_Device;
 		ID3D12CommandQueue* m_CommandQueue;
-		IDXGISwapChain1* m_SwapChain;
+		Dx12RenderSurface* m_RenderSurface;
 
 		uint64_t m_CurrentFenceValue;
 		uint64_t m_FenceValues[g_QueueSlotCount];
@@ -64,8 +73,6 @@ namespace IlluminoEngine
 		ID3D12Fence* m_Fences[g_QueueSlotCount];
 
 		uint32_t m_RenderTargetViewDescriptorSize;
-		ID3D12DescriptorHeap* m_RenderTargetDescriptorHeap;
-		ID3D12Resource* m_RenderTargets[g_QueueSlotCount];
 
 		ID3D12CommandAllocator* m_CommandAllocators[g_QueueSlotCount];
 		ID3D12GraphicsCommandList* m_CommandLists[g_QueueSlotCount];

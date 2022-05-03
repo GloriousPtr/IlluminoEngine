@@ -6,6 +6,7 @@
 #include <backends/imgui_impl_dx12.h>
 #include <d3d12.h>
 
+#include "Platform/D3D12/Dx12GraphicsContext.h"
 #include "Platform/D3D12/Dx12Resources.h"
 #include "Illumino/Core/Application.h"
 #include "Window.h"
@@ -27,7 +28,7 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		Ref<Window> window = Application::GetApplication()->GetWindow();
-		GraphicsContext* context = window->GetGraphicsContext().get();
+		Dx12GraphicsContext* context = (Dx12GraphicsContext*)window->GetGraphicsContext().get();
 
 		HWND hWnd = window->GetHwnd();
 		ID3D12Device* device = reinterpret_cast<ID3D12Device*>(context->GetDevice());
@@ -70,7 +71,7 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		Ref<Window> window = Application::GetApplication()->GetWindow();
-		GraphicsContext* context = window->GetGraphicsContext().get();
+		Dx12GraphicsContext* context = (Dx12GraphicsContext*)window->GetGraphicsContext().get();
 		DescriptorHeap* heap = (DescriptorHeap*)context->GetSRVDescriptorHeap();
 		heap->Free(s_ImGuiDescriptorHandle);
 

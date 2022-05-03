@@ -33,7 +33,27 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		CreateDeviceAndSwapChain();
+		UINT dxgiFactoryFlags = 0;
+#ifdef ILLUMINO_DEBUG
+		ID3D12Debug* debugController;
+		D3D12GetDebugInterface(IID_PPV_ARGS(&debugController));
+		debugController->EnableDebugLayer();
+		debugController->Release();
+
+		IDXGIInfoQueue* dxgiInfoQueue;
+        DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiInfoQueue));
+        dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
+        dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+		dxgiInfoQueue->Release();
+
+		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+#endif // ILLUMINO_DEBUG
+
+		IDXGIFactory7* factory;
+		HRESULT hr = CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory));
+		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create DXGI Factory");
+		
+		CreateDevice(factory);
 
 		bool result = true;
 		result &= m_RTVDescriptorHeap.Init(512, false);
@@ -41,6 +61,9 @@ namespace IlluminoEngine
 		result &= m_SRVDescriptorHeap.Init(4096, true);
 		result &= m_UAVDescriptorHeap.Init(512, true);
 		ILLUMINO_ASSERT(result, "Failed to create some descriptor heap allocations");
+
+		CreateRenderSurface(factory);
+		factory->Release();
 
 		CreateAllocatorsAndCommandLists();
 		CreateViewportScissor();
@@ -63,7 +86,7 @@ namespace IlluminoEngine
 
 			// Transition the swap chain back to present
 			D3D12_RESOURCE_BARRIER barrier;
-			barrier.Transition.pResource = m_RenderTargets[m_CurrentBackBuffer];
+			barrier.Transition.pResource = m_RenderSurface->GetBackBufferResource();
 			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -85,14 +108,14 @@ namespace IlluminoEngine
 
 			uint32_t syncInterval = m_Vsync ? 1 : 0;
 			uint32_t presentFlags = m_Vsync ? 0 : DXGI_PRESENT_ALLOW_TEARING;
-			HRESULT hr = m_SwapChain->Present(syncInterval, presentFlags);
-			ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to present the swapchain");
+
+			m_RenderSurface->Present();
 
 			const uint64_t fenceValue = m_CurrentFenceValue;
 			m_CommandQueue->Signal(m_Fences[m_CurrentBackBuffer], fenceValue);
 			m_FenceValues[m_CurrentBackBuffer] = fenceValue;
 			++m_CurrentFenceValue;
-			m_CurrentBackBuffer = (m_CurrentBackBuffer + 1) % g_QueueSlotCount;
+			m_CurrentBackBuffer = m_RenderSurface->GetBackBufferIndex();// (m_CurrentBackBuffer + 1) % g_QueueSlotCount;
 		}
 
 		WaitForFence(m_Fences[m_CurrentBackBuffer], m_FenceValues[m_CurrentBackBuffer], m_FenceEvents[m_CurrentBackBuffer]);
@@ -134,7 +157,6 @@ namespace IlluminoEngine
 		{
 			m_CommandLists[i]->Release();
 			m_CommandAllocators[i]->Release();
-			m_RenderTargets[i]->Release();
 
 			m_Fences[i]->Release();
 		}
@@ -147,9 +169,8 @@ namespace IlluminoEngine
 		for (uint32_t i = 0; i < g_QueueSlotCount; ++i)
 			ProcessDeferredReleases(i);
 
-		m_RenderTargetDescriptorHeap->Release();
+		delete m_RenderSurface;
 
-		m_SwapChain->Release();
 		m_CommandQueue->Release();
 		m_Device->Release();
 
@@ -196,45 +217,12 @@ namespace IlluminoEngine
 		}
 	}
 
-	void Dx12GraphicsContext::CreateDeviceAndSwapChain()
+	void Dx12GraphicsContext::CreateDevice(IDXGIFactory7* factory)
 	{
-		OPTICK_EVENT();
-
-		UINT dxgiFactoryFlags = 0;
-#ifdef ILLUMINO_DEBUG
-		ID3D12Debug* debugController;
-		D3D12GetDebugInterface(IID_PPV_ARGS(&debugController));
-		debugController->EnableDebugLayer();
-		debugController->Release();
-
-		IDXGIInfoQueue* dxgiInfoQueue;
-        DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiInfoQueue));
-        dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
-        dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
-		dxgiInfoQueue->Release();
-
-		dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-#endif // ILLUMINO_DEBUG
-
 		D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
-		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-		swapChainDesc.BufferCount = g_QueueSlotCount;
-		swapChainDesc.Width = m_Window.GetWidth();
-		swapChainDesc.Height = m_Window.GetHeight();
-		swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-		swapChainDesc.SampleDesc.Count = 1;
-		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-
-
-		IDXGIFactory7* dxgiFactory;
-		HRESULT hr = CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&dxgiFactory));
-		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create DXGI Factory");
-		
 		IDXGIAdapter1* adapter;
-		GetHardwareAdapter(dxgiFactory, &adapter, minFeatureLevel);
+		GetHardwareAdapter(factory, &adapter, minFeatureLevel);
 		if (adapter != nullptr)
 		{
 			DXGI_ADAPTER_DESC adapterDesc;
@@ -247,7 +235,7 @@ namespace IlluminoEngine
 			ILLUMINO_INFO("  DedicatedVideoMemory: {0}", adapterDesc.DedicatedVideoMemory / (1024.0f * 1024.0f * 1024.0f));
 		}
 		
-		hr = D3D12CreateDevice(adapter, minFeatureLevel, IID_PPV_ARGS(&m_Device));
+		HRESULT hr = D3D12CreateDevice(adapter, minFeatureLevel, IID_PPV_ARGS(&m_Device));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to find a compatible device");
 
 #ifdef ILLUMINO_DEBUG
@@ -281,12 +269,13 @@ namespace IlluminoEngine
 		hr = m_Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create command queue");
 
-		DXGI_SWAP_CHAIN_DESC1 swapChainDescCopy = swapChainDesc;
-		hr = dxgiFactory->CreateSwapChainForHwnd(m_CommandQueue, m_Window
-			.GetHwnd(), &swapChainDescCopy, nullptr, nullptr, &m_SwapChain);
-		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create SwapChain");
+		adapter->Release();
+	}
 
-		m_RenderTargetViewDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	void Dx12GraphicsContext::CreateRenderSurface(IDXGIFactory7* factory)
+	{
+		m_RenderSurface = new Dx12RenderSurface(m_Window.GetWidth(), m_Window.GetHeight());
+		m_RenderSurface->Create(factory, m_CommandQueue, DXGI_FORMAT_R8G8B8A8_UNORM);
 
 		// Setting up Fences and SwapChain
 		m_CurrentFenceValue = 1;
@@ -296,36 +285,6 @@ namespace IlluminoEngine
 			m_FenceValues[i] = 0;
 			m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fences[i]));
 		}
-
-		for (UINT i = 0; i < g_QueueSlotCount; ++i)
-		{
-			m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[i]));
-		}
-
-		// Setup Render Targets
-		D3D12_DESCRIPTOR_HEAP_DESC heapDesc;
-		heapDesc.NumDescriptors = g_QueueSlotCount;
-		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		heapDesc.NodeMask = 0;
-		m_Device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_RenderTargetDescriptorHeap));
-
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle { m_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart() };
-
-		for (size_t i = 0; i < g_QueueSlotCount; ++i)
-		{
-			D3D12_RENDER_TARGET_VIEW_DESC viewDesc;
-			viewDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-			viewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-			viewDesc.Texture2D.MipSlice = 0;
-			viewDesc.Texture2D.PlaneSlice = 0;
-
-			m_Device->CreateRenderTargetView(m_RenderTargets[i], &viewDesc, rtvHandle);
-			rtvHandle.Offset(m_RenderTargetViewDescriptorSize);
-		}
-
-		adapter->Release();
-		dxgiFactory->Release();
 	}
 
 	void Dx12GraphicsContext::CreateAllocatorsAndCommandLists()
@@ -397,12 +356,9 @@ namespace IlluminoEngine
 		auto commandList = m_CommandLists[m_CurrentBackBuffer];
 		commandList->Reset(m_CommandAllocators[m_CurrentBackBuffer], nullptr);
 
-		D3D12_CPU_DESCRIPTOR_HANDLE renderTargetHandle;
-		CD3DX12_CPU_DESCRIPTOR_HANDLE::InitOffsetted(renderTargetHandle,
-				m_RenderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-				m_CurrentBackBuffer, m_RenderTargetViewDescriptorSize);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_RenderSurface->GetRTV();
 
-		commandList->OMSetRenderTargets(1, &renderTargetHandle, true, nullptr);
+		commandList->OMSetRenderTargets(1, &rtvHandle, true, nullptr);
 
 		ID3D12DescriptorHeap* descHeap = const_cast<ID3D12DescriptorHeap*>(m_SRVDescriptorHeap.GetHeap());
         commandList->SetDescriptorHeaps(1, &descHeap);
@@ -412,7 +368,7 @@ namespace IlluminoEngine
 
 		// Transition back buffer
 		D3D12_RESOURCE_BARRIER barrier;
-		barrier.Transition.pResource = m_RenderTargets[m_CurrentBackBuffer];
+		barrier.Transition.pResource = m_RenderSurface->GetBackBufferResource();
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
@@ -423,7 +379,7 @@ namespace IlluminoEngine
 
 		s_RendererAPI->m_BackBufferIndex = m_CurrentBackBuffer;
 		s_RendererAPI->m_CommandList = m_CommandLists[m_CurrentBackBuffer];
-		s_RendererAPI->m_RenderTarget = renderTargetHandle;
+		s_RendererAPI->m_RenderTarget = rtvHandle;
 	}
 
 	void Dx12GraphicsContext::DeferredRelease(IUnknown* resource)
