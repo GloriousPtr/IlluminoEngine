@@ -19,9 +19,9 @@ namespace IlluminoEngine
 
 		switch (uMsg)
 		{
-			case WM_DESTROY:
-				PostQuitMessage(0);
-				break;
+			case WM_CLOSE:
+				window->OnClosed();
+				return true;
 		}
 
 		return DefWindowProcA(hWnd, uMsg, wParam, lParam);
@@ -73,6 +73,7 @@ namespace IlluminoEngine
 
 		m_Context->Shutdown();
 		UnregisterClassA(m_Name.c_str(), m_HInstance);
+		PostQuitMessage(0);
 	}
 
 	void Window::Init()
@@ -96,9 +97,6 @@ namespace IlluminoEngine
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-
-			if (msg.message == WM_QUIT)
-				OnClosed();
 		}
 	}
 
