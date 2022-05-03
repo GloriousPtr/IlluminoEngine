@@ -7,9 +7,9 @@
 [submodule "IlluminoEngine/vendor/glm"]
 	path = IlluminoEngine/vendor/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "IlluminoEngine/vendor/assimp"]
-	path = IlluminoEngine/vendor/assimp
-	url = https://github.com/MohitSethi99/assimp.git
 [submodule "IlluminoEngine/vendor/imgui"]
 	path = IlluminoEngine/vendor/imgui
 	url = https://github.com/MohitSethi99/imgui.git
+[submodule "IlluminoEngine/vendor/assimp"]
+	path = IlluminoEngine/vendor/assimp
+	url = https://github.com/MohitSethi99/assimp.git

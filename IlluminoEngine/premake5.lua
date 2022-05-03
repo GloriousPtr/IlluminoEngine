@@ -31,6 +31,8 @@ project "IlluminoEngine"
 		"%{IncludeDir.optick}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.assimp}",
+		"%{IncludeDir.assimp_config}",
+		"%{IncludeDir.assimp_config_assimp}",
 		"%{IncludeDir.imgui}",
 	}
 
