@@ -20,13 +20,20 @@ namespace IlluminoEngine
 	static DWORD s_DebugCallbackCookie;
 #endif
 	
-	static Dx12RendererAPI* s_RendererAPI;
+	Dx12GraphicsContext* Dx12GraphicsContext::s_Context;
 
 	Dx12GraphicsContext::Dx12GraphicsContext(const Window& window)
 		: m_Window(window), m_Vsync(true)
 	{
 		OPTICK_EVENT();
+		
+		ILLUMINO_ASSERT(!s_Context, "Dx12 Graphics Context already exists!");
+		s_Context = this;
+	}
 
+	Dx12GraphicsContext::~Dx12GraphicsContext()
+	{
+		s_Context = nullptr;
 	}
 
 	void Dx12GraphicsContext::Init()
@@ -67,11 +74,6 @@ namespace IlluminoEngine
 
 		CreateAllocatorsAndCommandLists();
 		CreateViewportScissor();
-
-		s_RendererAPI = reinterpret_cast<Dx12RendererAPI*>(RenderCommand::s_RendererAPI.get());
-		s_RendererAPI->m_Device = m_Device;
-		s_RendererAPI->m_CommandQueue = m_CommandQueue;
-		s_RendererAPI->m_CommandList = m_CommandLists[m_CurrentBackBuffer];
 
 		WaitForFence(m_Fences[m_CurrentBackBuffer], m_FenceValues[m_CurrentBackBuffer], m_FenceEvents[m_CurrentBackBuffer]);
 		PrepareRender();
@@ -325,19 +327,15 @@ namespace IlluminoEngine
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create pipeline state");
 	}
 
-	void Dx12GraphicsContext::WaitForFence(
-		void* fence,
-		uint64_t completionValue,
-		HANDLE waitEvent)
+	void Dx12GraphicsContext::WaitForFence(ID3D12Fence* fence, uint64_t completionValue, HANDLE waitEvent)
 	{
 		OPTICK_EVENT();
 
 		ILLUMINO_ASSERT(fence != nullptr, "Fence is null");
 
-		ID3D12Fence* d3d12Fence = reinterpret_cast<ID3D12Fence*>(fence);
-		if (d3d12Fence->GetCompletedValue() < completionValue)
+		if (fence->GetCompletedValue() < completionValue)
 		{
-			d3d12Fence->SetEventOnCompletion(completionValue, waitEvent);
+			fence->SetEventOnCompletion(completionValue, waitEvent);
 			WaitForSingleObject(waitEvent, INFINITE);
 		}
 	}
@@ -376,10 +374,6 @@ namespace IlluminoEngine
 		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
 		commandList->ResourceBarrier(1, &barrier);
-
-		s_RendererAPI->m_BackBufferIndex = m_CurrentBackBuffer;
-		s_RendererAPI->m_CommandList = m_CommandLists[m_CurrentBackBuffer];
-		s_RendererAPI->m_RenderTarget = rtvHandle;
 	}
 
 	void Dx12GraphicsContext::DeferredRelease(IUnknown* resource)

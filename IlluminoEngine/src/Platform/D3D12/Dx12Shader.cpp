@@ -7,21 +7,14 @@
 
 #include "d3dx12.h"
 
-#include "Illumino/Core/Application.h"
-#include "Window.h"
 #include "Dx12GraphicsContext.h"
 
 namespace IlluminoEngine
 {
-	static Dx12GraphicsContext* s_Context = nullptr;
-
 	Dx12Shader::Dx12Shader(const char* filepath, const BufferLayout& layout)
 		: m_Filepath(filepath)
 	{
 		OPTICK_EVENT();
-
-		GraphicsContext* context = Application::GetApplication()->GetWindow()->GetGraphicsContext().get();
-		s_Context = reinterpret_cast<Dx12GraphicsContext*>(context);
 
 		m_ConstantBuffers.reserve(g_QueueSlotCount);
 		for (size_t i = 0; i < g_QueueSlotCount; ++i)
@@ -50,18 +43,22 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		s_Context->BindShader(m_PipelineState, m_RootSignature);
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+
+		Dx12GraphicsContext::s_Context->BindShader(m_PipelineState, m_RootSignature);
 	}
 
 	void* Dx12Shader::CreateBuffer(String&& name, size_t sizeAligned)
 	{
-		uint32_t backBuffer = s_Context->GetCurrentBackBufferIndex();
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+
+		uint32_t backBuffer = Dx12GraphicsContext::s_Context->GetCurrentBackBufferIndex();
 		auto& constantBuffer = m_ConstantBuffers[backBuffer];
 
 		if (constantBuffer.find(name) != constantBuffer.end())
 			return constantBuffer[name];
 
-		ID3D12Resource* buffer = s_Context->CreateConstantBuffer(sizeAligned);
+		ID3D12Resource* buffer = Dx12GraphicsContext::s_Context->CreateConstantBuffer(sizeAligned);
 		constantBuffer[name] = buffer;
 		return buffer;
 	}
@@ -76,19 +73,23 @@ namespace IlluminoEngine
 		void** dst = p + offsetAligned;
 		memcpy(dst, data, size);
 		constantBuffer->Unmap(0, nullptr);
+
+		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootConstantBufferView(0, constantBuffer->GetGPUVirtualAddress() + offsetAligned);
 	}
 
 	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name, size_t size)
 	{
 		OPTICK_EVENT();
 
-		uint32_t backBuffer = s_Context->GetCurrentBackBufferIndex();
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+
+		uint32_t backBuffer = Dx12GraphicsContext::s_Context->GetCurrentBackBufferIndex();
 		auto& constantBuffer = m_ConstantBuffers[backBuffer];
 
 		if (constantBuffer.find(name) != constantBuffer.end())
 			return constantBuffer[name];
 
-		ID3D12Resource* buffer = s_Context->CreateConstantBuffer(ALIGN(256, size));
+		ID3D12Resource* buffer = Dx12GraphicsContext::s_Context->CreateConstantBuffer(ALIGN(256, size));
 		constantBuffer[name] = buffer;
 		return buffer;
 	}
@@ -132,7 +133,9 @@ namespace IlluminoEngine
 		if (errorBlob)
 			errorBlob->Release();
 
-		s_Context->CreateRootSignature(rootBlob, &m_RootSignature);
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+
+		Dx12GraphicsContext::s_Context->CreateRootSignature(rootBlob, &m_RootSignature);
 
 
 		std::vector<D3D12_INPUT_ELEMENT_DESC> d3d12BufferLayout;
@@ -225,7 +228,7 @@ namespace IlluminoEngine
 		psoDesc.SampleMask = 0xFFFFFFFF;
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-		s_Context->CreatePipelineState(psoDesc, &m_PipelineState);
+		Dx12GraphicsContext::s_Context->CreatePipelineState(psoDesc, &m_PipelineState);
 
 		rootBlob->Release();
 		pixelShader->Release();

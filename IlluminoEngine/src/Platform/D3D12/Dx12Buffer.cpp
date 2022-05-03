@@ -1,9 +1,7 @@
 #include "ipch.h"
 #include "Dx12Buffer.h"
 
-#include "Illumino/Core/Application.h"
-#include "Illumino/Renderer/GraphicsContext.h"
-#include "Window.h"
+#include "Dx12GraphicsContext.h"
 
 namespace IlluminoEngine
 {
@@ -12,9 +10,10 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		auto& context = Application::GetApplication()->GetWindow()->GetGraphicsContext();
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+		auto* context = Dx12GraphicsContext::s_Context;
 		
-		ID3D12Device* device = (ID3D12Device*) context->GetDevice();
+		ID3D12Device* device = context->GetDevice();
 		ID3D12CommandQueue* commandQueue = (ID3D12CommandQueue*) context->GetCommandQueue();
 
 		// Create our upload fence, command list and command allocator
@@ -133,6 +132,7 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		Application::GetApplication()->GetWindow()->GetGraphicsContext()->BindMeshBuffer(*this);
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+		Dx12GraphicsContext::s_Context->BindMeshBuffer(*this);
 	}
 }

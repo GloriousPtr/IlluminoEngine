@@ -83,7 +83,6 @@ namespace IlluminoEngine
 			buffer.u_MVP = s_Projection * meshData.Transform;
 			
 			s_Shader->UploadBuffer("Properties", &buffer, sizeof(CB), 0);
-			RenderCommand::SetConstantBufferView(cb, 0);
 			meshData.Mesh->Bind();
 			RenderCommand::DrawIndexed(meshData.Mesh);
 		}

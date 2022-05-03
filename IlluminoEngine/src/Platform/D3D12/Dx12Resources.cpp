@@ -2,8 +2,6 @@
 #include "Dx12Resources.h"
 
 #include "Dx12GraphicsContext.h"
-#include "Window.h"
-#include "Illumino/Core/Application.h"
 
 namespace IlluminoEngine
 {
@@ -15,8 +13,8 @@ namespace IlluminoEngine
 
 		ILLUMINO_ASSERT((capacity & capacity) < D3D12_MAX_SHADER_VISIBLE_DESCRIPTOR_HEAP_SIZE_TIER_2, "Capacity is either 0 or too high!");
 		ILLUMINO_ASSERT(!(m_Type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER && capacity > D3D12_MAX_SHADER_VISIBLE_SAMPLER_HEAP_SIZE));
-		ILLUMINO_ASSERT(Application::GetApplication()->GetWindow());
-		Dx12GraphicsContext* context = reinterpret_cast<Dx12GraphicsContext*>(Application::GetApplication()->GetWindow()->GetGraphicsContext().get());
+		Dx12GraphicsContext* context = Dx12GraphicsContext::s_Context;
+		ILLUMINO_ASSERT(context);
 
 		if (m_Type == D3D12_DESCRIPTOR_HEAP_TYPE_DSV ||
 			m_Type == D3D12_DESCRIPTOR_HEAP_TYPE_RTV)
@@ -25,7 +23,7 @@ namespace IlluminoEngine
 		if (m_Heap)
 			Release();
 
-		ID3D12Device* device = reinterpret_cast<ID3D12Device*>(context->GetDevice());
+		ID3D12Device* device = context->GetDevice();
 		ILLUMINO_ASSERT(device);
 
 		D3D12_DESCRIPTOR_HEAP_DESC desc{};
@@ -84,10 +82,9 @@ namespace IlluminoEngine
 
 		// Releasing the buffer of size 0 -> releasing the heap memory aquired by the buffer
 		ILLUMINO_ASSERT(m_Size >= 0);
-		
-		Dx12GraphicsContext* context = (Dx12GraphicsContext*) Application::GetApplication()->GetWindow()->GetGraphicsContext().get();
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
 
-		context->DeferredRelease(m_Heap);
+		Dx12GraphicsContext::s_Context->DeferredRelease(m_Heap);
 	}
 
 	DescriptorHandle DescriptorHeap::Allocate()
@@ -134,12 +131,11 @@ namespace IlluminoEngine
 		const uint32_t index = (uint32_t) (handle.CPU.ptr - m_CPUStart.ptr) / m_DescriptorSize;
 		
 		ILLUMINO_ASSERT(handle.m_Index == index);
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
 		
-		GraphicsContext* context = Application::GetApplication()->GetWindow()->GetGraphicsContext().get();
-
-		const uint32_t frameIndex = context->GetCurrentBackBufferIndex();
+		const uint32_t frameIndex = Dx12GraphicsContext::s_Context->GetCurrentBackBufferIndex();
 		m_DeferredFreeIndices[frameIndex].push_back(index);
-		context->SetDeferredReleasesFlag();
+		Dx12GraphicsContext::s_Context->SetDeferredReleasesFlag();
 
 		handle = {};
 	}

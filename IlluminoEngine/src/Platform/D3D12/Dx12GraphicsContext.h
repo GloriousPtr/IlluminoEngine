@@ -16,36 +16,24 @@ namespace IlluminoEngine
 	{
 	public:
 		Dx12GraphicsContext(const Window& window);
-		virtual ~Dx12GraphicsContext() override = default;
+		virtual ~Dx12GraphicsContext() override;
 
 		virtual void Init() override;
 		virtual void SwapBuffers() override;
 		virtual void Shutdown() override;
 		virtual void SetVsync(bool state) override { m_Vsync = state; }
-		virtual void* GetDevice() override { return m_Device; }
-		virtual void* GetCommandQueue() override { return m_CommandQueue; }
-		virtual void* GetCommandList() override { return m_CommandLists[m_CurrentBackBuffer]; }
-
-		void* GetRTVDescriptorHeap() { return &m_RTVDescriptorHeap; }
-		void* GetDSVDescriptorHeap() { return &m_DSVDescriptorHeap; }
-		void* GetSRVDescriptorHeap() { return &m_SRVDescriptorHeap; }
-		void* GetUAVDescriptorHeap() { return &m_UAVDescriptorHeap; }
-
-		virtual uint32_t GetCurrentBackBufferIndex() override { return m_CurrentBackBuffer; }
-
-		virtual void SetDeferredReleasesFlag() override {
-			m_DeferredReleasesFlag[m_CurrentBackBuffer] = 1;
-		}
-		virtual void WaitForFence(void* fence, uint64_t completionValue, HANDLE waitEvent) override;
-		virtual void BindMeshBuffer(MeshBuffer& mesh) override;
 		
-		void CreateRootSignature(ID3DBlob* rootBlob, ID3D12RootSignature** rootSignature);
-		void CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& psoDesc, ID3D12PipelineState** pipelineState);
+		ID3D12Device* GetDevice() { return m_Device; }
+		ID3D12CommandQueue* GetCommandQueue() { return m_CommandQueue; }
+		ID3D12GraphicsCommandList* GetCommandList() { return m_CommandLists[m_CurrentBackBuffer]; }
+		D3D12_CPU_DESCRIPTOR_HANDLE GetRenderTargetHandle() { return m_RenderSurface->GetRTV(); }
 
-		void BindShader(ID3D12PipelineState* pso, ID3D12RootSignature* rootSignature);
-		ID3D12Resource* CreateConstantBuffer(size_t sizeAligned);
-
-		void DeferredRelease(IUnknown* resource);
+		DescriptorHeap& GetRTVDescriptorHeap() { return m_RTVDescriptorHeap; }
+		DescriptorHeap& GetDSVDescriptorHeap() { return m_DSVDescriptorHeap; }
+		DescriptorHeap& GetSRVDescriptorHeap() { return m_SRVDescriptorHeap; }
+		DescriptorHeap& GetUAVDescriptorHeap() { return m_UAVDescriptorHeap; }
+		
+		uint32_t GetCurrentBackBufferIndex() { return m_CurrentBackBuffer; }
 
 	private:
 		void CreateDevice(IDXGIFactory7* factory);
@@ -53,8 +41,19 @@ namespace IlluminoEngine
 		void CreateAllocatorsAndCommandLists();
 		void CreateViewportScissor();
 		void PrepareRender();
+		void WaitForFence(ID3D12Fence* fence, uint64_t completionValue, HANDLE waitEvent);
 
+		void CreateRootSignature(ID3DBlob* rootBlob, ID3D12RootSignature** rootSignature);
+		void CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& psoDesc, ID3D12PipelineState** pipelineState);
+		ID3D12Resource* CreateConstantBuffer(size_t sizeAligned);
+
+		void BindShader(ID3D12PipelineState* pso, ID3D12RootSignature* rootSignature);
+		void BindMeshBuffer(MeshBuffer& mesh);
+
+		void SetDeferredReleasesFlag() { m_DeferredReleasesFlag[m_CurrentBackBuffer] = 1; }
+		void DeferredRelease(IUnknown* resource);
 		void ProcessDeferredReleases(const uint32_t frameIndex);
+
 	private:
 
 		const Window& m_Window;
@@ -72,8 +71,6 @@ namespace IlluminoEngine
 		HANDLE m_FenceEvents[g_QueueSlotCount];
 		ID3D12Fence* m_Fences[g_QueueSlotCount];
 
-		uint32_t m_RenderTargetViewDescriptorSize;
-
 		ID3D12CommandAllocator* m_CommandAllocators[g_QueueSlotCount];
 		ID3D12GraphicsCommandList* m_CommandLists[g_QueueSlotCount];
 
@@ -87,5 +84,12 @@ namespace IlluminoEngine
 		DescriptorHeap m_UAVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV };
 
 		std::mutex m_Mutex;
+
+		friend class Dx12MeshBuffer;
+		friend class Dx12RendererAPI;
+		friend class Dx12RenderSurface;
+		friend class Dx12Shader;
+		friend class DescriptorHeap;
+		static Dx12GraphicsContext* s_Context;
 	};
 }

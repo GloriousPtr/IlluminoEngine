@@ -50,11 +50,12 @@ namespace IlluminoEngine
 
 		m_CurrentBackBuffer = m_SwapChain->GetCurrentBackBufferIndex();
 
-		Dx12GraphicsContext* context = (Dx12GraphicsContext*)Application::GetApplication()->GetWindow()->GetGraphicsContext().get();
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+
 		for (size_t i = 0; i < g_QueueSlotCount; ++i)
 		{
-			DescriptorHeap* heap = (DescriptorHeap*) context->GetRTVDescriptorHeap();
-			m_RenderTargetData[i].RTVHandle = heap->Allocate();
+			DescriptorHeap& heap = Dx12GraphicsContext::s_Context->GetRTVDescriptorHeap();
+			m_RenderTargetData[i].RTVHandle = heap.Allocate();
 		}
 
 		Finalize();
@@ -74,7 +75,8 @@ namespace IlluminoEngine
 
 	void Dx12RenderSurface::Finalize()
 	{
-		Dx12GraphicsContext* context = (Dx12GraphicsContext*)Application::GetApplication()->GetWindow()->GetGraphicsContext().get();
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+		ID3D12Device* device = Dx12GraphicsContext::s_Context->GetDevice();
 
 		for (size_t i = 0 ; i < g_QueueSlotCount; ++i)
 		{
@@ -84,7 +86,7 @@ namespace IlluminoEngine
 			D3D12_RENDER_TARGET_VIEW_DESC desc{};
 			desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-			((ID3D12Device*) context->GetDevice())->CreateRenderTargetView(data.Resource, &desc, data.RTVHandle.CPU);
+			device->CreateRenderTargetView(data.Resource, &desc, data.RTVHandle.CPU);
 		}
 
 		int width = m_Width;
@@ -95,7 +97,8 @@ namespace IlluminoEngine
 
 	void Dx12RenderSurface::Release()
 	{
-		Dx12GraphicsContext* context = (Dx12GraphicsContext*)Application::GetApplication()->GetWindow()->GetGraphicsContext().get();
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+		Dx12GraphicsContext* context = Dx12GraphicsContext::s_Context;
 
 		for (size_t i = 0; i < g_QueueSlotCount; ++i)
 		{
@@ -103,8 +106,8 @@ namespace IlluminoEngine
 			data.Resource->Release();
 			data.Resource = nullptr;
 
-			DescriptorHeap* heap = (DescriptorHeap*) context->GetRTVDescriptorHeap();
-			heap->Free(data.RTVHandle);
+			DescriptorHeap& heap = context->GetRTVDescriptorHeap();
+			heap.Free(data.RTVHandle);
 		}
 
 		m_SwapChain->Release();

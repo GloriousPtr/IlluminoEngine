@@ -3,6 +3,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Dx12GraphicsContext.h"
+
 namespace IlluminoEngine
 {
 	Dx12RendererAPI::Dx12RendererAPI()
@@ -25,20 +27,14 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		m_CommandList->ClearRenderTargetView(m_RenderTarget, glm::value_ptr(color), 0, nullptr);
+		auto target = Dx12GraphicsContext::s_Context->GetRenderTargetHandle();
+		Dx12GraphicsContext::s_Context->GetCommandList()->ClearRenderTargetView(target, glm::value_ptr(color), 0, nullptr);
 	}
 
 	void Dx12RendererAPI::DrawIndexed(const Ref<MeshBuffer>& meshBuffer)
 	{
 		OPTICK_EVENT();
 
-		m_CommandList->DrawIndexedInstanced(meshBuffer->GetIndexCount(), 1, 0, 0, 0);
-	}
-
-	void Dx12RendererAPI::SetConstantBufferView(void* cb, size_t offsetAligned)
-	{
-		OPTICK_EVENT();
-
-		m_CommandList->SetGraphicsRootConstantBufferView(0, reinterpret_cast<ID3D12Resource*>(cb)->GetGPUVirtualAddress() + offsetAligned);
+		Dx12GraphicsContext::s_Context->GetCommandList()->DrawIndexedInstanced(meshBuffer->GetIndexCount(), 1, 0, 0, 0);
 	}
 }
