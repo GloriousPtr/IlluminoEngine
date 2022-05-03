@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Illumino/Renderer/Shader.h"
-
 #include <d3d12.h>
 #include <map>
+
+#include "Illumino/Renderer/Shader.h"
+#include "Illumino/Renderer/GraphicsContext.h"
 
 namespace IlluminoEngine
 {
@@ -15,7 +16,7 @@ namespace IlluminoEngine
 
 		virtual void Bind() override;
 
-		virtual void* CreateBuffer(String&& name, size_t sizeAligned) override;
+		virtual void CreateBuffer(String&& name, size_t sizeAligned) override;
 		virtual void UploadBuffer(String&& name, void* data, size_t size, size_t offsetAligned) override;
 
 	private:
@@ -27,6 +28,6 @@ namespace IlluminoEngine
 		String m_Filepath;
 		ID3D12RootSignature* m_RootSignature;
 		ID3D12PipelineState* m_PipelineState;
-		std::vector<std::map<String, ID3D12Resource*>> m_ConstantBuffers;
+		std::map<String, ID3D12Resource*> m_ConstantBuffers[g_QueueSlotCount];
 	};
 }

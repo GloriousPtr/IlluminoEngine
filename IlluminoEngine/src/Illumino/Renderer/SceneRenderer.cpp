@@ -73,7 +73,7 @@ namespace IlluminoEngine
 			glm::vec4 u_Color = { 1.0f, 0.0f, 0.0f, 1.0f };
 		};
 
-		void* cb = s_Shader->CreateBuffer("Properties", ALIGN(256, sizeof(CB)));
+		s_Shader->CreateBuffer("Properties", ALIGN(256, sizeof(CB)) * s_Meshes.size());
 
 		for (size_t i = 0; i < s_Meshes.size(); ++i)
 		{
@@ -82,7 +82,7 @@ namespace IlluminoEngine
 			CB buffer;
 			buffer.u_MVP = s_Projection * meshData.Transform;
 			
-			s_Shader->UploadBuffer("Properties", &buffer, sizeof(CB), 0);
+			s_Shader->UploadBuffer("Properties", &buffer, sizeof(CB), ALIGN(256, sizeof(CB)) * i);
 			meshData.Mesh->Bind();
 			RenderCommand::DrawIndexed(meshData.Mesh);
 		}

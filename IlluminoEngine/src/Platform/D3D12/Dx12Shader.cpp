@@ -16,10 +16,6 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		m_ConstantBuffers.reserve(g_QueueSlotCount);
-		for (size_t i = 0; i < g_QueueSlotCount; ++i)
-			m_ConstantBuffers.push_back(std::map<String, ID3D12Resource*>());
-
 		SetBufferLayout(layout);
 	}
 
@@ -30,9 +26,9 @@ namespace IlluminoEngine
 		m_PipelineState->Release();
 		m_RootSignature->Release();
 
-		for (auto buffer: m_ConstantBuffers)
+		for (auto& buffer: m_ConstantBuffers)
 		{
-			for (auto b : buffer)
+			for (auto& b : buffer)
 			{
 				b.second->Release();
 			}
@@ -48,7 +44,7 @@ namespace IlluminoEngine
 		Dx12GraphicsContext::s_Context->BindShader(m_PipelineState, m_RootSignature);
 	}
 
-	void* Dx12Shader::CreateBuffer(String&& name, size_t sizeAligned)
+	void Dx12Shader::CreateBuffer(String&& name, size_t sizeAligned)
 	{
 		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
 
@@ -56,11 +52,10 @@ namespace IlluminoEngine
 		auto& constantBuffer = m_ConstantBuffers[backBuffer];
 
 		if (constantBuffer.find(name) != constantBuffer.end())
-			return constantBuffer[name];
+			return;
 
 		ID3D12Resource* buffer = Dx12GraphicsContext::s_Context->CreateConstantBuffer(sizeAligned);
 		constantBuffer[name] = buffer;
-		return buffer;
 	}
 
 	void Dx12Shader::UploadBuffer(String&& name, void* data, size_t size, size_t offsetAligned)
@@ -70,8 +65,7 @@ namespace IlluminoEngine
 		ID3D12Resource* constantBuffer = GetConstantBuffer((String&&)name, size);
 		void** p;
 		constantBuffer->Map(0, nullptr, reinterpret_cast<void**>(&p));
-		void** dst = p + offsetAligned;
-		memcpy(dst, data, size);
+		memcpy(p + offsetAligned, data, size);
 		constantBuffer->Unmap(0, nullptr);
 
 		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootConstantBufferView(0, constantBuffer->GetGPUVirtualAddress() + offsetAligned);
