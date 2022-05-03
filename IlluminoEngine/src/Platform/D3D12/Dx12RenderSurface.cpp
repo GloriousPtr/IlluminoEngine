@@ -82,7 +82,7 @@ namespace IlluminoEngine
 			ILLUMINO_ASSERT(!data.Resource);
 			HRESULT hr = m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&data.Resource));
 			D3D12_RENDER_TARGET_VIEW_DESC desc{};
-			desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+			desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 			((ID3D12Device*) context->GetDevice())->CreateRenderTargetView(data.Resource, &desc, data.RTVHandle.CPU);
 		}

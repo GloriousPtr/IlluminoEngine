@@ -202,7 +202,7 @@ namespace IlluminoEngine
 		psoDesc.PS.pShaderBytecode = pixelShader->GetBufferPointer();
 		psoDesc.pRootSignature = m_RootSignature;
 		psoDesc.NumRenderTargets = 1;
-		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 		psoDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
 		psoDesc.InputLayout.NumElements = static_cast<UINT>(d3d12BufferLayout.size());
 		psoDesc.InputLayout.pInputElementDescs = &(d3d12BufferLayout[0]);
