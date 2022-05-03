@@ -24,7 +24,7 @@ namespace IlluminoEngine
 		virtual void* GetDevice() override { return m_Device; }
 		virtual void* GetCommandQueue() override { return m_CommandQueue; }
 		virtual void* GetCommandList() override { return m_CommandLists[m_CurrentBackBuffer]; }
-		virtual void* GetSRVDescriptorHeap() override { return m_SRVDescriptorHeap; }
+		virtual void* GetSRVDescriptorHeap() override { return &m_SRVDescriptorHeap; }
 		virtual uint32_t GetCurrentBackBufferIndex() override { return m_CurrentBackBuffer; }
 
 		virtual void SetDeferredReleasesFlag() override { m_DeferredReleasesFlag[m_CurrentBackBuffer] = 1; }
@@ -67,8 +67,6 @@ namespace IlluminoEngine
 		ID3D12DescriptorHeap* m_RenderTargetDescriptorHeap;
 		ID3D12Resource* m_RenderTargets[g_QueueSlotCount];
 
-		ID3D12DescriptorHeap* m_SRVDescriptorHeap;
-
 		ID3D12CommandAllocator* m_CommandAllocators[g_QueueSlotCount];
 		ID3D12GraphicsCommandList* m_CommandLists[g_QueueSlotCount];
 
@@ -78,7 +76,7 @@ namespace IlluminoEngine
 
 		DescriptorHeap m_RTVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV };
 		DescriptorHeap m_DSVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_DSV };
-//		DescriptorHeap m_SRVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV };
+		DescriptorHeap m_SRVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV };
 		DescriptorHeap m_UAVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV };
 
 		std::mutex m_Mutex;

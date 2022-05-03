@@ -6,6 +6,7 @@
 #include <backends/imgui_impl_dx12.h>
 #include <d3d12.h>
 
+#include "Platform/D3D12/Dx12Resources.h"
 #include "Illumino/Core/Application.h"
 #include "Window.h"
 
@@ -20,6 +21,7 @@ namespace IlluminoEngine
 	{
 	}
 
+	static DescriptorHandle s_ImGuiDescriptorHandle;
 	void ImGuiLayer::OnAttach()
 	{
 		OPTICK_EVENT();
@@ -52,22 +54,25 @@ namespace IlluminoEngine
 			style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 		}
 
-		ID3D12DescriptorHeap* srvHeap = reinterpret_cast<ID3D12DescriptorHeap*>(context->GetSRVDescriptorHeap());
+		DescriptorHeap* heap = (DescriptorHeap*)context->GetSRVDescriptorHeap();
+		s_ImGuiDescriptorHandle = heap->Allocate();
+
 		// Setup Platform/Renderer backends
-		D3D12_CPU_DESCRIPTOR_HANDLE cpuSrvHandle;
-		cpuSrvHandle.ptr = srvHeap->GetCPUDescriptorHandleForHeapStart().ptr;
-		D3D12_GPU_DESCRIPTOR_HANDLE gpuSrvHandle;
-		gpuSrvHandle.ptr = srvHeap->GetGPUDescriptorHandleForHeapStart().ptr;
 		ImGui_ImplWin32_Init(hWnd);
 		ImGui_ImplDX12_Init(device, g_QueueSlotCount,
-			DXGI_FORMAT_R8G8B8A8_UNORM, srvHeap,
-			cpuSrvHandle,
-			gpuSrvHandle);
+			DXGI_FORMAT_R8G8B8A8_UNORM, const_cast<ID3D12DescriptorHeap*>(heap->GetHeap()),
+			s_ImGuiDescriptorHandle.CPU,
+			s_ImGuiDescriptorHandle.GPU);
 	}
 
 	void ImGuiLayer::OnDetach()
 	{
 		OPTICK_EVENT();
+
+		Ref<Window> window = Application::GetApplication()->GetWindow();
+		GraphicsContext* context = window->GetGraphicsContext().get();
+		DescriptorHeap* heap = (DescriptorHeap*)context->GetSRVDescriptorHeap();
+		heap->Free(s_ImGuiDescriptorHandle);
 
 		ImGui_ImplDX12_Shutdown();
 		ImGui_ImplWin32_Shutdown();

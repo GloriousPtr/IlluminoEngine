@@ -38,7 +38,7 @@ namespace IlluminoEngine
 		bool result = true;
 		result &= m_RTVDescriptorHeap.Init(512, false);
 		result &= m_DSVDescriptorHeap.Init(512, false);
-//		result &= m_SRVDescriptorHeap.Init(4096, true);
+		result &= m_SRVDescriptorHeap.Init(4096, true);
 		result &= m_UAVDescriptorHeap.Init(512, true);
 		ILLUMINO_ASSERT(result, "Failed to create some descriptor heap allocations");
 
@@ -141,13 +141,12 @@ namespace IlluminoEngine
 
 		m_RTVDescriptorHeap.Release();
 		m_DSVDescriptorHeap.Release();
-//		m_SRVDescriptorHeap.Release();
+		m_SRVDescriptorHeap.Release();
 		m_UAVDescriptorHeap.Release();
 
 		for (uint32_t i = 0; i < g_QueueSlotCount; ++i)
 			ProcessDeferredReleases(i);
 
-		m_SRVDescriptorHeap->Release();
 		m_RenderTargetDescriptorHeap->Release();
 
 		m_SwapChain->Release();
@@ -325,14 +324,6 @@ namespace IlluminoEngine
 			rtvHandle.Offset(m_RenderTargetViewDescriptorSize);
 		}
 
-
-		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc;
-		srvHeapDesc.NumDescriptors = 1;
-		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		srvHeapDesc.NodeMask = 0;
-		m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVDescriptorHeap));
-
 		adapter->Release();
 		dxgiFactory->Release();
 	}
@@ -412,7 +403,10 @@ namespace IlluminoEngine
 				m_CurrentBackBuffer, m_RenderTargetViewDescriptorSize);
 
 		commandList->OMSetRenderTargets(1, &renderTargetHandle, true, nullptr);
-        commandList->SetDescriptorHeaps(1, &m_SRVDescriptorHeap);
+
+		ID3D12DescriptorHeap* descHeap = const_cast<ID3D12DescriptorHeap*>(m_SRVDescriptorHeap.GetHeap());
+        commandList->SetDescriptorHeaps(1, &descHeap);
+		
 		commandList->RSSetViewports(1, &m_Viewport);
 		commandList->RSSetScissorRects(1, &m_RectScissor);
 
@@ -447,7 +441,7 @@ namespace IlluminoEngine
 
 		m_RTVDescriptorHeap.ProcessDeferredFree(frameIndex);
 		m_DSVDescriptorHeap.ProcessDeferredFree(frameIndex);
-//		m_SRVDescriptorHeap.ProcessDeferredFree(frameIndex);
+		m_SRVDescriptorHeap.ProcessDeferredFree(frameIndex);
 		m_UAVDescriptorHeap.ProcessDeferredFree(frameIndex);
 
 		auto& resources = m_DeferredReleases[frameIndex];

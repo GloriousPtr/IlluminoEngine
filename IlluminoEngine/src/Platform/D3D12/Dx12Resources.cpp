@@ -82,8 +82,9 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		ILLUMINO_ASSERT(!m_Size);
-
+		// Releasing the buffer of size 0 -> releasing the heap memory aquired by the buffer
+		ILLUMINO_ASSERT(m_Size >= 0);
+		
 		Dx12GraphicsContext* context = (Dx12GraphicsContext*) Application::GetApplication()->GetWindow()->GetGraphicsContext().get();
 
 		context->DeferredRelease(m_Heap);
