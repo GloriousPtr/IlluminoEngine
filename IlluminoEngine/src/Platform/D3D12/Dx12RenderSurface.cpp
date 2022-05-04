@@ -64,7 +64,7 @@ namespace IlluminoEngine
 	void Dx12RenderSurface::Present()
 	{
 		ILLUMINO_ASSERT(m_SwapChain);
-		HRESULT hr = m_SwapChain->Present(0, 0);
+		HRESULT hr = m_SwapChain->Present(1, 0);
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to present the swapchain");
 		m_CurrentBackBuffer = m_SwapChain->GetCurrentBackBufferIndex();
 	}

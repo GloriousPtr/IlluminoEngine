@@ -65,6 +65,9 @@ namespace IlluminoEngine
 
 		RenderCommand::ClearColor({ 0.042f, 0.042f, 0.042f, 1.0f });
 
+		if (s_Meshes.empty())
+			return;
+
 		s_Shader->Bind();
 		
 		struct CB

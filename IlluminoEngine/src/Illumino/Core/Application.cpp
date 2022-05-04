@@ -32,6 +32,8 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		m_Window->Update();
+
 		SceneRenderer::Shutdown();
 		m_LayerStack.PopOverlay(m_ImGuiLayer);
 		delete m_ImGuiLayer;
@@ -59,7 +61,7 @@ namespace IlluminoEngine
 
 	void Application::Run()
 	{
-		while (!m_Window->ShouldClose())
+		while (true)
 		{
 			OPTICK_FRAME("MainThread");
 
@@ -68,6 +70,8 @@ namespace IlluminoEngine
 			m_LastFrameTime = time;
 			
 			m_Window->ProcessInput();
+			if (m_Window->ShouldClose())
+				break;
 
 			{
 				OPTICK_EVENT("LayerStack OnUpdate");
@@ -85,7 +89,7 @@ namespace IlluminoEngine
 			}
 			m_ImGuiLayer->End();
 
-			m_Window->Update();
+			m_Window->Update();	
 		}
 	}
 }

@@ -21,7 +21,7 @@ namespace IlluminoEngine
 		{
 			case WM_CLOSE:
 				window->OnClosed();
-				return true;
+				return 0;
 		}
 
 		return DefWindowProcA(hWnd, uMsg, wParam, lParam);

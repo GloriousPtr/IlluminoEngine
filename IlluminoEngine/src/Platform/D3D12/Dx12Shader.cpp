@@ -49,13 +49,13 @@ namespace IlluminoEngine
 		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
 
 		uint32_t backBuffer = Dx12GraphicsContext::s_Context->GetCurrentBackBufferIndex();
-		auto& constantBuffer = m_ConstantBuffers[backBuffer];
+		auto& constantBufferMap = m_ConstantBuffers[backBuffer];
 
-		if (constantBuffer.find(name) != constantBuffer.end())
-			return constantBuffer[name]->GetGPUVirtualAddress();
+		if (constantBufferMap.find(name) != constantBufferMap.end())
+			return constantBufferMap.at(name)->GetGPUVirtualAddress();
 
 		ID3D12Resource* buffer = Dx12GraphicsContext::s_Context->CreateConstantBuffer(sizeAligned);
-		constantBuffer[name] = buffer;
+		constantBufferMap.emplace(name, buffer);
 
 		return buffer->GetGPUVirtualAddress();
 	}
@@ -78,13 +78,13 @@ namespace IlluminoEngine
 		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
 
 		uint32_t backBuffer = Dx12GraphicsContext::s_Context->GetCurrentBackBufferIndex();
-		auto& constantBuffer = m_ConstantBuffers[backBuffer];
+		auto& constantBufferMap = m_ConstantBuffers[backBuffer];
 
-		if (constantBuffer.find(name) != constantBuffer.end())
-			return constantBuffer[name];
+		if (constantBufferMap.find(name) != constantBufferMap.end())
+			return constantBufferMap.at(name);
 
 		ID3D12Resource* buffer = Dx12GraphicsContext::s_Context->CreateConstantBuffer(ALIGN(256, size));
-		constantBuffer[name] = buffer;
+		constantBufferMap.emplace(name, buffer);
 		return buffer;
 	}
 

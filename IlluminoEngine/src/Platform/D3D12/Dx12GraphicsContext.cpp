@@ -69,6 +69,11 @@ namespace IlluminoEngine
 		result &= m_UAVDescriptorHeap.Init(512, true);
 		ILLUMINO_ASSERT(result, "Failed to create some descriptor heap allocations");
 
+		m_RTVDescriptorHeap.GetHeap()->SetName(L"RTV Heap");
+		m_DSVDescriptorHeap.GetHeap()->SetName(L"DSV Heap");
+		m_SRVDescriptorHeap.GetHeap()->SetName(L"SRV Heap");
+		m_UAVDescriptorHeap.GetHeap()->SetName(L"UAV Heap");
+
 		CreateRenderSurface(factory);
 		factory->Release();
 
@@ -376,7 +381,7 @@ namespace IlluminoEngine
 		commandList->ResourceBarrier(1, &barrier);
 	}
 
-	void Dx12GraphicsContext::DeferredRelease(IUnknown* resource)
+	void Dx12GraphicsContext::DeferredRelease(IUnknown** resource)
 	{
 		std::lock_guard lock{ m_Mutex };
 		m_DeferredReleases[m_CurrentBackBuffer].push_back(resource);
@@ -398,7 +403,10 @@ namespace IlluminoEngine
 		if (!resources.empty())
 		{
 			for (auto& r : resources)
-				r->Release();
+			{
+				(*r)->Release();
+				r = nullptr;
+			}
 
 			resources.clear();
 		}

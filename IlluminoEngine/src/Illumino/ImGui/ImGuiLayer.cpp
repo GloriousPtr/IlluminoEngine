@@ -61,7 +61,7 @@ namespace IlluminoEngine
 		// Setup Platform/Renderer backends
 		ImGui_ImplWin32_Init(hWnd);
 		ImGui_ImplDX12_Init(device, g_QueueSlotCount,
-			DXGI_FORMAT_R8G8B8A8_UNORM, const_cast<ID3D12DescriptorHeap*>(heap.GetHeap()),
+			DXGI_FORMAT_R8G8B8A8_UNORM, heap.GetHeap(),
 			s_ImGuiDescriptorHandle.CPU,
 			s_ImGuiDescriptorHandle.GPU);
 	}
@@ -70,14 +70,14 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		ImGui_ImplDX12_Shutdown();
+		ImGui_ImplWin32_Shutdown();
+		ImGui::DestroyContext();
+
 		Ref<Window> window = Application::GetApplication()->GetWindow();
 		Dx12GraphicsContext* context = (Dx12GraphicsContext*)window->GetGraphicsContext().get();
 		DescriptorHeap& heap = context->GetSRVDescriptorHeap();
 		heap.Free(s_ImGuiDescriptorHandle);
-
-		ImGui_ImplDX12_Shutdown();
-		ImGui_ImplWin32_Shutdown();
-		ImGui::DestroyContext();
 	}
 
 	void ImGuiLayer::Begin()

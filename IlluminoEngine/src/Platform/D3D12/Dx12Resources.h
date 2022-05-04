@@ -51,7 +51,7 @@ namespace IlluminoEngine
 		const D3D12_DESCRIPTOR_HEAP_TYPE GetType() const { return m_Type; }
 		const D3D12_CPU_DESCRIPTOR_HANDLE GetCPUStart() const { return m_CPUStart; }
 		const D3D12_GPU_DESCRIPTOR_HANDLE GetGPUStart() const { return m_GPUStart; }
-		const ID3D12DescriptorHeap* const GetHeap() const { return m_Heap; }
+		ID3D12DescriptorHeap* const GetHeap() const { return m_Heap; }
 		const uint32_t GetCapacity() const { return m_Capacity; }
 		const uint32_t GetSize() const { return m_Size; }
 		const uint32_t GetDescriptorSize() const { return m_DescriptorSize; }

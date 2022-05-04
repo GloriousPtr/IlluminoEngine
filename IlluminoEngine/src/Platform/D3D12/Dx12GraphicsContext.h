@@ -51,7 +51,7 @@ namespace IlluminoEngine
 		void BindMeshBuffer(MeshBuffer& mesh);
 
 		void SetDeferredReleasesFlag() { m_DeferredReleasesFlag[m_CurrentBackBuffer] = 1; }
-		void DeferredRelease(IUnknown* resource);
+		void DeferredRelease(IUnknown** resource);
 		void ProcessDeferredReleases(const uint32_t frameIndex);
 
 	private:
@@ -75,7 +75,7 @@ namespace IlluminoEngine
 		ID3D12GraphicsCommandList* m_CommandLists[g_QueueSlotCount];
 
 		int32_t m_CurrentBackBuffer = 0;
-		std::vector<IUnknown*> m_DeferredReleases[g_QueueSlotCount];
+		std::vector<IUnknown**> m_DeferredReleases[g_QueueSlotCount];
 		uint32_t m_DeferredReleasesFlag[g_QueueSlotCount];
 
 		DescriptorHeap m_RTVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV };

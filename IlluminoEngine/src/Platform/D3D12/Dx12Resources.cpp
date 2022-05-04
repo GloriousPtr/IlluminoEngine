@@ -84,7 +84,7 @@ namespace IlluminoEngine
 		ILLUMINO_ASSERT(m_Size >= 0);
 		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
 
-		Dx12GraphicsContext::s_Context->DeferredRelease(m_Heap);
+		Dx12GraphicsContext::s_Context->DeferredRelease((IUnknown**)&m_Heap);
 	}
 
 	DescriptorHandle DescriptorHeap::Allocate()

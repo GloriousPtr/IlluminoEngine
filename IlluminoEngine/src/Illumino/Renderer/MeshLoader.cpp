@@ -68,8 +68,8 @@ namespace IlluminoEngine
 			aiProcess_CalcTangentSpace |
 			aiProcess_Triangulate |
 			aiProcess_SortByPType |
-			aiProcess_GenNormals |
-			aiProcess_GenUVCoords |
+//			aiProcess_GenNormals |
+//			aiProcess_GenUVCoords |
 			aiProcess_OptimizeMeshes |
 			aiProcess_JoinIdenticalVertices |
 //			aiProcess_GlobalScale |
