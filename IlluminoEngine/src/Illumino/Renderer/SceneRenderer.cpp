@@ -73,20 +73,31 @@ namespace IlluminoEngine
 			glm::vec4 u_Color = { 1.0f, 0.0f, 0.0f, 1.0f };
 		};
 
-		s_Shader->CreateBuffer("Properties", ALIGN(256, sizeof(CB)) * s_Meshes.size());
+		const size_t alignedSize = ALIGN(256, sizeof(CB));
+		const uint32_t meshCount = s_Meshes.size();
+
+		s_Shader->CreateBuffer("Properties", alignedSize * meshCount);
+
+		size_t bufferSize = alignedSize * meshCount;
+		char* buffer = new char[bufferSize];
+		for (size_t i = 0; i < meshCount; ++i)
+		{
+			auto& meshData = s_Meshes[i];
+			CB cb;
+			cb.u_MVP = s_Projection * meshData.Transform;
+			memcpy(buffer + alignedSize * i, &cb, sizeof(CB));
+		}
+
+		s_Shader->UploadBuffer("Properties", buffer, bufferSize, 0);
 
 		for (size_t i = 0; i < s_Meshes.size(); ++i)
 		{
 			auto& meshData = s_Meshes[i];
-
-			CB buffer;
-			buffer.u_MVP = s_Projection * meshData.Transform;
-			
-			s_Shader->UploadBuffer("Properties", &buffer, sizeof(CB), ALIGN(256, sizeof(CB)) * i);
 			meshData.Mesh->Bind();
 			RenderCommand::DrawIndexed(meshData.Mesh);
 		}
 
+		delete[] buffer;
 		s_Meshes.clear();
 	}
 }
