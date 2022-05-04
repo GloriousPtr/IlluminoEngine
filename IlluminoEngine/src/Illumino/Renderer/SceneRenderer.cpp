@@ -76,9 +76,10 @@ namespace IlluminoEngine
 		const size_t alignedSize = ALIGN(256, sizeof(CB));
 		const uint32_t meshCount = s_Meshes.size();
 
-		s_Shader->CreateBuffer("Properties", alignedSize * meshCount);
+		uint64_t gpuHandle = s_Shader->CreateBuffer("Properties", alignedSize * meshCount);
 
 		size_t bufferSize = alignedSize * meshCount;
+		
 		char* buffer = new char[bufferSize];
 		for (size_t i = 0; i < meshCount; ++i)
 		{
@@ -89,15 +90,15 @@ namespace IlluminoEngine
 		}
 
 		s_Shader->UploadBuffer("Properties", buffer, bufferSize, 0);
+		delete[] buffer;
 
 		for (size_t i = 0; i < s_Meshes.size(); ++i)
 		{
 			auto& meshData = s_Meshes[i];
 			meshData.Mesh->Bind();
-			RenderCommand::DrawIndexed(meshData.Mesh);
+			RenderCommand::DrawIndexed(meshData.Mesh, gpuHandle + alignedSize * i);
 		}
 
-		delete[] buffer;
 		s_Meshes.clear();
 	}
 }

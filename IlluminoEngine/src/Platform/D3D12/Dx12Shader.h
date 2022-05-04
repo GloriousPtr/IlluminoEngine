@@ -16,7 +16,7 @@ namespace IlluminoEngine
 
 		virtual void Bind() override;
 
-		virtual void CreateBuffer(String&& name, size_t sizeAligned) override;
+		virtual uint64_t CreateBuffer(String&& name, size_t sizeAligned) override;
 		virtual void UploadBuffer(String&& name, void* data, size_t size, size_t offsetAligned) override;
 
 	private:

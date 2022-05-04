@@ -23,9 +23,9 @@ namespace IlluminoEngine
 			s_RendererAPI->ClearColor(color);
 		}
 
-		inline static void DrawIndexed(Ref<MeshBuffer>& meshBuffer)
+		inline static void DrawIndexed(Ref<MeshBuffer>& meshBuffer, uint64_t cbvGPUHandle)
 		{
-			s_RendererAPI->DrawIndexed(meshBuffer);
+			s_RendererAPI->DrawIndexed(meshBuffer, cbvGPUHandle);
 		}
 
 	private:

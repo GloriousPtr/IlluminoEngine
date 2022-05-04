@@ -44,7 +44,7 @@ namespace IlluminoEngine
 		Dx12GraphicsContext::s_Context->BindShader(m_PipelineState, m_RootSignature);
 	}
 
-	void Dx12Shader::CreateBuffer(String&& name, size_t sizeAligned)
+	uint64_t Dx12Shader::CreateBuffer(String&& name, size_t sizeAligned)
 	{
 		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
 
@@ -52,10 +52,12 @@ namespace IlluminoEngine
 		auto& constantBuffer = m_ConstantBuffers[backBuffer];
 
 		if (constantBuffer.find(name) != constantBuffer.end())
-			return;
+			return constantBuffer[name]->GetGPUVirtualAddress();
 
 		ID3D12Resource* buffer = Dx12GraphicsContext::s_Context->CreateConstantBuffer(sizeAligned);
 		constantBuffer[name] = buffer;
+
+		return buffer->GetGPUVirtualAddress();
 	}
 
 	void Dx12Shader::UploadBuffer(String&& name, void* data, size_t size, size_t offsetAligned)
@@ -67,8 +69,6 @@ namespace IlluminoEngine
 		constantBuffer->Map(0, nullptr, reinterpret_cast<void**>(&p));
 		memcpy(p + offsetAligned, data, size);
 		constantBuffer->Unmap(0, nullptr);
-
-		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootConstantBufferView(0, constantBuffer->GetGPUVirtualAddress() + offsetAligned);
 	}
 
 	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name, size_t size)

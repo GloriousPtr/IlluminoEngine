@@ -20,7 +20,7 @@ namespace IlluminoEngine
 		virtual void Init() = 0;
 		virtual void SetViewportSize(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
 		virtual void ClearColor(const glm::vec4& color) = 0;
-		virtual void DrawIndexed(const Ref<MeshBuffer>& meshBuffer) = 0;
+		virtual void DrawIndexed(const Ref<MeshBuffer>& meshBuffer, uint64_t cbvGPUHandle) = 0;
 
 		static Scope<RendererAPI> Create();
 
