@@ -25,17 +25,22 @@ namespace IlluminoEngine
 
 	void Dx12RendererAPI::ClearColor(const glm::vec4& color)
 	{
-		OPTICK_EVENT();
+		ID3D12GraphicsCommandList* commandList = Dx12GraphicsContext::s_Context->GetCommandList();
 
-		auto target = Dx12GraphicsContext::s_Context->GetRenderTargetHandle();
-		Dx12GraphicsContext::s_Context->GetCommandList()->ClearRenderTargetView(target, glm::value_ptr(color), 0, nullptr);
+		OPTICK_GPU_CONTEXT(commandList);
+		OPTICK_GPU_EVENT("ClearColor");
+
+		commandList->ClearRenderTargetView(Dx12GraphicsContext::s_Context->GetRenderTargetHandle(), glm::value_ptr(color), 0, nullptr);
 	}
 
 	void Dx12RendererAPI::DrawIndexed(const Ref<MeshBuffer>& meshBuffer, uint64_t cbvGPUHandle)
 	{
-		OPTICK_EVENT();
+		ID3D12GraphicsCommandList* commandList = Dx12GraphicsContext::s_Context->GetCommandList();
 
-		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootConstantBufferView(0, cbvGPUHandle);
-		Dx12GraphicsContext::s_Context->GetCommandList()->DrawIndexedInstanced(meshBuffer->GetIndexCount(), 1, 0, 0, 0);
+		OPTICK_GPU_CONTEXT(Dx12GraphicsContext::s_Context->GetCommandList());
+		OPTICK_GPU_EVENT("DrawIndexed");
+
+		commandList->SetGraphicsRootConstantBufferView(0, cbvGPUHandle);
+		commandList->DrawIndexedInstanced(meshBuffer->GetIndexCount(), 1, 0, 0, 0);
 	}
 }
