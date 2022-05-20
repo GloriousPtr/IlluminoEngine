@@ -87,9 +87,8 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		// Finalize Render
 		{
-			OPTICK_EVENT("Finalize Render");
-
 			// Transition the swap chain back to present
 			D3D12_RESOURCE_BARRIER barrier;
 			barrier.Transition.pResource = m_RenderSurface->GetBackBufferResource();
@@ -109,9 +108,8 @@ namespace IlluminoEngine
 			m_CommandQueue->ExecuteCommandLists(std::extent<decltype(commandLists)>::value, commandLists);
 		}
 
+		// Present
 		{
-			OPTICK_EVENT("Present");
-
 			uint32_t syncInterval = m_Vsync ? 1 : 0;
 			uint32_t presentFlags = m_Vsync ? 0 : DXGI_PRESENT_ALLOW_TEARING;
 
@@ -280,6 +278,8 @@ namespace IlluminoEngine
 		hr = m_Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create command queue");
 		m_CommandQueue->SetName(L"MainD3D12CommandQueue");
+
+		OPTICK_GPU_INIT_D3D12(m_Device, &m_CommandQueue, 1);
 
 		adapter->Release();
 	}
