@@ -27,6 +27,9 @@ namespace IlluminoEngine
 		const Scope<GraphicsContext>& GetGraphicsContext() { return m_Context; }
 
 	private:
+		static LRESULT HandleInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+	private:
 		std::string m_Name;
 		uint32_t m_Width;
 		uint32_t m_Height;

@@ -71,6 +71,25 @@ namespace IlluminoEngine
 
 	void Dx12RenderSurface::Resize(uint32_t width, uint32_t height)
 	{
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+		Dx12GraphicsContext::s_Context->WaitForAllFrames();
+
+		for (size_t i = 0; i < g_QueueSlotCount; ++i)
+		{
+			m_RenderTargetData[i].Resource->Release();
+			m_RenderTargetData[i].Resource = nullptr;
+		}
+
+		HRESULT hr = m_SwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to resize swapchain!");
+		m_CurrentBackBuffer = m_SwapChain->GetCurrentBackBufferIndex();
+
+		m_Width = width;
+		m_Height = height;
+
+		Finalize();
+
+		ILLUMINO_INFO("Swapchain resized to {0}x{1}", width, height);
 	}
 
 	void Dx12RenderSurface::Finalize()
@@ -87,6 +106,8 @@ namespace IlluminoEngine
 			desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 			device->CreateRenderTargetView(data.Resource, &desc, data.RTVHandle.CPU);
+
+			data.Resource->SetName(L"RTV Resource");
 		}
 
 		int width = m_Width;

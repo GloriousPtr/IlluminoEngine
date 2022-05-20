@@ -7,7 +7,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 namespace IlluminoEngine
 {
-	LRESULT HandleInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	LRESULT Window::HandleInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		OPTICK_EVENT();
 
@@ -21,7 +21,14 @@ namespace IlluminoEngine
 		{
 			case WM_CLOSE:
 				window->OnClosed();
-				return 0;
+				return true;
+			case WM_SIZE:
+				if (wParam != SIZE_MINIMIZED)
+				{
+					window->m_Width = LOWORD(lParam);
+					window->m_Height = HIWORD(lParam);
+					return true;
+				}
 		}
 
 		return DefWindowProcA(hWnd, uMsg, wParam, lParam);
@@ -34,7 +41,7 @@ namespace IlluminoEngine
 
 		WNDCLASSA wc = {};
 		wc.style = 0;
-		wc.lpfnWndProc = &(IlluminoEngine::HandleInput);
+		wc.lpfnWndProc = &(IlluminoEngine::Window::HandleInput);
 		wc.cbClsExtra = 0;
 		wc.cbWndExtra = 0;
 		wc.hInstance = m_HInstance;
@@ -46,7 +53,7 @@ namespace IlluminoEngine
 		bool success = RegisterClassA(&wc);
 		ILLUMINO_ASSERT(success, "Failed to register window class");
 
-		DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_BORDER;
+		DWORD style = WS_OVERLAPPEDWINDOW;
 
 		RECT rect;
 		rect.left = 100;

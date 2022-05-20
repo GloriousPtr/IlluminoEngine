@@ -23,6 +23,8 @@ namespace IlluminoEngine
 		constexpr uint32_t GetBackBufferIndex() const { return m_CurrentBackBuffer; }
 		constexpr ID3D12Resource* const GetBackBufferResource() const { return m_RenderTargetData[m_CurrentBackBuffer].Resource; }
 		constexpr D3D12_CPU_DESCRIPTOR_HANDLE GetRTV() const { return m_RenderTargetData[m_CurrentBackBuffer].RTVHandle.CPU; }
+		constexpr D3D12_VIEWPORT const GetViewport() const { return m_Viewport; }
+		constexpr D3D12_RECT const GetScissorRect() const { return m_ScissorRect; }
 
 	private:
 		void Finalize();

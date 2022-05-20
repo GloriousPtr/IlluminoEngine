@@ -78,7 +78,6 @@ namespace IlluminoEngine
 		factory->Release();
 
 		CreateAllocatorsAndCommandLists();
-		CreateViewportScissor();
 
 		WaitForFence(m_Fences[m_CurrentBackBuffer], m_FenceValues[m_CurrentBackBuffer], m_FenceEvents[m_CurrentBackBuffer]);
 		PrepareRender();
@@ -126,6 +125,10 @@ namespace IlluminoEngine
 		}
 
 		WaitForFence(m_Fences[m_CurrentBackBuffer], m_FenceValues[m_CurrentBackBuffer], m_FenceEvents[m_CurrentBackBuffer]);
+		
+		if (m_Window.GetWidth() != m_RenderSurface->GetWidth() || m_Window.GetHeight() != m_RenderSurface->GetHeight())
+			m_RenderSurface->Resize(m_Window.GetWidth(), m_Window.GetHeight());
+
 		PrepareRender();
 	}
 
@@ -244,6 +247,7 @@ namespace IlluminoEngine
 		
 		HRESULT hr = D3D12CreateDevice(adapter, minFeatureLevel, IID_PPV_ARGS(&m_Device));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to find a compatible device");
+		m_Device->SetName(L"MainD3D12Device");
 
 #ifdef ILLUMINO_DEBUG
 		ID3D12InfoQueue1* infoQueue1;
@@ -275,6 +279,7 @@ namespace IlluminoEngine
 		queueDesc.NodeMask = 0;
 		hr = m_Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_CommandQueue));
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to create command queue");
+		m_CommandQueue->SetName(L"MainD3D12CommandQueue");
 
 		adapter->Release();
 	}
@@ -306,16 +311,6 @@ namespace IlluminoEngine
 		}
 	}
 
-	void Dx12GraphicsContext::CreateViewportScissor()
-	{
-		OPTICK_EVENT();
-
-		int width = m_Window.GetWidth();
-		int height = m_Window.GetHeight();
-		m_RectScissor = { 0, 0, width, height };
-		m_Viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
-	}
-
 	void Dx12GraphicsContext::CreateRootSignature(ID3DBlob* rootBlob, ID3D12RootSignature** rootSignature)
 	{
 		OPTICK_EVENT();
@@ -345,6 +340,14 @@ namespace IlluminoEngine
 		}
 	}
 
+	void Dx12GraphicsContext::WaitForAllFrames()
+	{
+		OPTICK_EVENT();
+
+		for (size_t i = 0; i < g_QueueSlotCount; ++i)
+			WaitForFence(m_Fences[i], m_FenceValues[i], m_FenceEvents[i]);
+	}
+
 	void Dx12GraphicsContext::PrepareRender()
 	{
 		OPTICK_EVENT();
@@ -366,8 +369,10 @@ namespace IlluminoEngine
 		ID3D12DescriptorHeap* descHeap = const_cast<ID3D12DescriptorHeap*>(m_SRVDescriptorHeap.GetHeap());
         commandList->SetDescriptorHeaps(1, &descHeap);
 		
-		commandList->RSSetViewports(1, &m_Viewport);
-		commandList->RSSetScissorRects(1, &m_RectScissor);
+		auto& viewport = m_RenderSurface->GetViewport();
+		auto& scissorRect = m_RenderSurface->GetScissorRect();
+		commandList->RSSetViewports(1, &viewport);
+		commandList->RSSetScissorRects(1, &scissorRect);
 
 		// Transition back buffer
 		D3D12_RESOURCE_BARRIER barrier;

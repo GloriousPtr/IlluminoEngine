@@ -23,7 +23,7 @@ namespace IlluminoEngine
 		virtual void Shutdown() override;
 		virtual void SetVsync(bool state) override { m_Vsync = state; }
 		
-		ID3D12Device* GetDevice() { return m_Device; }
+		ID3D12Device8* GetDevice() { return m_Device; }
 		ID3D12CommandQueue* GetCommandQueue() { return m_CommandQueue; }
 		ID3D12GraphicsCommandList* GetCommandList() { return m_CommandLists[m_CurrentBackBuffer]; }
 		D3D12_CPU_DESCRIPTOR_HANDLE GetRenderTargetHandle() { return m_RenderSurface->GetRTV(); }
@@ -39,9 +39,9 @@ namespace IlluminoEngine
 		void CreateDevice(IDXGIFactory7* factory);
 		void CreateRenderSurface(IDXGIFactory7* factory);
 		void CreateAllocatorsAndCommandLists();
-		void CreateViewportScissor();
 		void PrepareRender();
 		void WaitForFence(ID3D12Fence* fence, uint64_t completionValue, HANDLE waitEvent);
+		void WaitForAllFrames();
 
 		void CreateRootSignature(ID3DBlob* rootBlob, ID3D12RootSignature** rootSignature);
 		void CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& psoDesc, ID3D12PipelineState** pipelineState);
@@ -59,10 +59,8 @@ namespace IlluminoEngine
 		const Window& m_Window;
 
 		bool m_Vsync;
-		D3D12_VIEWPORT m_Viewport;
-		D3D12_RECT m_RectScissor;
 
-		ID3D12Device* m_Device;
+		ID3D12Device8* m_Device;
 		ID3D12CommandQueue* m_CommandQueue;
 		Dx12RenderSurface* m_RenderSurface;
 
