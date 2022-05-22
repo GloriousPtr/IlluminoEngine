@@ -34,6 +34,7 @@ project "IlluminoEngine"
 		"%{IncludeDir.assimp_config}",
 		"%{IncludeDir.assimp_config_assimp}",
 		"%{IncludeDir.imgui}",
+		"%{IncludeDir.EASTL}",
 	}
 
 	links
@@ -46,6 +47,7 @@ project "IlluminoEngine"
 		"optick",
 		"assimp",
 		"imgui",
+		"EASTL",
 	}
 
 	filter "system:windows"

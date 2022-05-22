@@ -23,6 +23,7 @@ project "IlluminoEd"
 		"%{IncludeDir.assimp}",
 		"%{IncludeDir.assimp_config}",
 		"%{IncludeDir.assimp_config_assimp}",
+		"%{IncludeDir.EASTL}",
 	}
 
 	links
