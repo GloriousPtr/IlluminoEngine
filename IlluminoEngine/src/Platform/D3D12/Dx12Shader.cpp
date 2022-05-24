@@ -109,17 +109,18 @@ namespace IlluminoEngine
 			errorBlob->Release();
 
 		// Create root signature
-		D3D12_ROOT_DESCRIPTOR rootCBVDescriptor;
-		rootCBVDescriptor.RegisterSpace = 0;
-		rootCBVDescriptor.ShaderRegister = 0;
+		CD3DX12_ROOT_PARAMETER parameters[2];
+		CD3DX12_DESCRIPTOR_RANGE range { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0 };
 
-		CD3DX12_ROOT_PARAMETER parameters[1];
-		parameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-		parameters[0].Descriptor = rootCBVDescriptor;
-		parameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		parameters[0].InitAsDescriptorTable(1, &range);
+		parameters[1].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
+
+		CD3DX12_STATIC_SAMPLER_DESC samplers[1];
+		samplers->Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
 
 		CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
-		descRootSignature.Init(1, parameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		
+		descRootSignature.Init(2, parameters, 1, samplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		ID3DBlob* rootBlob;
 		hr = D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &rootBlob, &errorBlob);

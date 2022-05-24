@@ -5,7 +5,7 @@
 
 namespace IlluminoEngine
 {
-	static std::vector<Ref<MeshBuffer>> s_Meshes;
+	static std::vector<Ref<Mesh>> s_Meshes;
 
 	EditorLayer::EditorLayer()
 		: Layer("EditorLayer")
@@ -15,8 +15,9 @@ namespace IlluminoEngine
 
 	void EditorLayer::OnAttach()
 	{
-		MeshLoader::LoadMesh("Assets/Meshes/primitives/cone.fbx", s_Meshes);
-		MeshLoader::LoadMesh("Assets/Meshes/primitives/sphere.fbx", s_Meshes);
+		s_Meshes.push_back(CreateRef<Mesh>("Assets/Meshes/sponza/sponza.assbin"));
+//		s_Meshes.push_back(CreateRef<Mesh>("Assets/Meshes/primitives/plane.fbx"));
+//		s_Meshes.push_back(CreateRef<Mesh>("Assets/Meshes/primitives/sphere.fbx"));
 	}
 
 	void EditorLayer::OnDetach()
@@ -42,9 +43,12 @@ namespace IlluminoEngine
 		for (size_t i = 0; i < s_Meshes.size(); ++i)
 		{
 			int32_t multiplier = i % 2 == 0 ? 1 : -1;
-			glm::mat4 t = glm::mat4(1.0f) * glm::translate(glm::vec3(4.0f * multiplier, 0.0f, -10.0f))
-				* glm::rotate(counter * glm::radians(90.0f) / 60, glm::vec3(temp, 1.0 - temp, temp));
-			SceneRenderer::SubmitMesh(s_Meshes[i], t);
+//			glm::mat4 t = glm::mat4(1.0f) * glm::translate(glm::vec3(4.0f * multiplier, 0.0f, -10.0f))
+//				* glm::rotate(counter * glm::radians(90.0f) / 60, glm::vec3(180, temp, 0));
+
+			auto& submeshes = s_Meshes[i]->GetSubmeshes();
+			for (Submesh& submesh : submeshes)
+				SceneRenderer::SubmitMesh(submesh, glm::mat4(1.0f));
 		}
 		
 		SceneRenderer::EndScene();

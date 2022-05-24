@@ -1,12 +1,12 @@
 #pragma once
 
-#include <array>
-#include <vector>
-#include <string>
-
 #include <memory>
 #include <functional>
 #include <algorithm>
+
+#include <EASTL/string.h>
+#include <EASTL/array.h>
+#include <EASTL/vector.h>
 
 #include "Illumino/Core/Core.h"
 

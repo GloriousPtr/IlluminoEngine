@@ -6,6 +6,8 @@
 
 #include "RenderCommand.h"
 #include "Shader.h"
+#include "Shader.h"
+#include "Texture.h"
 
 namespace IlluminoEngine
 {
@@ -17,7 +19,7 @@ namespace IlluminoEngine
 	void SceneRenderer::Init()
 	{
 		OPTICK_EVENT();
-
+		
 		s_Shader = Shader::Create("Assets/Shaders/TestShader.hlsl",
 			{
 				{"POSITION", ShaderDataType::Float3},
@@ -46,14 +48,14 @@ namespace IlluminoEngine
 		RenderPass();
 	}
 
-	void SceneRenderer::SubmitMesh(const Ref<MeshBuffer>& mesh, glm::mat4& transform)
+	void SceneRenderer::SubmitMesh(Submesh& submesh, glm::mat4& transform)
 	{
 		OPTICK_EVENT();
 
 		MeshData meshData = 
 		{
 			transform,
-			mesh
+			submesh
 		};
 
 		s_Meshes.push_back(meshData);
@@ -95,11 +97,13 @@ namespace IlluminoEngine
 		s_Shader->UploadBuffer("Properties", buffer, bufferSize, 0);
 		delete[] buffer;
 
-		for (size_t i = 0; i < s_Meshes.size(); ++i)
+		uint32_t index = 0;
+		for (auto& mesh : s_Meshes)
 		{
-			auto& meshData = s_Meshes[i];
-			meshData.Mesh->Bind();
-			RenderCommand::DrawIndexed(meshData.Mesh, gpuHandle + alignedSize * i);
+			if (mesh.SubmeshData.Albedo)
+				mesh.SubmeshData.Albedo->Bind(0);
+			RenderCommand::DrawIndexed(mesh.SubmeshData.Geometry, gpuHandle + alignedSize * index);
+			++index;
 		}
 
 		s_Meshes.clear();

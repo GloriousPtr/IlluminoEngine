@@ -2,14 +2,14 @@
 
 #include <glm/glm.hpp>
 
-#include "Buffer.h"
+#include "Mesh.h"
 
 namespace IlluminoEngine
 {
 	struct MeshData
 	{
 		glm::mat4 Transform;
-		Ref<MeshBuffer> Mesh;
+		Submesh& SubmeshData;
 	};
 
 	class SceneRenderer
@@ -20,7 +20,7 @@ namespace IlluminoEngine
 		static void BeginScene();
 		static void EndScene();
 
-		static void SubmitMesh(const Ref<MeshBuffer>& mesh, glm::mat4& transform);
+		static void SubmitMesh(Submesh& mesh, glm::mat4& transform);
 
 	private:
 		static void RenderPass();

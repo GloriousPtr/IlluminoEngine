@@ -35,12 +35,14 @@ namespace IlluminoEngine
 
 	void Dx12RendererAPI::DrawIndexed(const Ref<MeshBuffer>& meshBuffer, uint64_t cbvGPUHandle)
 	{
+		meshBuffer->Bind();
+
 		ID3D12GraphicsCommandList* commandList = Dx12GraphicsContext::s_Context->GetCommandList();
 
-		OPTICK_GPU_CONTEXT(Dx12GraphicsContext::s_Context->GetCommandList());
+		OPTICK_GPU_CONTEXT(commandList);
 		OPTICK_GPU_EVENT("DrawIndexed");
 
-		commandList->SetGraphicsRootConstantBufferView(0, cbvGPUHandle);
+		commandList->SetGraphicsRootConstantBufferView(1, cbvGPUHandle);
 		commandList->DrawIndexedInstanced(meshBuffer->GetIndexCount(), 1, 0, 0, 0);
 	}
 }

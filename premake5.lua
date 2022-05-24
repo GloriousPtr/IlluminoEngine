@@ -26,6 +26,7 @@ IncludeDir["assimp_config_assimp"] = "%{wks.location}/IlluminoEngine/vendor/assi
 IncludeDir["imgui"] = "%{wks.location}/IlluminoEngine/vendor/imgui"
 IncludeDir["EASTL"] = "%{wks.location}/IlluminoEngine/vendor/EASTL/include"
 IncludeDir["EABase"] = "%{wks.location}/IlluminoEngine/vendor/EABase/include/Common"
+IncludeDir["stb_image"] = "%{wks.location}/IlluminoEngine/vendor/stb_image"
 
 group "Dependencies"
 	include "IlluminoEngine/vendor/optick"

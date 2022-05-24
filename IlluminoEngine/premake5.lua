@@ -16,6 +16,8 @@ project "IlluminoEngine"
 		"src/**.cpp",
 		"vendor/glm/glm/**.hpp",
 		"vendor/glm/glm/**.inl",
+		"vendor/stb_image/**.h",
+		"vendor/stb_image/**.cpp",
 	}
 
 	defines
@@ -35,10 +37,12 @@ project "IlluminoEngine"
 		"%{IncludeDir.assimp_config_assimp}",
 		"%{IncludeDir.imgui}",
 		"%{IncludeDir.EASTL}",
+		"%{IncludeDir.EABase}",
+		"%{IncludeDir.stb_image}",
 	}
 
 	links
-	{		
+	{
         "d3dcompiler",
         "dxguid",
         "d3d12",

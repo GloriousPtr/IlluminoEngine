@@ -19,9 +19,8 @@
 #include "Illumino/Renderer/RenderCommand.h"
 
 #include "Illumino/Renderer/Buffer.h"
+#include "Illumino/Renderer/Mesh.h"
 #include "Illumino/Renderer/Shader.h"
-
-#include "Illumino/Renderer/MeshLoader.h"
 
 //-----Maths---------------------------------------
 #include "Illumino/Math/Math.h"

@@ -26,7 +26,11 @@ VertexOut VS_main(VertexIn v)
 	return output;
 }
 
+Texture2D<float4> u_Texture : register(t0);
+SamplerState u_TextureSampler : register(s0);
+
 float4 PS_main(VertexOut i) : SV_TARGET
 {
-	return float4(i.uv, 0, 1);
+//	return float4(i.uv, 0, 1);
+	return u_Texture.Sample(u_TextureSampler, i.uv);
 }

@@ -24,6 +24,7 @@ project "IlluminoEd"
 		"%{IncludeDir.assimp_config}",
 		"%{IncludeDir.assimp_config_assimp}",
 		"%{IncludeDir.EASTL}",
+		"%{IncludeDir.EABase}",
 	}
 
 	links
