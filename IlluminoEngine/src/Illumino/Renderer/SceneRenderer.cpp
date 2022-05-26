@@ -12,7 +12,7 @@
 namespace IlluminoEngine
 {
 	static Ref<Shader> s_Shader;
-	static glm::mat4 s_Projection;
+	static glm::mat4 s_ViewProjection;
 	
 	std::vector<MeshData> SceneRenderer::s_Meshes;
 
@@ -33,12 +33,12 @@ namespace IlluminoEngine
 
 	}
 
-	void SceneRenderer::BeginScene()
+	void SceneRenderer::BeginScene(const Camera& camera)
 	{
 		OPTICK_EVENT();
 
 		// TODO: setup camera, lights, etc data
-		s_Projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.001f, 1000.0f);
+		s_ViewProjection = camera.GetProjection() * camera.GetView();
 	}
 
 	void SceneRenderer::EndScene()
@@ -90,7 +90,7 @@ namespace IlluminoEngine
 		{
 			auto& meshData = s_Meshes[i];
 			CB cb;
-			cb.u_MVP = s_Projection * meshData.Transform;
+			cb.u_MVP = s_ViewProjection * meshData.Transform;
 			memcpy(buffer + alignedSize * i, &cb, sizeof(CB));
 		}
 

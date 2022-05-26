@@ -22,19 +22,23 @@ namespace IlluminoEngine
 		virtual uint64_t GetRendererID() override;
 
 	private:
-		void TransitionTo(D3D12_RESOURCE_STATES afterState);
 
 		struct RenderTargetData
 		{
-			D3D12_RESOURCE_STATES State;
-			ID3D12Resource* Resource = nullptr;
+			D3D12_RESOURCE_STATES ColorState;
+			ID3D12Resource* ColorResource = nullptr;
 			DescriptorHandle SRVHandle;
 			DescriptorHandle RTVHandle;
+
+			D3D12_RESOURCE_STATES DepthState;
+			ID3D12Resource* DepthResource = nullptr;
+			DescriptorHandle DSVHandle;
 		};
 
 		RenderTargetData m_RenderTargets[g_QueueSlotCount];
 
-		glm::vec4 m_ClearColor;
+		glm::vec4 m_ClearColor = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
+		glm::vec2 m_ClearDepth = glm::vec2(1.0f, 0.0f);
 
 		DXGI_FORMAT m_Format;
 		RenderTextureSpec m_Specification;

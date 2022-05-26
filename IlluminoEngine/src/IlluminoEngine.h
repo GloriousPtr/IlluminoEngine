@@ -23,6 +23,7 @@
 #include "Illumino/Renderer/Shader.h"
 #include "Illumino/Renderer/Texture.h"
 #include "Illumino/Renderer/RenderTexture.h"
+#include "Illumino/Renderer/Camera.h"
 
 //-----Maths---------------------------------------
 #include "Illumino/Math/Math.h"

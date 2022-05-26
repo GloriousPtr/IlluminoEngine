@@ -218,7 +218,10 @@ namespace IlluminoEngine
 		renderTarget.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
 		psoDesc.SampleDesc.Count = 1;
-		psoDesc.DepthStencilState.DepthEnable = false;
+		psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+		psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+		psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+		psoDesc.DepthStencilState.DepthEnable = true;
 		psoDesc.DepthStencilState.StencilEnable = false;
 		psoDesc.SampleMask = 0xFFFFFFFF;
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;

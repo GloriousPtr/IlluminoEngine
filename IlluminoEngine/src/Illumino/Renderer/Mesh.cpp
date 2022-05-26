@@ -25,6 +25,7 @@ namespace IlluminoEngine
 		importer.SetPropertyFloat("PP_GSN_MAX_SMOOTHING_ANGLE", 80.0f);
 		uint32_t meshImportFlags = 
 			aiProcess_MakeLeftHanded |
+			aiProcess_FlipUVs |
 			aiProcess_CalcTangentSpace |
 			aiProcess_Triangulate |
 			aiProcess_PreTransformVertices |

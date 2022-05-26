@@ -2,6 +2,8 @@
 #include "EditorLayer.h"
 
 #include <imgui/imgui.h>
+#include <glm/glm.hpp>
+#include <glm/glm/gtx/norm.hpp>
 
 #include "Illumino/Core/Application.h"
 #include "Illumino/Renderer/GraphicsContext.h"
@@ -10,6 +12,7 @@
 namespace IlluminoEngine
 {
 	static std::vector<Ref<Mesh>> s_Meshes;
+	constexpr float EPSILON = 1.17549435E-38f;
 
 	EditorLayer::EditorLayer()
 		: Layer("EditorLayer")
@@ -24,6 +27,9 @@ namespace IlluminoEngine
 		spec.Height = 1080;
 		m_RenderTexture = RenderTexture::Create(spec);
 
+		m_EditorCamera = CreateRef<EditorCamera>(glm::radians(45.0f), (float)spec.Width / (float)spec.Height, 0.001f, 1000.0f);
+
+		// temp
 		s_Meshes.push_back(CreateRef<Mesh>("Assets/Meshes/sponza/sponza.assbin"));
 	}
 
@@ -34,7 +40,66 @@ namespace IlluminoEngine
 
 	void EditorLayer::OnUpdate(Timestep ts)
 	{
+		uint32_t width = m_ViewportSizeMax.x - m_ViewportSizeMin.x;
+		uint32_t height = m_ViewportSizeMax.y - m_ViewportSizeMin.y;
+		const RenderTextureSpec& spec = m_RenderTexture->GetSpecification();
+		if (width != 0 && height != 0 && (width != spec.Width || height != spec.Height))
+		{
+			m_RenderTexture->Resize(width, height);
+			m_EditorCamera->SetViewportSize(width, height);
+		}
 
+		m_MousePosition = *((glm::vec2*) &(ImGui::GetMousePos()));
+		const glm::vec3& position = m_EditorCamera->GetPosition();
+		float yaw = m_EditorCamera->GetYaw();
+		float pitch = m_EditorCamera->GetPitch();
+
+		bool moved = false;
+		if (m_ViewportHovered && ImGui::IsMouseDown(ImGuiMouseButton_Right))
+		{
+			const glm::vec2 change = (m_MousePosition - m_LastMousePosition) * m_MouseSensitivity;
+			yaw += change.x;
+			pitch = glm::clamp(pitch - change.y, -89.9f, 89.9f);
+
+			glm::vec3 moveDirection = glm::vec3(0.0f);
+			if (ImGui::IsKeyDown(ImGuiKey_W))
+			{
+				moved = true;
+				moveDirection += m_EditorCamera->GetForward() * ts.GetSeconds();
+			}
+			else if (ImGui::IsKeyDown(ImGuiKey_S))
+			{
+				moved = true;
+				moveDirection -= m_EditorCamera->GetForward() * ts.GetSeconds();
+			}
+			if (ImGui::IsKeyDown(ImGuiKey_D))
+			{
+				moved = true;
+				moveDirection += m_EditorCamera->GetRight() * ts.GetSeconds();
+			}
+			else if (ImGui::IsKeyDown(ImGuiKey_A))
+			{
+				moved = true;
+				moveDirection -= m_EditorCamera->GetRight() * ts.GetSeconds();
+			}
+
+			if (glm::length2(moveDirection) > EPSILON)
+				m_MoveDirection = glm::normalize(moveDirection);
+		}
+
+		m_MoveVelocity += (moved ? 1.0f : -1.0f) * ts;
+		m_MoveVelocity *= glm::pow(m_MoveDampeningFactor, ts);
+		if (m_MoveVelocity > 0.0f)
+		{
+			float maxMoveSpeed = m_MaxMoveSpeed * (ImGui::IsKeyDown(ImGuiKey_LeftShift) ? 3.0f : 1.0f);
+			m_EditorCamera->SetPosition(position + (m_MoveDirection * m_MoveVelocity * maxMoveSpeed));
+		}
+
+		m_EditorCamera->SetYaw(yaw);
+		m_EditorCamera->SetPitch(pitch);
+		m_LastMousePosition = m_MousePosition;
+
+		m_EditorCamera->OnUpdate(ts);
 	}
 
 	void EditorLayer::OnImGuiRender()
@@ -42,17 +107,9 @@ namespace IlluminoEngine
 		bool b = true;
 		ImGui::ShowDemoWindow(&b);
 
-		static uint32_t width = 0;
-		static uint32_t height = 0;
-		const RenderTextureSpec& spec = m_RenderTexture->GetSpecification();
-		if (width != 0 && height != 0 && (width != spec.Width || height != spec.Height))
-		{
-			m_RenderTexture->Resize(width, height);
-		}
-
 		m_RenderTexture->Bind();
 		{
-			SceneRenderer::BeginScene();
+			SceneRenderer::BeginScene(*m_EditorCamera);
 			for (size_t i = 0; i < s_Meshes.size(); ++i)
 			{
 				auto& submeshes = s_Meshes[i]->GetSubmeshes();
@@ -68,11 +125,12 @@ namespace IlluminoEngine
 		//////////////////////////////////////////////////////////////////////////////////////////////////////
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
 		ImGui::Begin("Viewport");
-		ImVec2 viewportMin = ImGui::GetWindowContentRegionMin();
-		ImVec2 viewportMax = ImGui::GetWindowContentRegionMax();
-		width = viewportMax.x - viewportMin.x;
-		height = viewportMax.y - viewportMin.y;
+		m_ViewportSizeMin = ImGui::GetWindowContentRegionMin();
+		m_ViewportSizeMax = ImGui::GetWindowContentRegionMax();
+		uint32_t width = m_ViewportSizeMax.x - m_ViewportSizeMin.x;
+		uint32_t height = m_ViewportSizeMax.y - m_ViewportSizeMin.y;
 
+		m_ViewportHovered = ImGui::IsWindowHovered();
 
 		uint64_t textureID = m_RenderTexture->GetRendererID();
 		ImGui::Image((ImTextureID)textureID, { (float)width, (float)height });
