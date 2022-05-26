@@ -21,6 +21,8 @@
 #include "Illumino/Renderer/Buffer.h"
 #include "Illumino/Renderer/Mesh.h"
 #include "Illumino/Renderer/Shader.h"
+#include "Illumino/Renderer/Texture.h"
+#include "Illumino/Renderer/RenderTexture.h"
 
 //-----Maths---------------------------------------
 #include "Illumino/Math/Math.h"

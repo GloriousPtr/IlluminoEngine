@@ -3,6 +3,10 @@
 
 #include <imgui/imgui.h>
 
+#include "Illumino/Core/Application.h"
+#include "Illumino/Renderer/GraphicsContext.h"
+#include "Window.h"
+
 namespace IlluminoEngine
 {
 	static std::vector<Ref<Mesh>> s_Meshes;
@@ -15,9 +19,12 @@ namespace IlluminoEngine
 
 	void EditorLayer::OnAttach()
 	{
+		RenderTextureSpec spec;
+		spec.Width = 1920;
+		spec.Height = 1080;
+		m_RenderTexture = RenderTexture::Create(spec);
+
 		s_Meshes.push_back(CreateRef<Mesh>("Assets/Meshes/sponza/sponza.assbin"));
-//		s_Meshes.push_back(CreateRef<Mesh>("Assets/Meshes/primitives/plane.fbx"));
-//		s_Meshes.push_back(CreateRef<Mesh>("Assets/Meshes/primitives/sphere.fbx"));
 	}
 
 	void EditorLayer::OnDetach()
@@ -35,23 +42,42 @@ namespace IlluminoEngine
 		bool b = true;
 		ImGui::ShowDemoWindow(&b);
 
-		SceneRenderer::BeginScene();
-		
-		static uint32_t counter = 0;
-		counter++;
-		float temp = glm::abs(glm::sin(static_cast<float>(counter) / 64.0f));
-		for (size_t i = 0; i < s_Meshes.size(); ++i)
+		static uint32_t width = 0;
+		static uint32_t height = 0;
+		const RenderTextureSpec& spec = m_RenderTexture->GetSpecification();
+		if (width != 0 && height != 0 && (width != spec.Width || height != spec.Height))
 		{
-			int32_t multiplier = i % 2 == 0 ? 1 : -1;
-//			glm::mat4 t = glm::mat4(1.0f) * glm::translate(glm::vec3(4.0f * multiplier, 0.0f, -10.0f))
-//				* glm::rotate(counter * glm::radians(90.0f) / 60, glm::vec3(180, temp, 0));
-
-			auto& submeshes = s_Meshes[i]->GetSubmeshes();
-			for (Submesh& submesh : submeshes)
-				SceneRenderer::SubmitMesh(submesh, glm::mat4(1.0f));
+			m_RenderTexture->Resize(width, height);
 		}
-		
-		SceneRenderer::EndScene();
+
+		m_RenderTexture->Bind();
+		{
+			SceneRenderer::BeginScene();
+			for (size_t i = 0; i < s_Meshes.size(); ++i)
+			{
+				auto& submeshes = s_Meshes[i]->GetSubmeshes();
+				for (Submesh& submesh : submeshes)
+					SceneRenderer::SubmitMesh(submesh, glm::mat4(1.0f));
+			}
+			SceneRenderer::EndScene();
+		}
+		m_RenderTexture->Unbind();
+
+		//////////////////////////////////////////////////////////////////////////////////////////////////////
+		//// Viewport ////////////////////////////////////////////////////////////////////////////////////////
+		//////////////////////////////////////////////////////////////////////////////////////////////////////
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
+		ImGui::Begin("Viewport");
+		ImVec2 viewportMin = ImGui::GetWindowContentRegionMin();
+		ImVec2 viewportMax = ImGui::GetWindowContentRegionMax();
+		width = viewportMax.x - viewportMin.x;
+		height = viewportMax.y - viewportMin.y;
+
+
+		uint64_t textureID = m_RenderTexture->GetRendererID();
+		ImGui::Image((ImTextureID)textureID, { (float)width, (float)height });
+		ImGui::End();
+		ImGui::PopStyleVar();
 	}
 
 	void EditorLayer::SetTheme()

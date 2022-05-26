@@ -97,11 +97,11 @@ namespace IlluminoEngine
 		Dx12GraphicsContext* context = (Dx12GraphicsContext*) window->GetGraphicsContext().get();
 		ID3D12GraphicsCommandList* commandList = context->GetCommandList();
 
-		ImGui::Render();
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
-
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		io.DisplaySize = ImVec2((float)window->GetWidth(), (float)window->GetHeight());
+
+		ImGui::Render();
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 
 		// Update and Render additional Platform Windows
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)

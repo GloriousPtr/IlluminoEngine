@@ -17,5 +17,8 @@ namespace IlluminoEngine
 
 	private:
 		void SetTheme();
+
+	private:
+		Ref<RenderTexture> m_RenderTexture;
 	};
 }

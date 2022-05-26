@@ -364,7 +364,7 @@ namespace IlluminoEngine
 
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_RenderSurface->GetRTV();
 
-		commandList->OMSetRenderTargets(1, &rtvHandle, true, nullptr);
+		commandList->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
 
 		ID3D12DescriptorHeap* descHeap = const_cast<ID3D12DescriptorHeap*>(m_SRVDescriptorHeap.GetHeap());
         commandList->SetDescriptorHeaps(1, &descHeap);

@@ -88,6 +88,7 @@ namespace IlluminoEngine
 		friend class Dx12RenderSurface;
 		friend class Dx12Shader;
 		friend class Dx12Texture2D;
+		friend class Dx12RenderTexture;
 		friend class DescriptorHeap;
 		static Dx12GraphicsContext* s_Context;
 	};
