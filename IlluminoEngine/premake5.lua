@@ -39,6 +39,7 @@ project "IlluminoEngine"
 		"%{IncludeDir.EASTL}",
 		"%{IncludeDir.EABase}",
 		"%{IncludeDir.stb_image}",
+		"%{IncludeDir.entt}",
 	}
 
 	links

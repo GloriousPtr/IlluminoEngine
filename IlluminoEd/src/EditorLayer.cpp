@@ -22,6 +22,8 @@ namespace IlluminoEngine
 
 	void EditorLayer::OnAttach()
 	{
+		m_SceneHierarchyPanel = CreateRef<SceneHierarchyPanel>();
+
 		RenderTextureSpec spec;
 		spec.Width = 1920;
 		spec.Height = 1080;
@@ -29,8 +31,13 @@ namespace IlluminoEngine
 
 		m_EditorCamera = CreateRef<EditorCamera>(glm::radians(45.0f), (float)spec.Width / (float)spec.Height, 0.001f, 1000.0f);
 
+		m_ActiveScene = CreateRef<Scene>();
+		Entity e1 = m_ActiveScene->CreateEntity("E1");
+		Entity e2 = m_ActiveScene->CreateEntity("E2");
+		Entity e3 = m_ActiveScene->CreateEntity();
+
 		// temp
-		s_Meshes.push_back(CreateRef<Mesh>("Assets/Meshes/sponza/sponza.assbin"));
+		//s_Meshes.push_back(CreateRef<Mesh>("Assets/Meshes/sponza/sponza.assbin"));
 	}
 
 	void EditorLayer::OnDetach()
@@ -100,6 +107,9 @@ namespace IlluminoEngine
 		m_LastMousePosition = m_MousePosition;
 
 		m_EditorCamera->OnUpdate(ts);
+
+		m_SceneHierarchyPanel->SetSelectionContext(m_ActiveScene.get());
+		m_SceneHierarchyPanel->OnUpdate(ts);
 	}
 
 	static void BeginDockspace(const char* name)
@@ -212,6 +222,8 @@ namespace IlluminoEngine
 
 			bool b = true;
 			ImGui::ShowDemoWindow(&b);
+
+			m_SceneHierarchyPanel->OnImGuiRender();
 		}
 		EndDockspace();
 	}

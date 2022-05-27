@@ -25,6 +25,10 @@
 #include "Illumino/Renderer/RenderTexture.h"
 #include "Illumino/Renderer/Camera.h"
 
+#include "Illumino/Scene/Scene.h"
+#include "Illumino/Scene/Entity.h"
+#include "Illumino/Scene/Component.h"
+
 //-----Maths---------------------------------------
 #include "Illumino/Math/Math.h"
 

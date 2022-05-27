@@ -3,6 +3,7 @@
 #include <IlluminoEngine.h>
 #include <imgui/imgui.h>
 
+#include "Panels/SceneHierarchyPanel.h"
 #include "Utils/EditorCamera.h"
 
 namespace IlluminoEngine
@@ -22,8 +23,11 @@ namespace IlluminoEngine
 		void SetTheme();
 
 	private:
+		Ref<SceneHierarchyPanel> m_SceneHierarchyPanel;
+
 		Ref<EditorCamera> m_EditorCamera;
 		Ref<RenderTexture> m_RenderTexture;
+		Ref<Scene> m_ActiveScene;
 
 		ImVec2 m_ViewportSizeMin = { 0, 0 };
 		ImVec2 m_ViewportSizeMax = { 0, 0 };
