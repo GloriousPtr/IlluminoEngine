@@ -102,11 +102,59 @@ namespace IlluminoEngine
 		m_EditorCamera->OnUpdate(ts);
 	}
 
+	static void BeginDockspace(const char* name)
+	{
+		static bool opt_fullscreen = true;
+		static bool opt_padding = false;
+		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+		// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+		// because it would be confusing to have two docking targets within each others.
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+		if (opt_fullscreen)
+		{
+			const ImGuiViewport* viewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos(viewport->WorkPos);
+			ImGui::SetNextWindowSize(viewport->WorkSize);
+			ImGui::SetNextWindowViewport(viewport->ID);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+		}
+		else
+		{
+			dockspace_flags &= ~ImGuiDockNodeFlags_PassthruCentralNode;
+		}
+
+		if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+			window_flags |= ImGuiWindowFlags_NoBackground;
+
+		if (!opt_padding)
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		ImGui::Begin(name, nullptr, window_flags);
+		if (!opt_padding)
+			ImGui::PopStyleVar();
+
+		if (opt_fullscreen)
+			ImGui::PopStyleVar(2);
+
+		// Submit the DockSpace
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+		{
+			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+		}
+	}
+
+	static void EndDockspace()
+	{
+		ImGui::End();
+	}
+
 	void EditorLayer::OnImGuiRender()
 	{
-		bool b = true;
-		ImGui::ShowDemoWindow(&b);
-
 		m_RenderTexture->Bind();
 		{
 			SceneRenderer::BeginScene(*m_EditorCamera);
@@ -120,22 +168,52 @@ namespace IlluminoEngine
 		}
 		m_RenderTexture->Unbind();
 
-		//////////////////////////////////////////////////////////////////////////////////////////////////////
-		//// Viewport ////////////////////////////////////////////////////////////////////////////////////////
-		//////////////////////////////////////////////////////////////////////////////////////////////////////
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
-		ImGui::Begin("Viewport");
-		m_ViewportSizeMin = ImGui::GetWindowContentRegionMin();
-		m_ViewportSizeMax = ImGui::GetWindowContentRegionMax();
-		uint32_t width = m_ViewportSizeMax.x - m_ViewportSizeMin.x;
-		uint32_t height = m_ViewportSizeMax.y - m_ViewportSizeMin.y;
+		BeginDockspace("Dockspace");
+		{
+			if (ImGui::BeginMenuBar())
+			{
+				if (ImGui::BeginMenu("File"))
+				{
+					ImGui::MenuItem("New");
+					ImGui::MenuItem("Save");
+					ImGui::MenuItem("Open");
 
-		m_ViewportHovered = ImGui::IsWindowHovered();
+					ImGui::EndMenu();
+				}
 
-		uint64_t textureID = m_RenderTexture->GetRendererID();
-		ImGui::Image((ImTextureID)textureID, { (float)width, (float)height });
-		ImGui::End();
-		ImGui::PopStyleVar();
+				if (ImGui::BeginMenu("View"))
+				{
+					ImGui::MenuItem("Viewport");
+					ImGui::MenuItem("Heirarchy");
+					ImGui::MenuItem("Properties");
+
+					ImGui::EndMenu();
+				}
+
+				ImGui::EndMenuBar();
+			}
+
+			//////////////////////////////////////////////////////////////////////////////////////////////////////
+			//// Viewport ////////////////////////////////////////////////////////////////////////////////////////
+			//////////////////////////////////////////////////////////////////////////////////////////////////////
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
+			ImGui::Begin("Viewport");
+			m_ViewportSizeMin = ImGui::GetWindowContentRegionMin();
+			m_ViewportSizeMax = ImGui::GetWindowContentRegionMax();
+			uint32_t width = m_ViewportSizeMax.x - m_ViewportSizeMin.x;
+			uint32_t height = m_ViewportSizeMax.y - m_ViewportSizeMin.y;
+
+			m_ViewportHovered = ImGui::IsWindowHovered();
+
+			uint64_t textureID = m_RenderTexture->GetRendererID();
+			ImGui::Image((ImTextureID)textureID, { (float)width, (float)height });
+			ImGui::End();
+			ImGui::PopStyleVar();
+
+			bool b = true;
+			ImGui::ShowDemoWindow(&b);
+		}
+		EndDockspace();
 	}
 
 	void EditorLayer::SetTheme()
@@ -221,5 +299,8 @@ namespace IlluminoEngine
 		style->ScrollbarRounding = 12.0f;
 		style->GrabRounding = 2.0f;
 		style->TabRounding = 6.0f;
+
+		style->WindowMenuButtonPosition = ImGuiDir_Right;
+		style->ColorButtonPosition = ImGuiDir_Right;
 	}
 }
