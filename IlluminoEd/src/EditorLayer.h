@@ -4,6 +4,7 @@
 #include <imgui/imgui.h>
 
 #include "Panels/SceneHierarchyPanel.h"
+#include "Panels/PropertiesPanel.h"
 #include "Utils/EditorCamera.h"
 
 namespace IlluminoEngine
@@ -23,7 +24,8 @@ namespace IlluminoEngine
 		void SetTheme();
 
 	private:
-		Ref<SceneHierarchyPanel> m_SceneHierarchyPanel;
+		SceneHierarchyPanel m_SceneHierarchyPanel;
+		PropertiesPanel m_PropertiesPanel;
 
 		Ref<EditorCamera> m_EditorCamera;
 		Ref<RenderTexture> m_RenderTexture;

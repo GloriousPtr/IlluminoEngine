@@ -3,6 +3,8 @@
 #include <entt.hpp>
 #include <EASTL/hash_map.h>
 
+#include "Illumino/Core/Timestep.h"
+#include "Illumino/Renderer/Camera.h"
 #include "Entity.h"
 
 namespace IlluminoEngine
@@ -15,6 +17,10 @@ namespace IlluminoEngine
 
 		Entity CreateEntity(const char* name = "Entity");
 		void DeleteEntity(Entity entity);
+
+		void OnUpdateEditor(Timestep ts);
+		void OnRenderEditor(const Camera& camera);
+
 		const eastl::hash_map<uint32_t, Entity>& GetEntityMap() const { return m_EntityMap; }
 
 	private:

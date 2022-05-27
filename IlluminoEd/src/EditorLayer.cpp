@@ -11,7 +11,6 @@
 
 namespace IlluminoEngine
 {
-	static std::vector<Ref<Mesh>> s_Meshes;
 	constexpr float EPSILON = 1.17549435E-38f;
 
 	EditorLayer::EditorLayer()
@@ -22,7 +21,9 @@ namespace IlluminoEngine
 
 	void EditorLayer::OnAttach()
 	{
-		m_SceneHierarchyPanel = CreateRef<SceneHierarchyPanel>();
+		m_ActiveScene = CreateRef<Scene>();
+
+		m_SceneHierarchyPanel.SetSelectionContext(m_ActiveScene.get());
 
 		RenderTextureSpec spec;
 		spec.Width = 1920;
@@ -30,14 +31,6 @@ namespace IlluminoEngine
 		m_RenderTexture = RenderTexture::Create(spec);
 
 		m_EditorCamera = CreateRef<EditorCamera>(glm::radians(45.0f), (float)spec.Width / (float)spec.Height, 0.001f, 1000.0f);
-
-		m_ActiveScene = CreateRef<Scene>();
-		Entity e1 = m_ActiveScene->CreateEntity("E1");
-		Entity e2 = m_ActiveScene->CreateEntity("E2");
-		Entity e3 = m_ActiveScene->CreateEntity();
-
-		// temp
-		//s_Meshes.push_back(CreateRef<Mesh>("Assets/Meshes/sponza/sponza.assbin"));
 	}
 
 	void EditorLayer::OnDetach()
@@ -47,6 +40,8 @@ namespace IlluminoEngine
 
 	void EditorLayer::OnUpdate(Timestep ts)
 	{
+		m_ActiveScene->OnUpdateEditor(ts);
+
 		uint32_t width = m_ViewportSizeMax.x - m_ViewportSizeMin.x;
 		uint32_t height = m_ViewportSizeMax.y - m_ViewportSizeMin.y;
 		const RenderTextureSpec& spec = m_RenderTexture->GetSpecification();
@@ -108,8 +103,10 @@ namespace IlluminoEngine
 
 		m_EditorCamera->OnUpdate(ts);
 
-		m_SceneHierarchyPanel->SetSelectionContext(m_ActiveScene.get());
-		m_SceneHierarchyPanel->OnUpdate(ts);
+		m_SceneHierarchyPanel.OnUpdate(ts);
+
+		m_PropertiesPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelection());
+		m_PropertiesPanel.OnUpdate(ts);
 	}
 
 	static void BeginDockspace(const char* name)
@@ -166,16 +163,7 @@ namespace IlluminoEngine
 	void EditorLayer::OnImGuiRender()
 	{
 		m_RenderTexture->Bind();
-		{
-			SceneRenderer::BeginScene(*m_EditorCamera);
-			for (size_t i = 0; i < s_Meshes.size(); ++i)
-			{
-				auto& submeshes = s_Meshes[i]->GetSubmeshes();
-				for (Submesh& submesh : submeshes)
-					SceneRenderer::SubmitMesh(submesh, glm::mat4(1.0f));
-			}
-			SceneRenderer::EndScene();
-		}
+		m_ActiveScene->OnRenderEditor(*m_EditorCamera);
 		m_RenderTexture->Unbind();
 
 		BeginDockspace("Dockspace");
@@ -223,7 +211,8 @@ namespace IlluminoEngine
 			bool b = true;
 			ImGui::ShowDemoWindow(&b);
 
-			m_SceneHierarchyPanel->OnImGuiRender();
+			m_SceneHierarchyPanel.OnImGuiRender();
+			m_PropertiesPanel.OnImGuiRender();
 		}
 		EndDockspace();
 	}

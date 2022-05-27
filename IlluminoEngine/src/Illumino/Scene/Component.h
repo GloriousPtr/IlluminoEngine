@@ -5,6 +5,9 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include "Illumino/Renderer/Mesh.h"
+#include "Illumino/Renderer/Texture.h"
+
 namespace IlluminoEngine
 {
 	struct TagComponent
@@ -30,5 +33,14 @@ namespace IlluminoEngine
 				 * glm::toMat4(glm::quat(Rotation))
 				 * glm::scale(glm::mat4(1.0f), Scale);
 		}
+	};
+
+	struct MeshComponent
+	{
+		Ref<Mesh> MeshGeometry;
+		uint32_t SubmeshIndex;
+
+		MeshComponent() = default;
+		MeshComponent(const MeshComponent&) = default;
 	};
 }

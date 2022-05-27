@@ -34,6 +34,13 @@ namespace IlluminoEngine
 			return m_Scene->m_Registry.get<T>(m_EntityHandle);
 		}
 
+		template<typename T>
+		void RemoveComponent()
+		{
+			ILLUMINO_ASSERT(HasComponent<T>(), "Entity doesn't have the component");
+			m_Scene->m_Registry.remove<T>(m_EntityHandle);
+		}
+
 		operator bool() const { return m_Scene && m_EntityHandle != entt::null; }
 		operator entt::entity() const { return m_EntityHandle; }
 		operator uint32_t() const { return (uint32_t) m_EntityHandle; }

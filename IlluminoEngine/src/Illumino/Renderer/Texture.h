@@ -9,6 +9,7 @@ namespace IlluminoEngine
 	public:
 		virtual ~Texture2D() = default;
 		virtual void Bind(uint32_t slot) = 0;
+		virtual uint64_t GetRendererID() = 0;
 
 		static Ref<Texture2D> Create(const char* filepath);
 	};

@@ -12,8 +12,11 @@ namespace IlluminoEngine
 
 		void OnUpdate(Timestep ts);
 		void OnImGuiRender();
+
 		void SetSelectionContext(Scene* scene) { m_SelectionContext = scene; }
 		void SetSelection(Entity entity) { m_SelectedEntity = entity; }
+
+		Entity GetSelection() { return m_SelectedEntity; }
 
 	private:
 		void DrawEntityNode(Entity entity);
