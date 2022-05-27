@@ -31,6 +31,9 @@ SamplerState u_TextureSampler : register(s0);
 
 float4 PS_main(VertexOut i) : SV_TARGET
 {
-//	return float4(i.uv, 0, 1);
-	return u_Texture.Sample(u_TextureSampler, i.uv);
+	float4 albedo = u_Texture.Sample(u_TextureSampler, i.uv);
+	if (albedo.a < 0.05)
+		discard;
+
+	return float4(albedo.rgb, 1.0f);
 }
