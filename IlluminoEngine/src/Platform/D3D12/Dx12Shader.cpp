@@ -30,9 +30,11 @@ namespace IlluminoEngine
 		{
 			for (auto& b : buffer)
 			{
-				b.second->Release();
+				b.second.Size = 0;
+				b.second.Resource->Release();
 			}
 		}
+		m_ConstantBuffers->clear();
 	}
 
 	void Dx12Shader::Bind()
@@ -52,10 +54,16 @@ namespace IlluminoEngine
 		auto& constantBufferMap = m_ConstantBuffers[backBuffer];
 
 		if (constantBufferMap.find(name) != constantBufferMap.end())
-			return constantBufferMap.at(name)->GetGPUVirtualAddress();
+		{
+			auto& cb = constantBufferMap.at(name);
+			if (cb.Size == sizeAligned)
+				return cb.Resource->GetGPUVirtualAddress();
+			else
+				cb.Resource->Release();
+		}
 
 		ID3D12Resource* buffer = Dx12GraphicsContext::s_Context->CreateConstantBuffer(sizeAligned);
-		constantBufferMap.emplace(name, buffer);
+		constantBufferMap[name] = { sizeAligned, buffer };
 
 		return buffer->GetGPUVirtualAddress();
 	}
@@ -64,14 +72,14 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		ID3D12Resource* constantBuffer = GetConstantBuffer((String&&)name, size);
+		ID3D12Resource* constantBuffer = GetConstantBuffer((String&&)name);
 		void** p;
 		constantBuffer->Map(0, nullptr, reinterpret_cast<void**>(&p));
 		memcpy(p + offsetAligned, data, size);
 		constantBuffer->Unmap(0, nullptr);
 	}
 
-	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name, size_t size)
+	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name)
 	{
 		OPTICK_EVENT();
 
@@ -81,11 +89,10 @@ namespace IlluminoEngine
 		auto& constantBufferMap = m_ConstantBuffers[backBuffer];
 
 		if (constantBufferMap.find(name) != constantBufferMap.end())
-			return constantBufferMap.at(name);
+			return constantBufferMap.at(name).Resource;
 
-		ID3D12Resource* buffer = Dx12GraphicsContext::s_Context->CreateConstantBuffer(ALIGN(256, size));
-		constantBufferMap.emplace(name, buffer);
-		return buffer;
+		ILLUMINO_ASSERT("Constant buffer not found!");
+		return nullptr;
 	}
 
 	void Dx12Shader::SetBufferLayout(const BufferLayout& layout)

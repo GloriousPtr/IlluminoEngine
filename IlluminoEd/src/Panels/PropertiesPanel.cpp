@@ -84,6 +84,14 @@ namespace IlluminoEngine
 			UI::EndProperties();
 		}, false);
 
+		DrawComponent<MeshComponent>("Mesh Component", entity, [](MeshComponent& component)
+		{
+			UI::BeginProperties();
+			if (component.MeshGeometry)
+				UI::Property("Submesh Index", component.SubmeshIndex, 0, component.MeshGeometry->GetSubmeshCount() - 1);
+			UI::EndProperties();
+		}, true);
+
 		// AddComponent
 		ImVec2 buttonSize = { 150, 30 };
 		ImGui::SetCursorPos({ (ImGui::GetContentRegionMax().x - buttonSize.x) * 0.5f, ImGui::GetCursorPosY() + buttonSize.y * 0.5f });

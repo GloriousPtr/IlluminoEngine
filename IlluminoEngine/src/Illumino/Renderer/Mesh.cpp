@@ -71,8 +71,7 @@ namespace IlluminoEngine
 		for(unsigned int i = 0; i < node->mNumMeshes; i++)
 		{
 			aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-			const char* nodeName = node->mName.C_Str();
-			ProcessMesh(mesh, scene, filepath, nodeName);
+			ProcessMesh(mesh, scene, filepath);
 		}
 
 		for(unsigned int i = 0; i < node->mNumChildren; i++)
@@ -86,7 +85,7 @@ namespace IlluminoEngine
 		OPTICK_EVENT();
 
 		eastl::string path = eastl::string(filepath);
-		eastl::string dir = path.substr(0, path.find_last_of('/'));
+		eastl::string dir = path.substr(0, path.find_last_of("\\"));
 		eastl::vector<Ref<Texture2D>> textures;
 		for(unsigned int i = 0; i < mat->GetTextureCount(type); i++)
 		{
@@ -99,7 +98,7 @@ namespace IlluminoEngine
 		return textures;
 	}
 
-	void Mesh::ProcessMesh(aiMesh *mesh, const aiScene *scene, const char* filepath, const char* nodeName)
+	void Mesh::ProcessMesh(aiMesh *mesh, const aiScene *scene, const char* filepath)
 	{
 		OPTICK_EVENT();
 
@@ -145,6 +144,6 @@ namespace IlluminoEngine
 		Ref<Texture2D> albedo = diffuseMaps.size() > 0 ? diffuseMaps[0] : nullptr;
 
 		uint32_t index = m_Submeshes.size();
-		m_Submeshes.push_back({ meshBuffer, albedo });
+		m_Submeshes.push_back({ mesh->mName.C_Str(), meshBuffer, albedo });
 	}
 }

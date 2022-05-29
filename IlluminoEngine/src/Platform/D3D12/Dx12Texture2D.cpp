@@ -31,7 +31,7 @@ namespace IlluminoEngine
 		m_Height = height;
 
 		static const auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-		const auto resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, width, height, 1, 1);
+		const auto resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 1, 1);
 
 		Dx12GraphicsContext::s_Context->GetDevice()->CreateCommittedResource(&defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_Image));
 
@@ -69,6 +69,8 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		Dx12GraphicsContext::s_Context->WaitForAllFrames();
+
 		m_Image->Release();
 		m_UploadImage->Release();
 	}
@@ -77,6 +79,6 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootDescriptorTable (slot, m_Handle.GPU);
+		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootDescriptorTable(slot, m_Handle.GPU);
 	}
 }

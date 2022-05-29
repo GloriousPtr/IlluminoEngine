@@ -29,6 +29,8 @@
 #include "Illumino/Scene/Entity.h"
 #include "Illumino/Scene/Component.h"
 
+#include "Illumino/Utils/StringUtils.h"
+
 //-----Maths---------------------------------------
 #include "Illumino/Math/Math.h"
 

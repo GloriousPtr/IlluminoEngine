@@ -5,6 +5,7 @@
 
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/PropertiesPanel.h"
+#include "Panels/AssetPanel.h"
 #include "Utils/EditorCamera.h"
 
 namespace IlluminoEngine
@@ -21,11 +22,9 @@ namespace IlluminoEngine
 		virtual void OnImGuiRender() override;
 
 	private:
-		void SetTheme();
-
-	private:
 		SceneHierarchyPanel m_SceneHierarchyPanel;
 		PropertiesPanel m_PropertiesPanel;
+		AssetPanel m_AssetPanel;
 
 		Ref<EditorCamera> m_EditorCamera;
 		Ref<RenderTexture> m_RenderTexture;

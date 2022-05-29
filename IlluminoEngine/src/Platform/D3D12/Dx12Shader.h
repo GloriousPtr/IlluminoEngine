@@ -22,12 +22,18 @@ namespace IlluminoEngine
 	private:
 		void SetBufferLayout(const BufferLayout& layout);
 		std::string ReadFile(const char* filepath);
-		ID3D12Resource* GetConstantBuffer(String&& name, size_t size);
+		ID3D12Resource* GetConstantBuffer(String&& name);
 
 	private:
+		struct ConstantBufferData
+		{
+			size_t Size = 0;
+			ID3D12Resource* Resource = nullptr;
+		};
+
 		String m_Filepath;
 		ID3D12RootSignature* m_RootSignature;
 		ID3D12PipelineState* m_PipelineState;
-		std::map<String, ID3D12Resource*> m_ConstantBuffers[g_QueueSlotCount];
+		std::map<String, ConstantBufferData> m_ConstantBuffers[g_QueueSlotCount];
 	};
 }

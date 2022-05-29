@@ -25,8 +25,8 @@ namespace IlluminoEngine
 		static Application* s_Instance;
 
 		std::chrono::steady_clock::time_point m_LastFrameTime;
-		LayerStack m_LayerStack;
 		Ref<Window> m_Window;
+		LayerStack m_LayerStack;
 		ImGuiLayer* m_ImGuiLayer;
 	};
 
