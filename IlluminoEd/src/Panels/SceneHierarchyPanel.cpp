@@ -18,10 +18,15 @@ namespace IlluminoEngine
 			for (auto [id, entity] : entityMap)
 				DrawEntityNode(entity);
 
+			if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
+				m_SelectedEntity = {};
+
 			if (ImGui::BeginPopupContextWindow())
 			{
 				if (ImGui::MenuItem("Create"))
-					m_SelectionContext->CreateEntity();
+				{
+					m_SelectedEntity = m_SelectionContext->CreateEntity();
+				}
 
 				if (m_SelectedEntity)
 				{
