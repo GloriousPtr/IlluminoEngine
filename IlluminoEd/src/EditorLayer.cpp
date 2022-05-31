@@ -107,8 +107,6 @@ namespace IlluminoEngine
 		m_EditorCamera->OnUpdate(ts);
 
 		m_SceneHierarchyPanel.OnUpdate(ts);
-
-		m_PropertiesPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelection());
 		m_PropertiesPanel.OnUpdate(ts);
 	}
 
@@ -244,6 +242,7 @@ namespace IlluminoEngine
 			ImGui::ShowDemoWindow(&b);
 
 			m_SceneHierarchyPanel.OnImGuiRender();
+			m_PropertiesPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelection());
 			m_PropertiesPanel.OnImGuiRender();
 			m_AssetPanel.OnImGuiRender();
 		}
