@@ -64,6 +64,12 @@ namespace IlluminoEngine
 
 	void PropertiesPanel::DrawComponents(Entity entity)
 	{
+		// ID Component
+		{
+			UUID id = entity.GetComponent<IDComponent>().ID;
+			ImGui::Text("ID: %llu", (uint64_t)id);
+		}
+
 		// TagComponent
 		{
 			auto& tagComponent = entity.GetComponent<TagComponent>();

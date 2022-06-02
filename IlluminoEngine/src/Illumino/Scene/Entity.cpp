@@ -9,4 +9,20 @@ namespace IlluminoEngine
 		: m_EntityHandle(handle), m_Scene(scene)
 	{
 	}
+
+	Entity Entity::GetParent()
+	{
+		return m_Scene->GetParent(*this);
+	}
+	
+	void Entity::SetParent(Entity parent)
+	{
+		m_Scene->SetParent(*this, parent);
+	}
+	
+	void Entity::RemoveParent()
+	{
+		if (GetParent())
+			m_Scene->RemoveParent(*this);
+	}
 }

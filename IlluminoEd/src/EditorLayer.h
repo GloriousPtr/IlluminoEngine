@@ -6,6 +6,7 @@
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/PropertiesPanel.h"
 #include "Panels/AssetPanel.h"
+#include "Panels/StatsPanel.h"
 #include "Utils/EditorCamera.h"
 
 namespace IlluminoEngine
@@ -25,6 +26,7 @@ namespace IlluminoEngine
 		SceneHierarchyPanel m_SceneHierarchyPanel;
 		PropertiesPanel m_PropertiesPanel;
 		AssetPanel m_AssetPanel;
+		StatsPanel m_StatsPanel;
 
 		Ref<EditorCamera> m_EditorCamera;
 		Ref<RenderTexture> m_RenderTexture;
@@ -36,11 +38,8 @@ namespace IlluminoEngine
 
 		glm::vec2 m_MousePosition = glm::vec2(0.0f);
 		glm::vec2 m_LastMousePosition = glm::vec2(0.0f);
-		float m_MouseSensitivity = 0.1f;
+		float m_MouseSensitivity = 10.0f;
 
-		float m_MaxMoveSpeed = 1.0f;
-		float m_MoveDampeningFactor = 0.000001f;
-		glm::vec3 m_MoveDirection = glm::vec3(0.0f);
-		float m_MoveVelocity = 0.0f;
+		float m_MaxMoveSpeed = 10.0f;
 	};
 }

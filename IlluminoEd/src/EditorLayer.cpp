@@ -12,8 +12,6 @@
 
 namespace IlluminoEngine
 {
-	constexpr float EPSILON = 1.17549435E-38f;
-
 	EditorLayer::EditorLayer()
 		: Layer("EditorLayer")
 	{
@@ -62,7 +60,7 @@ namespace IlluminoEngine
 		bool moved = false;
 		if (m_ViewportHovered && ImGui::IsMouseDown(ImGuiMouseButton_Right))
 		{
-			const glm::vec2 change = (m_MousePosition - m_LastMousePosition) * m_MouseSensitivity;
+			const glm::vec2 change = (m_MousePosition - m_LastMousePosition) * m_MouseSensitivity * ts.GetSeconds();
 			yaw += change.x;
 			pitch = glm::clamp(pitch - change.y, -89.9f, 89.9f);
 
@@ -70,44 +68,36 @@ namespace IlluminoEngine
 			if (ImGui::IsKeyDown(ImGuiKey_W))
 			{
 				moved = true;
-				moveDirection += m_EditorCamera->GetForward() * ts.GetSeconds();
+				moveDirection += m_EditorCamera->GetForward();
 			}
 			else if (ImGui::IsKeyDown(ImGuiKey_S))
 			{
 				moved = true;
-				moveDirection -= m_EditorCamera->GetForward() * ts.GetSeconds();
+				moveDirection -= m_EditorCamera->GetForward();
 			}
 			if (ImGui::IsKeyDown(ImGuiKey_D))
 			{
 				moved = true;
-				moveDirection += m_EditorCamera->GetRight() * ts.GetSeconds();
+				moveDirection += m_EditorCamera->GetRight();
 			}
 			else if (ImGui::IsKeyDown(ImGuiKey_A))
 			{
 				moved = true;
-				moveDirection -= m_EditorCamera->GetRight() * ts.GetSeconds();
+				moveDirection -= m_EditorCamera->GetRight();
 			}
 
-			if (glm::length2(moveDirection) > EPSILON)
-				m_MoveDirection = glm::normalize(moveDirection);
-		}
-
-		m_MoveVelocity += (moved ? 1.0f : -1.0f) * ts;
-		m_MoveVelocity *= glm::pow(m_MoveDampeningFactor, ts);
-		if (m_MoveVelocity > 0.0f)
-		{
 			float maxMoveSpeed = m_MaxMoveSpeed * (ImGui::IsKeyDown(ImGuiKey_LeftShift) ? 3.0f : 1.0f);
-			m_EditorCamera->SetPosition(position + (m_MoveDirection * m_MoveVelocity * maxMoveSpeed));
+			m_EditorCamera->SetPosition(position + (ts * maxMoveSpeed * moveDirection));
+			m_EditorCamera->SetYaw(yaw);
+			m_EditorCamera->SetPitch(pitch);
 		}
-
-		m_EditorCamera->SetYaw(yaw);
-		m_EditorCamera->SetPitch(pitch);
-		m_LastMousePosition = m_MousePosition;
 
 		m_EditorCamera->OnUpdate(ts);
+		m_LastMousePosition = m_MousePosition;
 
 		m_SceneHierarchyPanel.OnUpdate(ts);
 		m_PropertiesPanel.OnUpdate(ts);
+		m_StatsPanel.OnUpdate(ts);
 	}
 
 	static void BeginDockspace(const char* name)
@@ -225,7 +215,7 @@ namespace IlluminoEngine
 						{
 							auto& submesh = mesh->GetSubmesh(i);
 							Entity entity = m_ActiveScene->CreateEntity(submesh.Name.c_str());
-						//	entity.SetParent(parent);
+							entity.SetParent(parent);
 							auto& meshComponent = entity.AddComponent<MeshComponent>();
 							meshComponent.MeshGeometry = mesh;
 							meshComponent.SubmeshIndex = i;
@@ -245,6 +235,7 @@ namespace IlluminoEngine
 			m_PropertiesPanel.SetSelectedEntity(m_SceneHierarchyPanel.GetSelection());
 			m_PropertiesPanel.OnImGuiRender();
 			m_AssetPanel.OnImGuiRender();
+			m_StatsPanel.OnImGuiRender();
 		}
 		EndDockspace();
 	}

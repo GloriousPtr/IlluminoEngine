@@ -23,24 +23,24 @@ namespace IlluminoEngine
 
 		Assimp::Importer importer;
 		importer.SetPropertyFloat("PP_GSN_MAX_SMOOTHING_ANGLE", 80.0f);
-		uint32_t meshImportFlags = 
-			aiProcess_MakeLeftHanded |
-			aiProcess_FlipUVs |
-			aiProcess_CalcTangentSpace |
-			aiProcess_Triangulate |
-			aiProcess_PreTransformVertices |
-			aiProcess_SortByPType |
-			aiProcess_OptimizeMeshes |
-			aiProcess_JoinIdenticalVertices |
-			aiProcess_ImproveCacheLocality |
-			aiProcess_ValidateDataStructure;
+
+		uint32_t meshImportFlags = aiProcess_MakeLeftHanded
+			| aiProcess_FlipUVs;
 		
 		if (StringUtils::GetExtension(filepath) != "assbin")
 		{
 			meshImportFlags |=
+				aiProcess_CalcTangentSpace |
+				aiProcess_Triangulate |
+				aiProcess_PreTransformVertices |
+				aiProcess_SortByPType |
 				aiProcess_GenNormals |
 				aiProcess_GenUVCoords |
-				aiProcess_GlobalScale;
+				aiProcess_OptimizeMeshes |
+				aiProcess_JoinIdenticalVertices |
+				aiProcess_GlobalScale |
+				aiProcess_ImproveCacheLocality |
+				aiProcess_ValidateDataStructure;
 		}
 
 		const aiScene *scene = importer.ReadFile(filepath, meshImportFlags);
@@ -71,7 +71,7 @@ namespace IlluminoEngine
 		for(unsigned int i = 0; i < node->mNumMeshes; i++)
 		{
 			aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-			ProcessMesh(mesh, scene, filepath);
+			ProcessMesh(mesh, scene, filepath, node->mName.C_Str());
 		}
 
 		for(unsigned int i = 0; i < node->mNumChildren; i++)
@@ -98,7 +98,7 @@ namespace IlluminoEngine
 		return textures;
 	}
 
-	void Mesh::ProcessMesh(aiMesh *mesh, const aiScene *scene, const char* filepath)
+	void Mesh::ProcessMesh(aiMesh *mesh, const aiScene *scene, const char* filepath, const char* nodeName)
 	{
 		OPTICK_EVENT();
 
@@ -144,6 +144,6 @@ namespace IlluminoEngine
 		Ref<Texture2D> albedo = diffuseMaps.size() > 0 ? diffuseMaps[0] : nullptr;
 
 		uint32_t index = m_Submeshes.size();
-		m_Submeshes.push_back({ mesh->mName.C_Str(), meshBuffer, albedo });
+		m_Submeshes.push_back({ nodeName, meshBuffer, albedo });
 	}
 }

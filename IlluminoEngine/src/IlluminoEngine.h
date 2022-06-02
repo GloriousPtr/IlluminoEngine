@@ -10,6 +10,7 @@
 #include "Illumino/Core/Log.h"
 #include "Illumino/Core/Assert.h"
 #include "Illumino/Core/Timestep.h"
+#include "Illumino/Core/UUID.h"
 
 //-----ImGui---------------------------------------
 #include "Illumino/ImGui/ImGuiLayer.h"

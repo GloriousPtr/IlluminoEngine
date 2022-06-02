@@ -113,6 +113,7 @@ namespace IlluminoEngine
 			ImGui::GetStyle().WindowMenuButtonPosition = ImGuiDir_Right;
 
 			HeaderSelectedColor = colors[ImGuiCol_HeaderActive];
+			HeaderHoveredColor = Lighten(HeaderSelectedColor, 0.1f);
 			WindowBgColor = colors[ImGuiCol_WindowBg];
 			WindowBgAlternativeColor = Lighten(WindowBgColor, 0.04f);
 			AssetIconColor = Lighten(colors[ImGuiCol_HeaderActive], 0.9f);
@@ -151,6 +152,7 @@ namespace IlluminoEngine
 		static void SetFont();
 
 		static ImVec4 HeaderSelectedColor;
+		static ImVec4 HeaderHoveredColor;
 		static ImVec4 WindowBgColor;
 		static ImVec4 WindowBgAlternativeColor;
 		static ImVec4 AssetIconColor;

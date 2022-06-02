@@ -5,11 +5,29 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include "Illumino/Core/UUID.h"
 #include "Illumino/Renderer/Mesh.h"
 #include "Illumino/Renderer/Texture.h"
 
 namespace IlluminoEngine
 {
+	struct IDComponent
+	{
+		UUID ID;
+		
+		IDComponent() = default;
+		IDComponent(const IDComponent&) = default;
+	};
+
+	struct RelationshipComponent
+	{
+		UUID Parent = 0;
+		eastl::vector<UUID> Children;
+
+		RelationshipComponent() = default;
+		RelationshipComponent(const RelationshipComponent&) = default;
+	};
+
 	struct TagComponent
 	{
 		eastl::string Tag = "";

@@ -33,7 +33,7 @@ namespace IlluminoEngine
 
 	private:
 		void ProcessNode(aiNode *node, const aiScene *scene, const char* filepath);
-		void ProcessMesh(aiMesh *mesh, const aiScene *scene, const char* filepath);
+		void ProcessMesh(aiMesh *mesh, const aiScene *scene, const char* filepath, const char* nodeName);
 
 	private:
 		eastl::string m_Name;

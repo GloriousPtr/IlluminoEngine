@@ -22,7 +22,9 @@ namespace IlluminoEngine
 		void DrawEntityNode(Entity entity);
 
 	private:
-		Scene* m_SelectionContext;
-		Entity m_SelectedEntity;
+		Scene* m_SelectionContext = nullptr;
+		Entity m_SelectedEntity = {};
+		Entity m_HoveredEntity = {};
+		uint32_t m_CurrentlyVisibleEntities = 0;
 	};
 }
