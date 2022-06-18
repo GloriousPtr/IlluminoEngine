@@ -110,10 +110,7 @@ namespace IlluminoEngine
 
 		// Present
 		{
-			uint32_t syncInterval = m_Vsync ? 1 : 0;
-			uint32_t presentFlags = m_Vsync ? 0 : DXGI_PRESENT_ALLOW_TEARING;
-
-			m_RenderSurface->Present();
+			m_RenderSurface->Present(m_Vsync);
 
 			const uint64_t fenceValue = m_CurrentFenceValue;
 			m_CommandQueue->Signal(m_Fences[m_CurrentBackBuffer], fenceValue);
@@ -388,15 +385,12 @@ namespace IlluminoEngine
 
 	void Dx12GraphicsContext::DeferredRelease(IUnknown** resource)
 	{
-		std::lock_guard lock{ m_Mutex };
 		m_DeferredReleases[m_CurrentBackBuffer].push_back(resource);
 		SetDeferredReleasesFlag();
 	}
 
 	void Dx12GraphicsContext::ProcessDeferredReleases(const uint32_t frameIndex)
 	{
-		std::lock_guard lock{ m_Mutex };
-
 		m_DeferredReleasesFlag[frameIndex] = 0;
 
 		m_RTVDescriptorHeap.ProcessDeferredFree(frameIndex);

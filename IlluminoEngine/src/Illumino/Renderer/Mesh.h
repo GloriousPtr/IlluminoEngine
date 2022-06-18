@@ -17,6 +17,7 @@ namespace IlluminoEngine
 		eastl::string Name;
 		Ref<MeshBuffer> Geometry;
 		Ref<Texture2D> Albedo;
+		Ref<Texture2D> Normal;
 	};
 
 	class Mesh

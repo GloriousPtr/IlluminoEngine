@@ -2,6 +2,7 @@
 
 #include <imgui/imgui.h>
 
+#include <Window.h>
 #include "../Utils/UI.h"
 
 namespace IlluminoEngine
@@ -28,13 +29,11 @@ namespace IlluminoEngine
 		ImGui::SetNextWindowSize(ImVec2(480, 640), ImGuiCond_FirstUseEver);
 		ImGui::Begin("Stats");
 
-		/*
 		UI::BeginProperties();
-		bool vSync = Application::Get().GetWindow().IsVSync();
+		bool vSync = Application::GetApplication()->GetWindow()->GetGraphicsContext()->IsVsync();
 		if (UI::Property("VSync Enabled", vSync))
-			Application::Get().GetWindow().SetVSync(vSync);
+			Application::GetApplication()->GetWindow()->GetGraphicsContext()->SetVsync(vSync);
 		UI::EndProperties();
-		*/
 
 		ImGui::Text("FPS");
 		ImGui::Separator();

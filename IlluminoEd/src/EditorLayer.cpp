@@ -57,43 +57,32 @@ namespace IlluminoEngine
 		float yaw = m_EditorCamera->GetYaw();
 		float pitch = m_EditorCamera->GetPitch();
 
-		bool moved = false;
 		if (m_ViewportHovered && ImGui::IsMouseDown(ImGuiMouseButton_Right))
 		{
-			const glm::vec2 change = (m_MousePosition - m_LastMousePosition) * m_MouseSensitivity * ts.GetSeconds();
+			const glm::vec2 change = (m_MousePosition - m_LastMousePosition) * m_MouseSensitivity;
 			yaw += change.x;
 			pitch = glm::clamp(pitch - change.y, -89.9f, 89.9f);
 
-			glm::vec3 moveDirection = glm::vec3(0.0f);
-			if (ImGui::IsKeyDown(ImGuiKey_W))
-			{
-				moved = true;
-				moveDirection += m_EditorCamera->GetForward();
-			}
-			else if (ImGui::IsKeyDown(ImGuiKey_S))
-			{
-				moved = true;
-				moveDirection -= m_EditorCamera->GetForward();
-			}
-			if (ImGui::IsKeyDown(ImGuiKey_D))
-			{
-				moved = true;
-				moveDirection += m_EditorCamera->GetRight();
-			}
-			else if (ImGui::IsKeyDown(ImGuiKey_A))
-			{
-				moved = true;
-				moveDirection -= m_EditorCamera->GetRight();
-			}
-
 			float maxMoveSpeed = m_MaxMoveSpeed * (ImGui::IsKeyDown(ImGuiKey_LeftShift) ? 3.0f : 1.0f);
-			m_EditorCamera->SetPosition(position + (ts * maxMoveSpeed * moveDirection));
+			glm::vec3 pos = position;
+			if (ImGui::IsKeyDown(ImGuiKey_W))
+				pos += m_EditorCamera->GetForward() * m_MaxMoveSpeed * ts.GetSeconds();
+			else if (ImGui::IsKeyDown(ImGuiKey_S))
+				pos -= m_EditorCamera->GetForward() * m_MaxMoveSpeed * ts.GetSeconds();
+			if (ImGui::IsKeyDown(ImGuiKey_D))
+				pos += m_EditorCamera->GetRight() * m_MaxMoveSpeed * ts.GetSeconds();
+			else if (ImGui::IsKeyDown(ImGuiKey_A))
+				pos -= m_EditorCamera->GetRight() * m_MaxMoveSpeed * ts.GetSeconds();
+
+			ILLUMINO_ERROR("{0}", m_MaxMoveSpeed * ts.GetSeconds());
+
+			m_EditorCamera->SetPosition(pos);
 			m_EditorCamera->SetYaw(yaw);
 			m_EditorCamera->SetPitch(pitch);
 		}
 
-		m_EditorCamera->OnUpdate(ts);
 		m_LastMousePosition = m_MousePosition;
+		m_EditorCamera->OnUpdate(ts);
 
 		m_SceneHierarchyPanel.OnUpdate(ts);
 		m_PropertiesPanel.OnUpdate(ts);
@@ -153,10 +142,6 @@ namespace IlluminoEngine
 
 	void EditorLayer::OnImGuiRender()
 	{
-		m_RenderTexture->Bind();
-		m_ActiveScene->OnRenderEditor(*m_EditorCamera);
-		m_RenderTexture->Unbind();
-
 		BeginDockspace("Dockspace");
 		{
 			if (ImGui::BeginMenuBar())
@@ -193,8 +178,12 @@ namespace IlluminoEngine
 			uint32_t height = m_ViewportSizeMax.y - m_ViewportSizeMin.y;
 
 			m_ViewportHovered = ImGui::IsWindowHovered();
-
+			
+			m_RenderTexture->Bind();
+			m_ActiveScene->OnRenderEditor(*m_EditorCamera);
+			m_RenderTexture->Unbind();
 			uint64_t textureID = m_RenderTexture->GetRendererID();
+			
 			ImGui::Image((ImTextureID)textureID, { (float)width, (float)height });
 
 			if (ImGui::BeginDragDropTarget())

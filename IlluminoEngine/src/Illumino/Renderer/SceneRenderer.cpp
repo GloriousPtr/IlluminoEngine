@@ -70,7 +70,7 @@ namespace IlluminoEngine
 		if (s_Meshes.empty())
 			return;
 
-		s_Shader->Bind();
+		s_Shader->BindPipeline();
 		
 		struct CB
 		{
@@ -102,7 +102,13 @@ namespace IlluminoEngine
 		{
 			if (mesh.SubmeshData.Albedo)
 				mesh.SubmeshData.Albedo->Bind(0);
-			RenderCommand::DrawIndexed(mesh.SubmeshData.Geometry, gpuHandle + alignedSize * index);
+			
+			if (mesh.SubmeshData.Normal)
+				mesh.SubmeshData.Normal->Bind(1);
+			
+			s_Shader->BindConstant(3, gpuHandle + alignedSize * index);
+
+			RenderCommand::DrawIndexed(mesh.SubmeshData.Geometry);
 			++index;
 		}
 

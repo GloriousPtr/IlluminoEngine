@@ -63,7 +63,6 @@ namespace IlluminoEngine
 		D3D12_GPU_DESCRIPTOR_HANDLE m_GPUStart;
 		Scope<uint32_t[]> m_FreeHandles;
 		std::vector<uint32_t> m_DeferredFreeIndices[g_QueueSlotCount];
-		std::mutex m_Mutex;
 		uint32_t m_Capacity = 0;
 		uint32_t m_Size = 0;
 		uint32_t m_DescriptorSize = 0;

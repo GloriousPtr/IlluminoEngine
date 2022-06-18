@@ -14,7 +14,7 @@ namespace IlluminoEngine
 		void OnUpdate(Timestep timestep);
 
 		void SetViewportSize(float width, float height);
-		void SetPosition(const glm::vec3& position) { m_Position = position; }
+		void SetPosition(const glm::vec3 position) { m_Position = position; }
 		void SetYaw(float yaw) { m_Yaw = yaw; }
 		void SetPitch(float pitch) { m_Pitch = pitch; }
 
@@ -24,6 +24,9 @@ namespace IlluminoEngine
 		const glm::vec3& GetUp() const { return m_Up; }
 		const float GetYaw() const { return m_Yaw; }
 		const float GetPitch() const { return m_Pitch; }
+
+		virtual const glm::mat4& GetView() const override { return m_View; }
+		virtual const glm::mat4& GetProjection() const override { return m_Projection; }
 
 	private:
 		float m_Fov = 45.0f;
@@ -38,5 +41,8 @@ namespace IlluminoEngine
 
 		float m_Yaw = 90.0f;
 		float m_Pitch = 0.0f;
+
+		glm::mat4 m_View = glm::mat4(1.0f);
+		glm::mat4 m_Projection = glm::mat4(1.0f);
 	};
 }

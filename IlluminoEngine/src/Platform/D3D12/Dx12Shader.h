@@ -14,7 +14,9 @@ namespace IlluminoEngine
 		Dx12Shader(const char* filepath, const BufferLayout& layout);
 		virtual ~Dx12Shader() override;
 
-		virtual void Bind() override;
+		virtual void BindConstant(uint32_t slot, uint64_t handle) override;
+		virtual void BindGlobal(uint32_t slot, uint64_t handle) override;
+		virtual void BindPipeline() override;
 
 		virtual uint64_t CreateBuffer(String&& name, size_t sizeAligned) override;
 		virtual void UploadBuffer(String&& name, void* data, size_t size, size_t offsetAligned) override;

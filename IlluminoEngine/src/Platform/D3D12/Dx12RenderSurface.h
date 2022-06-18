@@ -15,7 +15,7 @@ namespace IlluminoEngine
 		virtual ~Dx12RenderSurface();
 
 		void Create(IDXGIFactory7* factory, ID3D12CommandQueue* commandQueue, DXGI_FORMAT format);
-		void Present();
+		void Present(const bool vsync = true);
 		void Resize(uint32_t width, uint32_t height);
 
 		constexpr uint32_t GetWidth() const { return m_Width; }

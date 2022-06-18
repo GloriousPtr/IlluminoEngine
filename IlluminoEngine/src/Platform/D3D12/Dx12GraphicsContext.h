@@ -23,6 +23,8 @@ namespace IlluminoEngine
 		virtual void Shutdown() override;
 		virtual void SetVsync(bool state) override { m_Vsync = state; }
 		
+		virtual bool IsVsync() override { return m_Vsync; }
+
 		ID3D12Device8* GetDevice() { return m_Device; }
 		ID3D12CommandQueue* GetCommandQueue() { return m_CommandQueue; }
 		ID3D12GraphicsCommandList* GetCommandList() { return m_CommandLists[m_CurrentBackBuffer]; }
@@ -33,7 +35,7 @@ namespace IlluminoEngine
 		DescriptorHeap& GetSRVDescriptorHeap() { return m_SRVDescriptorHeap; }
 		DescriptorHeap& GetUAVDescriptorHeap() { return m_UAVDescriptorHeap; }
 		
-		uint32_t GetCurrentBackBufferIndex() { return m_CurrentBackBuffer; }
+		uint32_t GetCurrentBackBufferIndex() { return m_RenderSurface->GetBackBufferIndex(); }
 
 	private:
 		void CreateDevice(IDXGIFactory7* factory);
@@ -80,8 +82,6 @@ namespace IlluminoEngine
 		DescriptorHeap m_DSVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_DSV };
 		DescriptorHeap m_SRVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV };
 		DescriptorHeap m_UAVDescriptorHeap{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV };
-
-		std::mutex m_Mutex;
 
 		friend class Dx12MeshBuffer;
 		friend class Dx12RendererAPI;

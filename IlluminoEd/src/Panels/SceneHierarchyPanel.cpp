@@ -15,7 +15,6 @@ namespace IlluminoEngine
 
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 		ImGui::Begin("Hierarchy");
 
 		m_HoveredEntity = {};
@@ -28,6 +27,7 @@ namespace IlluminoEngine
 
 		if(m_SelectionContext)
 		{
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 			const auto& entityMap = m_SelectionContext->GetEntityMap();
 			for (auto [id, entity] : entityMap)
 			{
@@ -40,16 +40,23 @@ namespace IlluminoEngine
 				if (ImGui::IsMouseDown(0) || (ImGui::IsMouseDown(1) && !m_HoveredEntity))
 					m_SelectedEntity = {};
 			}
+			ImGui::PopStyleVar();
 
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 10, 10 });
 			if (ImGui::BeginPopupContextWindow())
 			{
-				if (ImGui::MenuItem("Create"))
+				if (ImGui::BeginMenu("Create"))
 				{
-					Entity e = m_SelectionContext->CreateEntity();
-					if (m_SelectedEntity)
-						e.SetParent(m_SelectedEntity);
-					else
-						m_SelectedEntity = e;
+					if (ImGui::MenuItem("Entity"))
+					{
+						Entity e = m_SelectionContext->CreateEntity();
+						if (m_SelectedEntity)
+							e.SetParent(m_SelectedEntity);
+						else
+							m_SelectedEntity = e;
+					}
+
+					ImGui::EndMenu();
 				}
 
 				if (m_SelectedEntity)
@@ -63,10 +70,10 @@ namespace IlluminoEngine
 
 				ImGui::EndPopup();
 			}
+			ImGui::PopStyleVar();
 		}
 
 		ImGui::End();
-		ImGui::PopStyleVar();
 	}
 
 	void SceneHierarchyPanel::DrawEntityNode(Entity entity)
@@ -92,7 +99,8 @@ namespace IlluminoEngine
 			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, EditorTheme::HeaderHoveredColor);
 		}
 
-		eastl::string name = ICON_MDI_CUBE_OUTLINE + eastl::string(" ") + entity.GetComponent<TagComponent>().Tag.c_str();
+		static const eastl::string icon = ICON_MDI_CUBE_OUTLINE + eastl::string(" ");
+		eastl::string name = icon + entity.GetComponent<TagComponent>().Tag.c_str();
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, treeFlags, name.c_str());
 		
 		if (highlight)

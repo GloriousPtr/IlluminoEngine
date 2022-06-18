@@ -51,8 +51,14 @@ namespace IlluminoEngine
 	{
 		for (size_t i = 0; i < g_QueueSlotCount; ++i)
 		{
-			m_RenderTargets[i].ColorResource->Release();
-			m_RenderTargets[i].DepthResource->Release();
+			auto& data = m_RenderTargets[i];
+
+			data.ColorResource->Release();
+			data.DepthResource->Release();
+
+			Dx12GraphicsContext::s_Context->GetDSVDescriptorHeap().Free(data.DSVHandle);
+			Dx12GraphicsContext::s_Context->GetSRVDescriptorHeap().Free(data.SRVHandle);
+			Dx12GraphicsContext::s_Context->GetRTVDescriptorHeap().Free(data.RTVHandle);
 		}
 	}
 
@@ -186,6 +192,6 @@ namespace IlluminoEngine
 
 	uint64_t Dx12RenderTexture::GetRendererID()
 	{
-		return m_RenderTargets[Dx12GraphicsContext::s_Context->m_CurrentBackBuffer].SRVHandle.GPU.ptr;
+		return m_RenderTargets[Dx12GraphicsContext::s_Context->GetCurrentBackBufferIndex()].SRVHandle.GPU.ptr;
 	}
 }

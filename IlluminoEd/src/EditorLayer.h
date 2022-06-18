@@ -38,7 +38,7 @@ namespace IlluminoEngine
 
 		glm::vec2 m_MousePosition = glm::vec2(0.0f);
 		glm::vec2 m_LastMousePosition = glm::vec2(0.0f);
-		float m_MouseSensitivity = 10.0f;
+		float m_MouseSensitivity = 0.1f;
 
 		float m_MaxMoveSpeed = 10.0f;
 	};

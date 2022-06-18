@@ -9,8 +9,6 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		std::lock_guard lock{ m_Mutex };
-
 		ILLUMINO_ASSERT((capacity & capacity) < D3D12_MAX_SHADER_VISIBLE_DESCRIPTOR_HEAP_SIZE_TIER_2, "Capacity is either 0 or too high!");
 		ILLUMINO_ASSERT(!(m_Type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER && capacity > D3D12_MAX_SHADER_VISIBLE_SAMPLER_HEAP_SIZE));
 		Dx12GraphicsContext* context = Dx12GraphicsContext::s_Context;
@@ -60,8 +58,6 @@ namespace IlluminoEngine
 
 	void DescriptorHeap::ProcessDeferredFree(uint32_t frameIndex)
 	{
-		std::lock_guard lock{ m_Mutex };
-
 		ILLUMINO_ASSERT(frameIndex < g_QueueSlotCount);
 
 		std::vector<uint32_t>& indices = m_DeferredFreeIndices[frameIndex];
@@ -91,8 +87,6 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		std::lock_guard lock{ m_Mutex };
-
 		ILLUMINO_ASSERT(m_Heap);
 		ILLUMINO_ASSERT(m_Size < m_Capacity);
 
@@ -119,8 +113,6 @@ namespace IlluminoEngine
 
 		if (!handle.IsValid())
 			return;
-
-		std::lock_guard lock{ m_Mutex };
 
 		ILLUMINO_ASSERT(m_Heap && m_Size);
 		ILLUMINO_ASSERT(handle.m_Container == this);

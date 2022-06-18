@@ -28,7 +28,7 @@ namespace IlluminoEngine
 		desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 		desc.BufferCount = g_QueueSlotCount;
 		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		desc.Flags = 0;
+		desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 		desc.Format = format;
 		desc.Width = m_Width;
 		desc.Height = m_Height;
@@ -61,13 +61,16 @@ namespace IlluminoEngine
 		Finalize();
 	}
 
-	void Dx12RenderSurface::Present()
+	void Dx12RenderSurface::Present(const bool vsync)
 	{
 		ILLUMINO_ASSERT(m_SwapChain);
 
+		uint32_t syncInterval = vsync ? 1 : 0;
+		uint32_t presentFlags = vsync ? 0 : DXGI_PRESENT_ALLOW_TEARING;
+
 		OPTICK_GPU_FLIP(m_SwapChain);
 		OPTICK_CATEGORY("Wait", Optick::Category::Wait);
-		HRESULT hr = m_SwapChain->Present(1, 0);
+		HRESULT hr = m_SwapChain->Present(syncInterval, presentFlags);
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to present the swapchain");
 		m_CurrentBackBuffer = m_SwapChain->GetCurrentBackBufferIndex();
 	}
@@ -83,7 +86,7 @@ namespace IlluminoEngine
 			m_RenderTargetData[i].Resource = nullptr;
 		}
 
-		HRESULT hr = m_SwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+		HRESULT hr = m_SwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING);
 		ILLUMINO_ASSERT(SUCCEEDED(hr), "Failed to resize swapchain!");
 		m_CurrentBackBuffer = m_SwapChain->GetCurrentBackBufferIndex();
 

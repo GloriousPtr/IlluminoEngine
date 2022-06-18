@@ -73,6 +73,8 @@ namespace IlluminoEngine
 
 		m_Image->Release();
 		m_UploadImage->Release();
+
+		Dx12GraphicsContext::s_Context->GetSRVDescriptorHeap().Free(m_Handle);
 	}
 
 	void Dx12Texture2D::Bind(uint32_t slot)

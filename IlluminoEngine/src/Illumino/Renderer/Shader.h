@@ -9,7 +9,9 @@ namespace IlluminoEngine
 	public:
 		virtual ~Shader() = default;
 
-		virtual void Bind() = 0;
+		virtual void BindConstant(uint32_t slot, uint64_t handle) = 0;
+		virtual void BindGlobal(uint32_t slot, uint64_t handle) = 0;
+		virtual void BindPipeline() = 0;
 
 		virtual uint64_t CreateBuffer(String&& name, size_t sizeAligned) = 0;
 		virtual void UploadBuffer(String&& name, void* data, size_t size, size_t offsetAligned) = 0;

@@ -137,13 +137,16 @@ namespace IlluminoEngine
 
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         eastl::vector<Ref<Texture2D>> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, filepath);
-		//eastl::vector<Ref<Texture2D>> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS, filepath);
-		//eastl::vector<Ref<Texture2D>> heightMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, filepath);
+		eastl::vector<Ref<Texture2D>> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS, filepath);
+		eastl::vector<Ref<Texture2D>> heightMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, filepath);
 		//eastl::vector<Ref<Texture2D>> emissiveMaps = LoadMaterialTextures(material, aiTextureType_EMISSIVE, filepath);
 
 		Ref<Texture2D> albedo = diffuseMaps.size() > 0 ? diffuseMaps[0] : nullptr;
+		Ref<Texture2D> normal = normalMaps.size() > 0 ? normalMaps[0] : nullptr;
+		if (!normal)
+			normal = heightMaps.size() > 0 ? heightMaps[0] : nullptr;
 
 		uint32_t index = m_Submeshes.size();
-		m_Submeshes.push_back({ nodeName, meshBuffer, albedo });
+		m_Submeshes.push_back({ nodeName, meshBuffer, albedo, normal });
 	}
 }

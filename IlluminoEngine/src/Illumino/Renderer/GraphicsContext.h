@@ -17,6 +17,8 @@ namespace IlluminoEngine
 		virtual void Shutdown() = 0;
 		virtual void SetVsync(bool state) = 0;
 
+		virtual bool IsVsync() = 0;
+
 		static Scope<GraphicsContext> Create(const Window& window);
 	};
 }

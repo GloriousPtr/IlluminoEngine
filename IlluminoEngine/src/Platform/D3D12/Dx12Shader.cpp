@@ -37,7 +37,25 @@ namespace IlluminoEngine
 		m_ConstantBuffers->clear();
 	}
 
-	void Dx12Shader::Bind()
+	void Dx12Shader::BindConstant(uint32_t slot, uint64_t handle)
+	{
+		OPTICK_EVENT();
+
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+
+		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootConstantBufferView(slot, handle);
+	}
+
+	void Dx12Shader::BindGlobal(uint32_t slot, uint64_t handle)
+	{
+		OPTICK_EVENT();
+
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+
+		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootUnorderedAccessView(slot, handle);
+	}
+
+	void Dx12Shader::BindPipeline()
 	{
 		OPTICK_EVENT();
 
@@ -116,18 +134,21 @@ namespace IlluminoEngine
 			errorBlob->Release();
 
 		// Create root signature
-		CD3DX12_ROOT_PARAMETER parameters[2];
-		CD3DX12_DESCRIPTOR_RANGE range { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0 };
+		CD3DX12_ROOT_PARAMETER parameters[4];
+		CD3DX12_DESCRIPTOR_RANGE range1 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0 };
+		CD3DX12_DESCRIPTOR_RANGE range2 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1 };
 
-		parameters[0].InitAsDescriptorTable(1, &range);
-		parameters[1].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
+		parameters[0].InitAsDescriptorTable(1, &range1);
+		parameters[1].InitAsDescriptorTable(1, &range2);
+		parameters[2].InitAsConstantBufferView(0, 0);
+		parameters[3].InitAsConstantBufferView(1, 0);
 
 		CD3DX12_STATIC_SAMPLER_DESC samplers[1];
-		samplers->Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
+		samplers[0].Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
 
 		CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
 		
-		descRootSignature.Init(2, parameters, 1, samplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		descRootSignature.Init(4, parameters, 1, samplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		ID3DBlob* rootBlob;
 		hr = D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &rootBlob, &errorBlob);
