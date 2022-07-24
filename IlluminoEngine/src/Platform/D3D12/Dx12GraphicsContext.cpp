@@ -136,6 +136,7 @@ namespace IlluminoEngine
 			CloseHandle(e);
 
 #ifdef ILLUMINO_DEBUG
+#ifdef ENABLE_DX12_DEBUG_MESSAGES
 		ID3D12InfoQueue1* infoQueue1;
 		HRESULT hr = m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue1));
 
@@ -150,12 +151,26 @@ namespace IlluminoEngine
 		else
 		{
 			ID3D12InfoQueue* infoQueue;
-			m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue));
+			HRESULT hr = m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue));
+			if (SUCCEEDED(hr))
+			{
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, false);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, false);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+				infoQueue->Release();
+			}
+		}
+#else
+		ID3D12InfoQueue* infoQueue;
+		HRESULT hr = m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue));
+		if (SUCCEEDED(hr))
+		{
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, false);
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, false);
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
 			infoQueue->Release();
 		}
+#endif // ENABLE_DX12_DEBUG_MESSAGES
 #endif // ILLUMINO_DEBUG
 
 		for (size_t i = 0; i < g_QueueSlotCount; ++i)
@@ -245,6 +260,7 @@ namespace IlluminoEngine
 		m_Device->SetName(L"MainD3D12Device");
 
 #ifdef ILLUMINO_DEBUG
+#ifdef ENABLE_DX12_DEBUG_MESSAGES
 		ID3D12InfoQueue1* infoQueue1;
 		hr = m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue1));
 
@@ -258,14 +274,38 @@ namespace IlluminoEngine
 		}
 		else
 		{
+			ILLUMINO_WARN("Could not enable enable DX12 debug messages on console window!");
+
 			ID3D12InfoQueue* infoQueue;
-			m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue));
+			hr = m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue));
+			if (SUCCEEDED(hr))
+			{
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+				infoQueue->Release();
+			}
+			else
+			{
+				ILLUMINO_ERROR("Could not enable debugging support for the device!");
+			}
+		}
+#else
+		ILLUMINO_WARN("Support for DX12 debug messages on console window is disabled, define ENABLE_DX12_DEBUG_MESSAGES to enable the support, it requires Windows 11 SDK!");
+		ID3D12InfoQueue* infoQueue;
+		hr = m_Device->QueryInterface(IID_PPV_ARGS(&infoQueue));
+		if (SUCCEEDED(hr))
+		{
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
 			infoQueue->Release();
 		}
-		
+		else
+		{
+			ILLUMINO_ERROR("Could not enable debugging support for the DX12 device!");
+		}
+#endif //ENABLE_DX12_DEBUG_MESSAGES
 #endif // ILLUMINO_DEBUG
 
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};

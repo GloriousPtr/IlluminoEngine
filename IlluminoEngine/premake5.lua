@@ -22,6 +22,7 @@ project "IlluminoEngine"
 
 	defines
 	{
+		--"ENABLE_DX12_DEBUG_MESSAGES",
 		"_CRT_SECURE_NO_WARNINGS",
 	}
 
