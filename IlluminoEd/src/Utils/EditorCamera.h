@@ -25,6 +25,7 @@ namespace IlluminoEngine
 		const float GetYaw() const { return m_Yaw; }
 		const float GetPitch() const { return m_Pitch; }
 
+		virtual const glm::mat4& GetTransform() const override { return glm::inverse(m_View); }
 		virtual const glm::mat4& GetView() const override { return m_View; }
 		virtual const glm::mat4& GetProjection() const override { return m_Projection; }
 

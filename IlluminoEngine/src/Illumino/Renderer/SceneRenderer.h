@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include "Illumino/Scene/Entity.h"
 #include "Camera.h"
 #include "Mesh.h"
 
@@ -18,16 +19,12 @@ namespace IlluminoEngine
 	public:
 		static void Init();
 		static void Shutdown();
-		static void BeginScene(const Camera& camera);
+		static void BeginScene(const Camera& camera, const eastl::vector<Entity>& pointLights);
 		static void EndScene();
 
 		static void SubmitMesh(Submesh& mesh, glm::mat4& transform);
 
 	private:
 		static void RenderPass();
-
-	private:
-		
-		static std::vector<MeshData> s_Meshes;
 	};
 }

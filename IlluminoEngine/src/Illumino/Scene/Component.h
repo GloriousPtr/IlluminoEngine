@@ -61,4 +61,14 @@ namespace IlluminoEngine
 		MeshComponent() = default;
 		MeshComponent(const MeshComponent&) = default;
 	};
+
+	struct PointLightComponent
+	{
+		float Intensity = 1.0f;
+		glm::vec3 Color = glm::vec3(1.0f);
+		float Radius = 1.0f;
+
+		PointLightComponent() = default;
+		PointLightComponent(const PointLightComponent&) = default;
+	};
 }

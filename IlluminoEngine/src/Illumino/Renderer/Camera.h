@@ -9,6 +9,7 @@ namespace IlluminoEngine
 	public:
 		virtual ~Camera() = default;
 
+		virtual const glm::mat4& GetTransform() const = 0;
 		virtual const glm::mat4& GetView() const = 0;
 		virtual const glm::mat4& GetProjection() const = 0;
 	};

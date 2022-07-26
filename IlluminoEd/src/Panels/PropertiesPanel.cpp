@@ -81,7 +81,7 @@ namespace IlluminoEngine
 			}
 		}
 
-		DrawComponent<TransformComponent>("Transform Component", entity, [](TransformComponent& component)
+		DrawComponent<TransformComponent>("Transform", entity, [](TransformComponent& component)
 		{
 			UI::BeginProperties();
 			UI::DrawVec3Control("Translation", component.Translation);
@@ -90,11 +90,29 @@ namespace IlluminoEngine
 			UI::EndProperties();
 		}, false);
 
-		DrawComponent<MeshComponent>("Mesh Component", entity, [](MeshComponent& component)
+		DrawComponent<MeshComponent>("Mesh", entity, [](MeshComponent& component)
 		{
 			UI::BeginProperties();
 			if (component.MeshGeometry)
+			{
 				UI::Property("Submesh Index", component.SubmeshIndex, 0, component.MeshGeometry->GetSubmeshCount() - 1);
+
+				Submesh& submesh = component.MeshGeometry->GetSubmesh(component.SubmeshIndex);
+
+				ImGui::Separator();
+
+				UI::Property("Roughness", submesh.Roughness, 0.0f, 1.0f);
+				UI::Property("Metalness", submesh.Metalness, 0.0f, 1.0f);
+			}
+			UI::EndProperties();
+		}, true);
+
+		DrawComponent<PointLightComponent>("Point Light", entity, [](PointLightComponent& component)
+		{
+			UI::BeginProperties();
+			UI::Property("Intensity", component.Intensity);
+			UI::PropertyColor3("Color", component.Color);
+			UI::Property("Radius", component.Radius);
 			UI::EndProperties();
 		}, true);
 
@@ -102,11 +120,25 @@ namespace IlluminoEngine
 		ImVec2 buttonSize = { 150, 30 };
 		ImGui::SetCursorPos({ (ImGui::GetContentRegionMax().x - buttonSize.x) * 0.5f, ImGui::GetCursorPosY() + buttonSize.y * 0.5f });
 		if (ImGui::Button("Add Component", buttonSize))
-		{
-			if (ImGui::BeginPopupContextWindow())
-			{
+			ImGui::OpenPopup("AddComponentPopup");
 
-				ImGui::EndPopup();
+		if (ImGui::BeginPopup("AddComponentPopup"))
+		{
+			DisplayAddComponentEntry<PointLightComponent>("Point Light");
+
+			ImGui::EndPopup();
+		}
+	}
+
+	template<typename Component>
+	void PropertiesPanel::DisplayAddComponentEntry(const char* entryName)
+	{
+		if (!m_SelectedEntity.HasComponent<Component>())
+		{
+			if (ImGui::MenuItem(entryName))
+			{
+				m_SelectedEntity.AddComponent<Component>();
+				ImGui::CloseCurrentPopup();
 			}
 		}
 	}

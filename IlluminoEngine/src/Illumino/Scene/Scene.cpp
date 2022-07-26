@@ -78,8 +78,20 @@ namespace IlluminoEngine
 
 	void Scene::OnRenderEditor(const Camera& camera)
 	{
-		SceneRenderer::BeginScene(camera);
+		OPTICK_EVENT("SubmitMeshes");
+
+		auto& view = m_Registry.view<TransformComponent, PointLightComponent>();
+		eastl::vector<Entity> pointLights;
+		pointLights.reserve(view.size());
+		for (auto entity : view)
 		{
+			pointLights.emplace_back(entity, this);
+		}
+
+		SceneRenderer::BeginScene(camera, pointLights);
+		{
+			OPTICK_EVENT("SubmitMeshes");
+
 			auto& view = m_Registry.view<TransformComponent, MeshComponent>();
 			for (auto entity : view)
 			{

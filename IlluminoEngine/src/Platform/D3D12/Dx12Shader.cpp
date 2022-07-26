@@ -64,14 +64,14 @@ namespace IlluminoEngine
 		Dx12GraphicsContext::s_Context->BindShader(m_PipelineState, m_RootSignature);
 	}
 
-	uint64_t Dx12Shader::CreateBuffer(String&& name, size_t sizeAligned)
+	uint64_t Dx12Shader::CreateBuffer(const char* name, size_t sizeAligned)
 	{
 		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
 
 		uint32_t backBuffer = Dx12GraphicsContext::s_Context->GetCurrentBackBufferIndex();
 		auto& constantBufferMap = m_ConstantBuffers[backBuffer];
 
-		if (constantBufferMap.find(name) != constantBufferMap.end())
+		if (constantBufferMap.find_as(name) != constantBufferMap.end())
 		{
 			auto& cb = constantBufferMap.at(name);
 			if (cb.Size == sizeAligned)
@@ -86,7 +86,7 @@ namespace IlluminoEngine
 		return buffer->GetGPUVirtualAddress();
 	}
 
-	void Dx12Shader::UploadBuffer(String&& name, void* data, size_t size, size_t offsetAligned)
+	void Dx12Shader::UploadBuffer(const char* name, void* data, size_t size, size_t offsetAligned)
 	{
 		OPTICK_EVENT();
 
@@ -97,7 +97,7 @@ namespace IlluminoEngine
 		constantBuffer->Unmap(0, nullptr);
 	}
 
-	ID3D12Resource* Dx12Shader::GetConstantBuffer(String&& name)
+	ID3D12Resource* Dx12Shader::GetConstantBuffer(const char* name)
 	{
 		OPTICK_EVENT();
 
@@ -106,7 +106,7 @@ namespace IlluminoEngine
 		uint32_t backBuffer = Dx12GraphicsContext::s_Context->GetCurrentBackBufferIndex();
 		auto& constantBufferMap = m_ConstantBuffers[backBuffer];
 
-		if (constantBufferMap.find(name) != constantBufferMap.end())
+		if (constantBufferMap.find_as(name) != constantBufferMap.end())
 			return constantBufferMap.at(name).Resource;
 
 		ILLUMINO_ASSERT("Constant buffer not found!");
@@ -134,7 +134,7 @@ namespace IlluminoEngine
 			errorBlob->Release();
 
 		// Create root signature
-		CD3DX12_ROOT_PARAMETER parameters[4];
+		CD3DX12_ROOT_PARAMETER parameters[6];
 		CD3DX12_DESCRIPTOR_RANGE range1 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0 };
 		CD3DX12_DESCRIPTOR_RANGE range2 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1 };
 
@@ -142,13 +142,15 @@ namespace IlluminoEngine
 		parameters[1].InitAsDescriptorTable(1, &range2);
 		parameters[2].InitAsConstantBufferView(0, 0);
 		parameters[3].InitAsConstantBufferView(1, 0);
+		parameters[4].InitAsConstantBufferView(2, 0);
+		parameters[5].InitAsConstantBufferView(3, 0);
 
 		CD3DX12_STATIC_SAMPLER_DESC samplers[1];
 		samplers[0].Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
 
 		CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
 		
-		descRootSignature.Init(4, parameters, 1, samplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		descRootSignature.Init(6, parameters, 1, samplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		ID3DBlob* rootBlob;
 		hr = D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &rootBlob, &errorBlob);

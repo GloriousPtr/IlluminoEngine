@@ -18,6 +18,9 @@ namespace IlluminoEngine
 	private:
 		void DrawComponents(Entity entity);
 
+		template<typename Component>
+		void DisplayAddComponentEntry(const char* entryName);
+
 	private:
 		Entity m_SelectedEntity;
 	};

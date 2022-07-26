@@ -18,6 +18,8 @@ namespace IlluminoEngine
 		Ref<MeshBuffer> Geometry;
 		Ref<Texture2D> Albedo;
 		Ref<Texture2D> Normal;
+		float Metalness = 0.0f;
+		float Roughness = 1.0f;
 	};
 
 	class Mesh
