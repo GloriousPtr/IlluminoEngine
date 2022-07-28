@@ -2,8 +2,10 @@
 #include "EditorLayer.h"
 
 #include <imgui/imgui.h>
+#include <ImGuizmo.h>
 #include <glm/glm.hpp>
 #include <glm/glm/gtx/norm.hpp>
+#include <glm/glm/gtc/type_ptr.hpp>
 
 #include "Utils/EditorTheme.h"
 #include "Illumino/Core/Application.h"
@@ -87,6 +89,18 @@ namespace IlluminoEngine
 		m_SceneHierarchyPanel.OnUpdate(ts);
 		m_PropertiesPanel.OnUpdate(ts);
 		m_StatsPanel.OnUpdate(ts);
+
+		if (!ImGuizmo::IsUsing() && !ImGui::IsMouseDown(ImGuiMouseButton_Right))
+		{
+			if (ImGui::IsKeyPressed(ImGuiKey_Q))
+				m_GizmoType = -1;
+			if (ImGui::IsKeyPressed(ImGuiKey_W))
+				m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+			if (ImGui::IsKeyPressed(ImGuiKey_E))
+				m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+			if (ImGui::IsKeyPressed(ImGuiKey_R))
+				m_GizmoType = ImGuizmo::OPERATION::SCALE;
+		}
 	}
 
 	static void BeginDockspace(const char* name)
@@ -174,6 +188,10 @@ namespace IlluminoEngine
 			ImGui::Begin("Viewport");
 			m_ViewportSizeMin = ImGui::GetWindowContentRegionMin();
 			m_ViewportSizeMax = ImGui::GetWindowContentRegionMax();
+			ImVec2 viewportOffset = ImGui::GetWindowPos();
+			m_ViewportBounds[0] = { m_ViewportSizeMin.x + viewportOffset.x, m_ViewportSizeMin.y + viewportOffset.y };
+			m_ViewportBounds[1] = {m_ViewportSizeMax.x + viewportOffset.x, m_ViewportSizeMax.y + viewportOffset.y};
+
 			uint32_t width = m_ViewportSizeMax.x - m_ViewportSizeMin.x;
 			uint32_t height = m_ViewportSizeMax.y - m_ViewportSizeMin.y;
 
@@ -212,6 +230,48 @@ namespace IlluminoEngine
 					}
 				}
 				ImGui::EndDragDropTarget();
+			}
+
+			// Gizmos
+			if (m_ViewportHovered && m_GizmoType != -1)
+			{
+				Entity selectedEntity = m_SceneHierarchyPanel.GetSelection();
+				if (selectedEntity)
+				{
+					ImGuizmo::SetOrthographic(false);
+					ImGuizmo::SetDrawlist();
+
+					ImGuizmo::SetRect(m_ViewportBounds[0].x, m_ViewportBounds[0].y, m_ViewportBounds[1].x - m_ViewportBounds[0].x, m_ViewportBounds[1].y - m_ViewportBounds[0].y);
+
+					const glm::mat4& cameraProjection = m_EditorCamera->GetProjection();
+					const glm::mat4& cameraView = m_EditorCamera->GetView();
+					// Entity Transform
+					auto& tc = selectedEntity.GetComponent<TransformComponent>();
+					auto& rc = selectedEntity.GetComponent<RelationshipComponent>();
+					glm::mat4 transform = tc.GetTransform();
+
+					// Snapping
+					const bool snap = ImGui::IsKeyDown(ImGuiKey_LeftCtrl);
+					float snapValue = 0.5f;
+					if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+						snapValue = 45.0f;
+
+					float snapValues[3] = { snapValue, snapValue, snapValue };
+
+					ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), (ImGuizmo::OPERATION)m_GizmoType, ImGuizmo::LOCAL, glm::value_ptr(transform), nullptr, snap ? snapValues : nullptr);
+
+					if (m_ViewportHovered && ImGuizmo::IsUsing())
+					{
+						glm::mat4& parentWorldTransform = rc.Parent != 0 ? selectedEntity.GetParent().GetComponent<TransformComponent>().GetTransform() : glm::mat4(1.0f);
+						glm::vec3 translation, rotation, scale;
+						Math::DecomposeTransform(glm::inverse(parentWorldTransform) * transform, translation, rotation, scale);
+
+						tc.Translation = translation;
+						const glm::vec3 deltaRotation = rotation - tc.Rotation;
+						tc.Rotation += deltaRotation;
+						tc.Scale = scale;
+					}
+				}
 			}
 
 			ImGui::End();
