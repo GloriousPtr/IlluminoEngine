@@ -34,7 +34,9 @@ namespace IlluminoEngine
 
 		ImVec2 m_ViewportSizeMin = { 0, 0 };
 		ImVec2 m_ViewportSizeMax = { 0, 0 };
+		ImVec2 m_ViewportBounds[2] = { {0, 0}, {0, 0} };
 		bool m_ViewportHovered = false;
+		int m_GizmoType = -1;
 
 		glm::vec2 m_MousePosition = glm::vec2(0.0f);
 		glm::vec2 m_LastMousePosition = glm::vec2(0.0f);

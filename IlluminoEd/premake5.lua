@@ -26,6 +26,7 @@ project "IlluminoEd"
 		"%{IncludeDir.EASTL}",
 		"%{IncludeDir.EABase}",
 		"%{IncludeDir.entt}",
+		"%{IncludeDir.ImGuizmo}",
 	}
 
 	links

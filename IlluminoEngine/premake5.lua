@@ -18,6 +18,8 @@ project "IlluminoEngine"
 		"vendor/glm/glm/**.inl",
 		"vendor/stb_image/**.h",
 		"vendor/stb_image/**.cpp",
+		"vendor/ImGuizmo/ImGuizmo.h",
+		"vendor/ImGuizmo/ImGuizmo.cpp",
 	}
 
 	defines
@@ -41,6 +43,7 @@ project "IlluminoEngine"
 		"%{IncludeDir.EABase}",
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.entt}",
+		"%{IncludeDir.ImGuizmo}",
 	}
 
 	links
@@ -55,6 +58,9 @@ project "IlluminoEngine"
 		"imgui",
 		"EASTL",
 	}
+
+	filter "files:vendor/ImGuizmo/**.cpp"
+	flags { "NoPCH" }
 
 	filter "system:windows"
 		systemversion "latest"
