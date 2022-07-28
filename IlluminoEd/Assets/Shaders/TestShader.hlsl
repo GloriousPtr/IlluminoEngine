@@ -4,6 +4,9 @@ static const float EPSILON = 1.17549435E-38;
 struct VertexIn
 {
 	float4 Position : POSITION;
+	float4 Normal : NORMAL;
+	float4 Tangent : TANGENT;
+	float4 Bitangent : BITANGENT;
 	float2 UV : TEXCOORD;
 };
 
@@ -12,6 +15,8 @@ struct VertexOut
 	float4 CameraPosition : CAMERA_POSITION;
 	float4 WorldPosition : WORLD_POSITION;
 	float4 Position : SV_POSITION;
+	float3x3 WorldNormal : WORLD_NORMAL;
+	float3 Normal : NORMAL;
 	float2 UV : TEXCOORD;
 };
 
@@ -33,6 +38,12 @@ VertexOut VS_main(VertexIn v)
 	output.CameraPosition = u_CameraPosition;
 	output.WorldPosition = mul(v.Position, u_Model);
 	output.Position = mul(output.WorldPosition, u_ViewProjection);
+
+	float3 T = normalize(mul(u_Model, v.Tangent).xyz);
+	float3 B = normalize(mul(u_Model, v.Bitangent).xyz);
+	output.Normal = normalize(mul(u_Model, v.Normal).xyz);
+	output.WorldNormal = transpose(float3x3(T, B, output.Normal));
+
 	output.UV = v.UV;
 
 	return output;
@@ -103,12 +114,13 @@ float4 PS_main(VertexOut input) : SV_TARGET
 	if (albedo.a < 0.05)
 		discard;
 
-	float3 normal = u_NormalMap.Sample(u_Sampler, input.UV).rgb;
+	float3 tangentNormal = u_NormalMap.Sample(u_Sampler, input.UV).rgb * 2.0 - 1.0;
+	float3 normal = normalize(mul(input.WorldNormal, tangentNormal));
 	float metalness = u_MRAO.r;
 	float roughness = u_MRAO.g;
 
 	float3 view = normalize(input.CameraPosition.xyz - input.WorldPosition.xyz);
-	float NdotV = max(dot(normal.xyz, view), 0.0);
+	float NdotV = max(dot(normal, view), 0.0);
 
 	float3 F0 = float3(0.04, 0.04, 0.04);
 	F0 = lerp(F0, albedo.rgb, metalness);
@@ -122,18 +134,17 @@ float4 PS_main(VertexOut input) : SV_TARGET
 	{
 		PointLight light = u_PointLights[i];
 		float3 L = normalize(light.Position.xyz - input.WorldPosition.xyz);
-		float NdotL = max(dot(normal.xyz, L), 0.0);
+		float NdotL = max(dot(normal, L), 0.0);
 		float lightDistance2 = LengthSq(light.Position.xyz - input.WorldPosition.xyz);
 
-		float4 attenFactors = light.Factors;
-		float lightRadius2 = attenFactors.x * attenFactors.x;
+		float lightRadius2 = light.Factors.x * light.Factors.x;
 		float attenuation = saturate(1 - ((lightDistance2 * lightDistance2) / (lightRadius2 * lightRadius2)));
 		attenuation = (attenuation * attenuation) / (lightDistance2 + 1.0);
 
 		float3 radiance = light.Color.rgb * light.Color.a * attenuation;
 
 		float3 H = normalize(L + view);
-		float NDF = DistributionGGX(normal.xyz, H, a2);
+		float NDF = DistributionGGX(normal, H, a2);
 		float G = GeometrySmith(NdotL, clamp(NdotV, 0.0, 1.0), k);
 		float3 F = FresnelSchlickRoughness(clamp(dot(H, view), 0.0, 1.0), F0, roughness);
 

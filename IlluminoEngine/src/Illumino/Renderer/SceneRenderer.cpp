@@ -26,6 +26,9 @@ namespace IlluminoEngine
 		s_Shader = Shader::Create("Assets/Shaders/TestShader.hlsl",
 			{
 				{"POSITION", ShaderDataType::Float3},
+				{"NORMAL", ShaderDataType::Float3},
+				{"TANGENT", ShaderDataType::Float3},
+				{"BITANGENT", ShaderDataType::Float3},
 				{"TEXCOORD", ShaderDataType::Float2}
 			});
 	}

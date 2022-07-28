@@ -105,7 +105,10 @@ namespace IlluminoEngine
 		struct Vertex
 		{
 			glm::vec3 Position;
-			glm::vec2 UV;
+			glm::vec3 Normal;
+			glm::vec3 Tangent;
+			glm::vec3 Bitangent;
+			glm::vec2 UV = glm::vec2(0.0);
 		};
 
 		eastl::vector<Vertex> vertices;
@@ -114,12 +117,67 @@ namespace IlluminoEngine
 		for (size_t i = 0; i < mesh->mNumVertices; ++i)
 		{
 			Vertex v;
-			v.Position.x = mesh->mVertices[i].x;
-			v.Position.y = mesh->mVertices[i].y;
-			v.Position.z = mesh->mVertices[i].z;
+			auto& vertexPos = mesh->mVertices[i];
+			v.Position.x = vertexPos.x;
+			v.Position.y = vertexPos.y;
+			v.Position.z = vertexPos.z;
 
-			v.UV.x = mesh->mTextureCoords[0][i].x;
-			v.UV.y = mesh->mTextureCoords[0][i].y;
+			auto& normal = mesh->mNormals[i];
+			v.Normal.x = normal.x;
+			v.Normal.y = normal.y;
+			v.Normal.z = normal.z;
+
+			if (mesh->mTangents)
+			{
+				auto& tangent = mesh->mTangents[i];
+				v.Tangent.x = tangent.x;
+				v.Tangent.y = tangent.y;
+				v.Tangent.z = tangent.z;
+
+				auto& bitangent = mesh->mBitangents[i];
+				v.Bitangent.x = bitangent.x;
+				v.Bitangent.y = bitangent.y;
+				v.Bitangent.z = bitangent.z;
+			}
+			else
+			{
+				size_t index = i / 3;
+				// Shortcuts for vertices
+				auto& v0 = mesh->mVertices[index + 0];
+				auto& v1 = mesh->mVertices[index + 1];
+				auto& v2 = mesh->mVertices[index + 2];
+
+				// Shortcuts for UVs
+				auto& uv0 = mesh->mTextureCoords[0][index + 0];
+				auto& uv1 = mesh->mTextureCoords[0][index + 1];
+				auto& uv2 = mesh->mTextureCoords[0][index + 2];
+
+				// Edges of the triangle : position delta
+				auto deltaPos1 = v1 - v0;
+				auto deltaPos2 = v2 - v0;
+
+				// UV delta
+				auto deltaUV1 = uv1 - uv0;
+				auto deltaUV2 = uv2 - uv0;
+
+				float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+				auto tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
+				auto bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;
+
+				v.Tangent.x = tangent.x;
+				v.Tangent.y = tangent.y;
+				v.Tangent.z = tangent.z;
+
+				v.Bitangent.x = bitangent.x;
+				v.Bitangent.y = bitangent.y;
+				v.Bitangent.z = bitangent.z;
+			}
+
+			if (mesh->mTextureCoords[0])
+			{
+				v.UV.x = mesh->mTextureCoords[0][i].x;
+				v.UV.y = mesh->mTextureCoords[0][i].y;
+			}
 
 			vertices.push_back(v);
 		}
