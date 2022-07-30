@@ -37,6 +37,7 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		s_Shader = nullptr;
 	}
 
 	void SceneRenderer::BeginScene(const Camera& camera, const eastl::vector<Entity>& pointLights)
@@ -95,7 +96,7 @@ namespace IlluminoEngine
 			const uint64_t cameraDataGpuHandle = s_Shader->CreateBuffer("CameraData", cameraDataAlignedSize);
 			s_Shader->UploadBuffer("CameraData", &cameraData, sizeof(CameraData), 0);
 
-			s_Shader->BindConstant(2, cameraDataGpuHandle);
+			s_Shader->BindConstantBuffer(3, cameraDataGpuHandle);
 		}
 
 		{
@@ -105,35 +106,27 @@ namespace IlluminoEngine
 			{
 				glm::vec4 LightPosition = glm::vec4(0.0f);
 				glm::vec4 LightColor = glm::vec4(1.0f);
-				glm::vec4 LightFactors = glm::vec4(0.0f);
 			};
 
-			struct LightData
+			struct PointLightData
 			{
-				PointLight pointLights[3];
+				PointLight pointLights[63];
 				int pointLightsSize;
-			};
+			} pointLightData;
 
-			const size_t lightDataAlignedSize = ALIGN(256, sizeof(LightData));
-			const uint64_t lightDataGpuHandle = s_Shader->CreateBuffer("LightData", lightDataAlignedSize);
+			constexpr size_t lightDataSize = sizeof(pointLightData);
+			const uint64_t lightDataGpuHandle = s_Shader->CreateSRV("LightData", lightDataSize);
 
-			char* lightDataBuffer = new char[lightDataAlignedSize];
-			LightData lightData = {};
-			lightData.pointLightsSize = glm::min((int)s_PointLights.size(), 3);
-			for (size_t i = 0; i < lightData.pointLightsSize; ++i)
+			pointLightData.pointLightsSize = s_PointLights.size();
+			for (size_t i = 0; i < pointLightData.pointLightsSize; ++i)
 			{
 				auto& light = s_PointLights[i].GetComponent<PointLightComponent>();
-				PointLight& pl = lightData.pointLights[i];
-				pl.LightPosition = glm::vec4(s_PointLights[i].GetComponent<TransformComponent>().Translation, 1.0f);
+				PointLight& pl = pointLightData.pointLights[i];
+				pl.LightPosition = glm::vec4(s_PointLights[i].GetComponent<TransformComponent>().Translation, light.Radius);
 				pl.LightColor = glm::vec4(light.Color, light.Intensity);
-				pl.LightFactors.x = light.Radius;
 			}
-
-			memcpy(lightDataBuffer, &lightData, sizeof(lightData));
-			s_Shader->UploadBuffer("LightData", lightDataBuffer, lightDataAlignedSize, 0);
-			delete[] lightDataBuffer;
-
-			s_Shader->BindConstant(3, lightDataGpuHandle);
+			s_Shader->UploadSRV("LightData", &pointLightData, lightDataSize, 0);
+			s_Shader->BindStructuredBuffer(0, lightDataGpuHandle);
 		}
 
 
@@ -180,13 +173,13 @@ namespace IlluminoEngine
 		for (auto& mesh : s_Meshes)
 		{
 			if (mesh.SubmeshData.Albedo)
-				mesh.SubmeshData.Albedo->Bind(0);
+				mesh.SubmeshData.Albedo->Bind(1);
 			
 			if (mesh.SubmeshData.Normal)
-				mesh.SubmeshData.Normal->Bind(1);
+				mesh.SubmeshData.Normal->Bind(2);
 			
-			s_Shader->BindConstant(4, meshGpuHandle + meshAlignedSize * index);
-			s_Shader->BindConstant(5, materialGpuHandle + materialAlignedSize * index);
+			s_Shader->BindConstantBuffer(4, meshGpuHandle + meshAlignedSize * index);
+			s_Shader->BindConstantBuffer(5, materialGpuHandle + materialAlignedSize * index);
 
 			RenderCommand::DrawIndexed(mesh.SubmeshData.Geometry);
 			++index;

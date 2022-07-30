@@ -1,5 +1,7 @@
 static const float PI = 3.141592653589793;
 static const float EPSILON = 1.17549435E-38;
+static const float GAMMA = 2.2;
+static const float INVGAMMA = 1/GAMMA;
 
 struct VertexIn
 {
@@ -26,7 +28,7 @@ cbuffer Camera : register (b0)
 	float4 u_CameraPosition;
 }
 
-cbuffer Properties : register (b2)
+cbuffer Properties : register (b1)
 {
 	row_major float4x4 u_Model;
 }
@@ -51,34 +53,27 @@ VertexOut VS_main(VertexIn v)
 
 struct PointLight
 {
-	float4 Position;
-
-	/* rgb: color, a: intensity */
-	float4 Color;
-
-	/* packed into a vec4
-	x: range
-	y: cutOffAngle
-	z: outerCutOffAngle
-	w: unused */
-	float4 Factors;
+	float4 Position;			// xyz: position, w: radius
+	float4 Color;				// rgb: color, a: intensity
 };
 
-cbuffer LightData : register (b1)
+struct PointLightData
 {
-	PointLight u_PointLights[3];
+	PointLight u_PointLights[63];
 	int u_PointLightsSize;
-}
+};
 
-cbuffer MaterialData : register (b3)
+StructuredBuffer<PointLightData> u_PointLightData : register (t0);
+
+Texture2D u_Albedo : register(t1);
+Texture2D u_NormalMap : register(t2);
+
+SamplerState u_Sampler : register(s0);
+
+cbuffer MaterialData : register (b2)
 {
 	float4 u_MRAO;
 }
-
-Texture2D u_Albedo : register(t0);
-Texture2D u_NormalMap : register(t1);
-
-SamplerState u_Sampler : register(s0);
 
 // N: Normal, H: Halfway, a2: pow(roughness, 2)
 float DistributionGGX(const float3 N, const float3 H, const float a2)
@@ -108,6 +103,17 @@ float LengthSq(const float3 v)
 	return dot(v, v);
 }
 
+float3 Uncharted2Tonemap(const float3 x)
+{
+	const float A = 0.15;
+	const float B = 0.50;
+	const float C = 0.10;
+	const float D = 0.20;
+	const float E = 0.02;
+	const float F = 0.30;
+	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+}
+
 float4 PS_main(VertexOut input) : SV_TARGET
 {
 	float4 albedo = u_Albedo.Sample(u_Sampler, input.UV);
@@ -130,14 +136,15 @@ float4 PS_main(VertexOut input) : SV_TARGET
 	float k = (r * r) / 8.0;
 
 	float3 Lo = float3(0.0, 0.0, 0.0);
-	for (int i = 0; i < u_PointLightsSize; i++)
+	int pointLightsSize = u_PointLightData[0].u_PointLightsSize;
+	for (int i = 0; i < pointLightsSize; i++)
 	{
-		PointLight light = u_PointLights[i];
+		PointLight light = u_PointLightData[0].u_PointLights[i];
 		float3 L = normalize(light.Position.xyz - input.WorldPosition.xyz);
 		float NdotL = max(dot(normal, L), 0.0);
 		float lightDistance2 = LengthSq(light.Position.xyz - input.WorldPosition.xyz);
 
-		float lightRadius2 = light.Factors.x * light.Factors.x;
+		float lightRadius2 = light.Position.w * light.Position.w;
 		float attenuation = saturate(1 - ((lightDistance2 * lightDistance2) / (lightRadius2 * lightRadius2)));
 		attenuation = (attenuation * attenuation) / (lightDistance2 + 1.0);
 
@@ -159,5 +166,14 @@ float4 PS_main(VertexOut input) : SV_TARGET
 	float ambient = 0.0f;
 
 	float3 color = Lo + ambient;
+
+	// Uncharted 2 Tonemapping
+	const float W = 11.2;
+	const float exposureBias = 2.0;
+	float3 curr = Uncharted2Tonemap(exposureBias * color);
+	float3 whiteScale = 1.0 / Uncharted2Tonemap(float3(W, W, W));
+	
+	color = pow(curr * whiteScale, float3(INVGAMMA, INVGAMMA, INVGAMMA));
+
 	return float4(color, 1.0);
 }

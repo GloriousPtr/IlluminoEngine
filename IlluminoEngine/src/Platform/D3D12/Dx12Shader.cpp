@@ -23,27 +23,51 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		Dx12GraphicsContext::s_Context->WaitForAllFrames();
+
 		m_PipelineState->Release();
 		m_RootSignature->Release();
 
 		for (auto& buffer: m_ConstantBuffers)
 		{
-			for (auto& b : buffer)
+			for (auto& [name, b] : buffer)
 			{
-				b.second.Size = 0;
-				b.second.Resource->Release();
+				b.Size = 0;
+				b.Resource->Release();
 			}
 		}
 		m_ConstantBuffers->clear();
+
+		for (auto& buffer : m_SRVBuffers)
+		{
+			for (auto& [name, b] : buffer)
+			{
+				b.Size = 0;
+				b.Resource->Release();
+
+				Dx12GraphicsContext::s_Context->GetSRVDescriptorHeap().Free(b.Handle);
+			}
+		}
+
+		m_SRVBuffers->clear();
 	}
 
-	void Dx12Shader::BindConstant(uint32_t slot, uint64_t handle)
+	void Dx12Shader::BindConstantBuffer(uint32_t slot, uint64_t handle)
 	{
 		OPTICK_EVENT();
 
 		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
 
 		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootConstantBufferView(slot, handle);
+	}
+
+	void Dx12Shader::BindStructuredBuffer(uint32_t slot, uint64_t handle)
+	{
+		OPTICK_EVENT();
+
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+
+		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootDescriptorTable(slot, { handle });
 	}
 
 	void Dx12Shader::BindGlobal(uint32_t slot, uint64_t handle)
@@ -86,6 +110,64 @@ namespace IlluminoEngine
 		return buffer->GetGPUVirtualAddress();
 	}
 
+	uint64_t Dx12Shader::CreateSRV(const char* name, size_t size)
+	{
+		ILLUMINO_ASSERT(Dx12GraphicsContext::s_Context);
+
+		uint32_t backBuffer = Dx12GraphicsContext::s_Context->GetCurrentBackBufferIndex();
+		auto& srvBufferMap = m_SRVBuffers[backBuffer];
+		if (srvBufferMap.find_as(name) != srvBufferMap.end())
+		{
+			auto& s = srvBufferMap.at(name);
+			if (s.Size == size)
+			{
+				return s.Handle.GPU.ptr;
+			}
+			else
+			{
+				s.Resource->Release();
+				Dx12GraphicsContext::s_Context->GetSRVDescriptorHeap().Free(s.Handle);
+			}
+		}
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc = {};
+		shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+		shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		shaderResourceViewDesc.Format = DXGI_FORMAT_UNKNOWN;
+		shaderResourceViewDesc.Buffer.FirstElement = 0;
+		shaderResourceViewDesc.Buffer.NumElements = 1;
+		shaderResourceViewDesc.Buffer.StructureByteStride = size;
+		shaderResourceViewDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+		D3D12_HEAP_PROPERTIES heapDesc = {};
+		heapDesc.Type = D3D12_HEAP_TYPE_UPLOAD;
+		heapDesc.CreationNodeMask = 1;
+		heapDesc.VisibleNodeMask = 1;
+
+		D3D12_RESOURCE_DESC resourceDesc = {};
+		resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		resourceDesc.Alignment = 0;
+		resourceDesc.Height = 1;
+		resourceDesc.DepthOrArraySize = 1;
+		resourceDesc.MipLevels = 1;
+		resourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+		resourceDesc.SampleDesc.Count = 1;
+		resourceDesc.SampleDesc.Quality = 0;
+		resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		resourceDesc.Width = size;
+		resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+		ID3D12Resource* ret = nullptr;
+		HRESULT hr = Dx12GraphicsContext::s_Context->GetDevice()->CreateCommittedResource(&heapDesc, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&ret));
+
+		DescriptorHandle handle = Dx12GraphicsContext::s_Context->GetSRVDescriptorHeap().Allocate();
+		Dx12GraphicsContext::s_Context->GetDevice()->CreateShaderResourceView(ret, &shaderResourceViewDesc, handle.CPU);
+		
+		srvBufferMap[name] = { size, ret, handle };
+
+		return handle.GPU.ptr;
+	}
+
 	void Dx12Shader::UploadBuffer(const char* name, void* data, size_t size, size_t offsetAligned)
 	{
 		OPTICK_EVENT();
@@ -95,6 +177,18 @@ namespace IlluminoEngine
 		constantBuffer->Map(0, nullptr, reinterpret_cast<void**>(&p));
 		memcpy(p + offsetAligned, data, size);
 		constantBuffer->Unmap(0, nullptr);
+	}
+
+	void Dx12Shader::UploadSRV(const char* name, void* data, size_t size, size_t offsetAligned)
+	{
+		OPTICK_EVENT();
+
+		uint32_t backBuffer = Dx12GraphicsContext::s_Context->GetCurrentBackBufferIndex();
+		ID3D12Resource* srvBuffer = m_SRVBuffers[backBuffer].at(name).Resource;
+		void** p;
+		srvBuffer->Map(0, nullptr, reinterpret_cast<void**>(&p));
+		memcpy(p + offsetAligned, data, size);
+		srvBuffer->Unmap(0, nullptr);
 	}
 
 	ID3D12Resource* Dx12Shader::GetConstantBuffer(const char* name)
@@ -137,13 +231,14 @@ namespace IlluminoEngine
 		CD3DX12_ROOT_PARAMETER parameters[6];
 		CD3DX12_DESCRIPTOR_RANGE range1 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0 };
 		CD3DX12_DESCRIPTOR_RANGE range2 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1 };
+		CD3DX12_DESCRIPTOR_RANGE range3 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2 };
 
 		parameters[0].InitAsDescriptorTable(1, &range1);
 		parameters[1].InitAsDescriptorTable(1, &range2);
-		parameters[2].InitAsConstantBufferView(0, 0);
-		parameters[3].InitAsConstantBufferView(1, 0);
-		parameters[4].InitAsConstantBufferView(2, 0);
-		parameters[5].InitAsConstantBufferView(3, 0);
+		parameters[2].InitAsDescriptorTable(1, &range3);
+		parameters[3].InitAsConstantBufferView(0, 0);
+		parameters[4].InitAsConstantBufferView(1, 0);
+		parameters[5].InitAsConstantBufferView(2, 0);
 
 		CD3DX12_STATIC_SAMPLER_DESC samplers[1];
 		samplers[0].Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);

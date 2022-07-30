@@ -76,8 +76,6 @@ namespace IlluminoEngine
 			else if (ImGui::IsKeyDown(ImGuiKey_A))
 				pos -= m_EditorCamera->GetRight() * m_MaxMoveSpeed * ts.GetSeconds();
 
-			ILLUMINO_ERROR("{0}", m_MaxMoveSpeed * ts.GetSeconds());
-
 			m_EditorCamera->SetPosition(pos);
 			m_EditorCamera->SetYaw(yaw);
 			m_EditorCamera->SetPitch(pitch);
