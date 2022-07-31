@@ -29,6 +29,7 @@ IncludeDir["EABase"] = "%{wks.location}/IlluminoEngine/vendor/EABase/include/Com
 IncludeDir["stb_image"] = "%{wks.location}/IlluminoEngine/vendor/stb_image"
 IncludeDir["entt"] = "%{wks.location}/IlluminoEngine/vendor/entt/include"
 IncludeDir["ImGuizmo"] = "%{wks.location}/IlluminoEngine/vendor/ImGuizmo"
+IncludeDir["half"] = "%{wks.location}/IlluminoEngine/vendor/half"
 
 group "Dependencies"
 	include "IlluminoEngine/vendor/optick"

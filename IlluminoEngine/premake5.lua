@@ -20,6 +20,7 @@ project "IlluminoEngine"
 		"vendor/stb_image/**.cpp",
 		"vendor/ImGuizmo/ImGuizmo.h",
 		"vendor/ImGuizmo/ImGuizmo.cpp",
+		"vendor/half/half.hpp",
 	}
 
 	defines
@@ -44,6 +45,7 @@ project "IlluminoEngine"
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.entt}",
 		"%{IncludeDir.ImGuizmo}",
+		"%{IncludeDir.half}",
 	}
 
 	links

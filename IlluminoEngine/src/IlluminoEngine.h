@@ -34,6 +34,8 @@
 
 //-----Maths---------------------------------------
 #include "Illumino/Math/Math.h"
+#include "Illumino/Math/Half.h"
+#include <glm/glm.hpp>
 
 //-----Profiling-----------------------------------
 #include <optick.h>
