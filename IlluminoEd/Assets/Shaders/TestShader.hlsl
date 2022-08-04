@@ -1,7 +1,5 @@
 static const float PI = 3.141592653589793;
 static const float EPSILON = 1.17549435E-38;
-static const float GAMMA = 2.2;
-static const float INVGAMMA = 1/GAMMA;
 
 struct VertexIn
 {
@@ -63,10 +61,23 @@ struct PointLightData
 	int u_PointLightsSize;
 };
 
-StructuredBuffer<PointLightData> u_PointLightData : register (t0);
+struct DirectionalLight
+{
+	float4 Direction;
+	float4 Color;				// rgb: color, a: intensity
+};
 
-Texture2D u_Albedo : register(t1);
-Texture2D u_NormalMap : register(t2);
+struct DirectionalLightData
+{
+	DirectionalLight u_DirectionalLights[3];
+	int u_DirectionalLightsSize;
+};
+
+StructuredBuffer<DirectionalLightData> u_DirectionalLightData : register (t0);
+StructuredBuffer<PointLightData> u_PointLightData : register (t1);
+
+Texture2D u_Albedo : register(t2);
+Texture2D u_NormalMap : register(t3);
 
 SamplerState u_Sampler : register(s0);
 
@@ -136,6 +147,31 @@ float4 PS_main(VertexOut input) : SV_TARGET
 	float k = (r * r) / 8.0;
 
 	float3 Lo = float3(0.0, 0.0, 0.0);
+
+	// Directional Light
+	int directionalLightsSize = u_DirectionalLightData[0].u_DirectionalLightsSize;
+	for (int i = 0; i < directionalLightsSize; i++)
+	{
+		DirectionalLight light = u_DirectionalLightData[0].u_DirectionalLights[i];
+		float3 L = -normalize(light.Direction.xyz);
+		float NdotL = max(dot(normal, L), 0.0);
+
+		float3 radiance = light.Color.rgb * light.Color.a;
+
+		float3 H = normalize(L + view);
+		float NDF = DistributionGGX(normal, H, a2);
+		float G = GeometrySmith(NdotL, clamp(NdotV, 0.0, 1.0), k);
+		float3 F = FresnelSchlickRoughness(clamp(dot(H, view), 0.0, 1.0), F0, roughness);
+
+		float3 numerator = NDF * G * F;
+		float denom = max(4.0 * NdotV * NdotL, 0.0001);
+		float3 specular = numerator / denom;
+
+		float3 kD = (1.0 - F) * (1.0 - metalness);
+		Lo += (kD * (albedo.rgb / PI) + specular) * radiance * NdotL;
+	}
+
+	// Point Lights
 	int pointLightsSize = u_PointLightData[0].u_PointLightsSize;
 	for (int i = 0; i < pointLightsSize; i++)
 	{
@@ -172,8 +208,8 @@ float4 PS_main(VertexOut input) : SV_TARGET
 	const float exposureBias = 2.0;
 	float3 curr = Uncharted2Tonemap(exposureBias * color);
 	float3 whiteScale = 1.0 / Uncharted2Tonemap(float3(W, W, W));
-	
-	color = pow(curr * whiteScale, float3(INVGAMMA, INVGAMMA, INVGAMMA));
+
+	color = curr * whiteScale;
 
 	return float4(color, 1.0);
 }

@@ -19,7 +19,7 @@ namespace IlluminoEngine
 	public:
 		static void Init();
 		static void Shutdown();
-		static void BeginScene(const Camera& camera, const eastl::vector<Entity>& pointLights);
+		static void BeginScene(const Camera& camera, const eastl::vector<Entity>& pointLights, const eastl::vector<Entity>& directionalLight);
 		static void EndScene();
 
 		static void SubmitMesh(Submesh& mesh, glm::mat4& transform);

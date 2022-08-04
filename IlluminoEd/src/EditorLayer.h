@@ -15,7 +15,7 @@ namespace IlluminoEngine
 	{
 	public:
 		EditorLayer();
-		virtual ~EditorLayer() override = default;
+		virtual ~EditorLayer() override;
 
 		virtual void OnAttach() override;
 		virtual void OnDetach() override;

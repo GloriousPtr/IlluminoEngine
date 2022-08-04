@@ -12,6 +12,6 @@
 
 #include "Illumino/Core/Log.h"
 #include "Illumino/Core/Assert.h"
-#include "optick.h"
+#include <optick.h>
 
 #include "Illumino/Core/String.h"

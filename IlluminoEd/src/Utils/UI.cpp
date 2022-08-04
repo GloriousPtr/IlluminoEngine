@@ -10,6 +10,18 @@ namespace IlluminoEngine
 	static int s_UIContextID = 0;
 	static uint32_t s_Counter = 0;
 	static char s_IDBuffer[16];
+	static Ref<Texture2D> s_BlackTexture;
+
+	void UI::Init()
+	{
+		glm::vec4 blackColor = glm::vec4(0.0f);
+		s_BlackTexture = Texture2D::Create(1, 1, glm::value_ptr(blackColor));
+	}
+
+	void UI::Shutdown()
+	{
+		s_BlackTexture = nullptr;
+	}
 
 	void UI::PushID()
 	{
@@ -56,7 +68,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { ImGui::GetStyle().CellPadding.x, 0 });
 		ImGui::BeginTable(s_IDBuffer, 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchSame);
@@ -84,7 +96,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::InputText(s_IDBuffer, buffer, 256))
 		{
 			value = buffer;
@@ -103,7 +115,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		ImGui::InputText(s_IDBuffer, (char*)value, 256, ImGuiInputTextFlags_ReadOnly);
 
 		EndPropertyGrid();
@@ -118,7 +130,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::DragInt(s_IDBuffer, &value))
 			modified = true;
 
@@ -136,7 +148,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::DragInt(s_IDBuffer, (int*)&value))
 			modified = true;
 
@@ -154,7 +166,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::SliderInt(s_IDBuffer, &value, min, max))
 			modified = true;
 
@@ -172,7 +184,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::SliderInt(s_IDBuffer, (int*)&value, min, max))
 			modified = true;
 
@@ -190,7 +202,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::DragFloat(s_IDBuffer, &value, delta))
 			modified = true;
 
@@ -208,7 +220,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::SliderFloat(s_IDBuffer, &value, min, max, fmt))
 			modified = true;
 
@@ -226,7 +238,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::DragFloat(s_IDBuffer, &value, delta, min, max, fmt))
 			modified = true;
 
@@ -244,7 +256,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::DragFloat2(s_IDBuffer, glm::value_ptr(value), delta))
 			modified = true;
 
@@ -262,7 +274,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::DragFloat3(s_IDBuffer, glm::value_ptr(value), delta))
 			modified = true;
 
@@ -280,7 +292,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::DragFloat4(s_IDBuffer, glm::value_ptr(value), delta))
 			modified = true;
 
@@ -298,7 +310,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::Checkbox(s_IDBuffer, &flag))
 			modified = true;
 
@@ -318,7 +330,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 
 		if(ImGui::BeginCombo(s_IDBuffer, current))
 		{
@@ -352,7 +364,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::ColorEdit3(s_IDBuffer, glm::value_ptr(color)))
 			modified = true;
 
@@ -370,7 +382,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::ColorEdit4(s_IDBuffer, glm::value_ptr(color)))
 			modified = true;
 
@@ -388,7 +400,7 @@ namespace IlluminoEngine
 		s_IDBuffer[0] = '#';
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
-		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		_itoa(s_Counter++, s_IDBuffer + 2, 16);
 		if (ImGui::ColorEdit3(s_IDBuffer, glm::value_ptr(color)))
 			modified = true;
 
@@ -397,7 +409,7 @@ namespace IlluminoEngine
 		return modified;
 	}
 
-	bool UI::Property(const char* label, Ref<Texture2D>& texture, uint32_t overrideTextureID)
+	bool UI::Property(const char* label, Ref<Texture2D>& texture, uint64_t overrideTextureID)
 	{
 		bool changed = false;
 
@@ -412,10 +424,10 @@ namespace IlluminoEngine
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.35f, 0.35f, 0.35f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.25f, 0.25f, 0.25f, 1.0f });
 		
-		uint32_t id = overrideTextureID;
-		if (id == 0)
-			id = texture == nullptr ? 0 : texture->GetRendererID();
-		ImGui::ImageButton((ImTextureID)id, buttonSize, { 1, 1 }, { 0, 0 }, 0);
+		ImTextureID texId = (ImTextureID) overrideTextureID;
+		if (overrideTextureID == 0)
+			texId = (ImTextureID) (texture == nullptr ? s_BlackTexture->GetRendererID() : texture->GetRendererID());
+		ImGui::ImageButton(texId, buttonSize, { 1, 1 }, { 0, 0 }, 0);
 		if (ImGui::BeginDragDropTarget())
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CONTENT_BROWSER_ITEM"))

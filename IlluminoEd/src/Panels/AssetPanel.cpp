@@ -310,7 +310,7 @@ namespace IlluminoEngine
 				if (!file.DirectoryEntry.is_directory())
 				{
 					eastl::string ext = StringUtils::GetExtension((eastl::string&&)file.Name);
-					if (file.IconTexture && ext == "png" || ext == "jpg" || ext == "jpeg" || ext == "bmp")
+					if (file.IconTexture)
 					{
 						textureId = file.IconTexture->GetRendererID();
 					}

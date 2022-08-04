@@ -7,6 +7,9 @@ namespace IlluminoEngine
 	class UI
 	{
 	public:
+		static void Init();
+		static void Shutdown();
+
 		static void BeginProperties();
 		static void EndProperties();
 
@@ -30,7 +33,7 @@ namespace IlluminoEngine
 		static bool PropertyColor4(const char* label, glm::vec4& color);
 		static bool PropertyColor4as3(const char* label, glm::vec4& color);
 
-		static bool Property(const char* label, Ref<Texture2D>& texture, uint32_t overrideTextureID = 0);
+		static bool Property(const char* label, Ref<Texture2D>& texture, uint64_t overrideTextureID = 0);
 
 		static void DrawVec3Control(const char* label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
 

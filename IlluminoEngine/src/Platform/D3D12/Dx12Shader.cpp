@@ -228,24 +228,26 @@ namespace IlluminoEngine
 			errorBlob->Release();
 
 		// Create root signature
-		CD3DX12_ROOT_PARAMETER parameters[6];
+		CD3DX12_ROOT_PARAMETER parameters[7];
 		CD3DX12_DESCRIPTOR_RANGE range1 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0 };
 		CD3DX12_DESCRIPTOR_RANGE range2 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1 };
 		CD3DX12_DESCRIPTOR_RANGE range3 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2 };
+		CD3DX12_DESCRIPTOR_RANGE range4 { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3 };
 
 		parameters[0].InitAsDescriptorTable(1, &range1);
 		parameters[1].InitAsDescriptorTable(1, &range2);
 		parameters[2].InitAsDescriptorTable(1, &range3);
-		parameters[3].InitAsConstantBufferView(0, 0);
-		parameters[4].InitAsConstantBufferView(1, 0);
-		parameters[5].InitAsConstantBufferView(2, 0);
+		parameters[3].InitAsDescriptorTable(1, &range4);
+		parameters[4].InitAsConstantBufferView(0, 0);
+		parameters[5].InitAsConstantBufferView(1, 0);
+		parameters[6].InitAsConstantBufferView(2, 0);
 
 		CD3DX12_STATIC_SAMPLER_DESC samplers[1];
 		samplers[0].Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
 
 		CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
 		
-		descRootSignature.Init(6, parameters, 1, samplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		descRootSignature.Init(7, parameters, 1, samplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		ID3DBlob* rootBlob;
 		hr = D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &rootBlob, &errorBlob);

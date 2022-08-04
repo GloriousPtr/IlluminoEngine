@@ -27,6 +27,42 @@ namespace IlluminoEngine
 			data = stbi_load(filepath, &width, &height, &channels, 4);
 		}
 		ILLUMINO_ASSERT(data, "Failed to load image!");
+
+		LoadTexture(width, height, data);
+		
+		stbi_image_free(data);
+	}
+
+	Dx12Texture2D::Dx12Texture2D(uint32_t width, uint32_t height, void* data)
+	{
+		OPTICK_EVENT();
+
+		LoadTexture(width, height, data);
+	}
+
+	Dx12Texture2D::~Dx12Texture2D()
+	{
+		OPTICK_EVENT();
+
+		Dx12GraphicsContext::s_Context->WaitForAllFrames();
+
+		m_Image->Release();
+		m_UploadImage->Release();
+
+		Dx12GraphicsContext::s_Context->GetSRVDescriptorHeap().Free(m_Handle);
+	}
+
+	void Dx12Texture2D::Bind(uint32_t slot)
+	{
+		OPTICK_EVENT();
+
+		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootDescriptorTable(slot, m_Handle.GPU);
+	}
+
+	void Dx12Texture2D::LoadTexture(uint32_t width, uint32_t height, void* data)
+	{
+		OPTICK_EVENT();
+
 		m_Width = width;
 		m_Height = height;
 
@@ -61,26 +97,5 @@ namespace IlluminoEngine
 
 		m_Handle = Dx12GraphicsContext::s_Context->GetSRVDescriptorHeap().Allocate();
 		Dx12GraphicsContext::s_Context->GetDevice()->CreateShaderResourceView(m_Image, &shaderResourceViewDesc, m_Handle.CPU);
-		
-		stbi_image_free(data);
-	}
-
-	Dx12Texture2D::~Dx12Texture2D()
-	{
-		OPTICK_EVENT();
-
-		Dx12GraphicsContext::s_Context->WaitForAllFrames();
-
-		m_Image->Release();
-		m_UploadImage->Release();
-
-		Dx12GraphicsContext::s_Context->GetSRVDescriptorHeap().Free(m_Handle);
-	}
-
-	void Dx12Texture2D::Bind(uint32_t slot)
-	{
-		OPTICK_EVENT();
-
-		Dx12GraphicsContext::s_Context->GetCommandList()->SetGraphicsRootDescriptorTable(slot, m_Handle.GPU);
 	}
 }

@@ -7,6 +7,7 @@
 #include <glm/glm/gtx/norm.hpp>
 #include <glm/glm/gtc/type_ptr.hpp>
 
+#include "Utils/UI.h"
 #include "Utils/EditorTheme.h"
 #include "Illumino/Core/Application.h"
 #include "Illumino/Renderer/GraphicsContext.h"
@@ -17,9 +18,16 @@ namespace IlluminoEngine
 	EditorLayer::EditorLayer()
 		: Layer("EditorLayer")
 	{
+		UI::Init();
+
 		EditorTheme::ApplyTheme();
 		EditorTheme::SetStyle();
 		EditorTheme::SetFont();
+	}
+	
+	EditorLayer::~EditorLayer()
+	{
+		UI::Shutdown();
 	}
 
 	void EditorLayer::OnAttach()

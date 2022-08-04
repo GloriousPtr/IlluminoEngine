@@ -80,15 +80,22 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT("SubmitMeshes");
 
-		auto& view = m_Registry.view<TransformComponent, PointLightComponent>();
+		eastl::vector<Entity> directionalLights;
 		eastl::vector<Entity> pointLights;
-		pointLights.reserve(view.size());
-		for (auto entity : view)
+		
 		{
-			pointLights.emplace_back(entity, this);
+			auto& view = m_Registry.view<TransformComponent, PointLightComponent>();
+			pointLights.reserve(view.size());
+			for (auto entity : view)
+				pointLights.emplace_back(entity, this);
+		}
+		{
+			auto& view = m_Registry.view<TransformComponent, DirectionalLightComponent>();
+			for (auto entity : view)
+				directionalLights.emplace_back(entity, this);
 		}
 
-		SceneRenderer::BeginScene(camera, pointLights);
+		SceneRenderer::BeginScene(camera, pointLights, directionalLights);
 		{
 			OPTICK_EVENT("SubmitMeshes");
 

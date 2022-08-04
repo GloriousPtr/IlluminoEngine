@@ -8,7 +8,6 @@
 #include "Illumino/Scene/Component.h"
 #include "RenderCommand.h"
 #include "Shader.h"
-#include "Shader.h"
 #include "Texture.h"
 
 namespace IlluminoEngine
@@ -16,6 +15,7 @@ namespace IlluminoEngine
 	static Ref<Shader> s_Shader;
 	static glm::mat4 s_ViewProjection;
 	static glm::vec4 s_CameraPosition;
+	static eastl::vector<Entity> s_DirectionalLights;
 	static eastl::vector<Entity> s_PointLights;
 	static std::vector<MeshData> s_Meshes;
 
@@ -40,7 +40,7 @@ namespace IlluminoEngine
 		s_Shader = nullptr;
 	}
 
-	void SceneRenderer::BeginScene(const Camera& camera, const eastl::vector<Entity>& pointLights)
+	void SceneRenderer::BeginScene(const Camera& camera, const eastl::vector<Entity>& pointLights, const eastl::vector<Entity>& directionalLights)
 	{
 		OPTICK_EVENT();
 
@@ -48,6 +48,7 @@ namespace IlluminoEngine
 		s_ViewProjection = camera.GetProjection() * camera.GetView();
 		s_CameraPosition = camera.GetTransform()[3];
 
+		s_DirectionalLights = directionalLights;
 		s_PointLights = pointLights;
 	}
 
@@ -96,16 +97,45 @@ namespace IlluminoEngine
 			const uint64_t cameraDataGpuHandle = s_Shader->CreateBuffer("CameraData", cameraDataAlignedSize);
 			s_Shader->UploadBuffer("CameraData", &cameraData, sizeof(CameraData), 0);
 
-			s_Shader->BindConstantBuffer(3, cameraDataGpuHandle);
+			s_Shader->BindConstantBuffer(4, cameraDataGpuHandle);
 		}
 
 		{
 			OPTICK_EVENT("LightData Upload");
 
+
+			struct DirectionalLight
+			{
+				glm::vec4 Direction;
+				glm::vec4 Color;
+			};
+
+			struct DirectionalLightData
+			{
+				DirectionalLight directionalLights[3];
+				int directionalLightsSize;
+			} directionalLightData;
+
+			constexpr size_t dirLightDataSize = sizeof(directionalLightData);
+			const uint64_t dirLightDataGpuHandle = s_Shader->CreateSRV("DirectionalLightData", dirLightDataSize);
+
+			directionalLightData.directionalLightsSize = s_DirectionalLights.size();
+			for (size_t i = 0; i < directionalLightData.directionalLightsSize; ++i)
+			{
+				auto& light = s_DirectionalLights[i].GetComponent<DirectionalLightComponent>();
+				glm::vec4 dir = s_DirectionalLights[i].GetComponent<TransformComponent>().GetTransform() * glm::vec4(0, 0, 1, 0);
+				directionalLightData.directionalLights[i] = { dir, glm::vec4(light.Color, light.Intensity) };
+			}
+			s_Shader->UploadSRV("DirectionalLightData", &directionalLightData, dirLightDataSize, 0);
+			s_Shader->BindStructuredBuffer(0, dirLightDataGpuHandle);
+
+
+
+
 			struct PointLight
 			{
-				glm::vec4 LightPosition = glm::vec4(0.0f);
-				glm::vec4 LightColor = glm::vec4(1.0f);
+				glm::vec4 Position;
+				glm::vec4 Color;
 			};
 
 			struct PointLightData
@@ -114,19 +144,21 @@ namespace IlluminoEngine
 				int pointLightsSize;
 			} pointLightData;
 
-			constexpr size_t lightDataSize = sizeof(pointLightData);
-			const uint64_t lightDataGpuHandle = s_Shader->CreateSRV("LightData", lightDataSize);
+			constexpr size_t pointLightDataSize = sizeof(pointLightData);
+			const uint64_t pointLightDataGpuHandle = s_Shader->CreateSRV("PointLightData", pointLightDataSize);
 
 			pointLightData.pointLightsSize = s_PointLights.size();
 			for (size_t i = 0; i < pointLightData.pointLightsSize; ++i)
 			{
 				auto& light = s_PointLights[i].GetComponent<PointLightComponent>();
-				PointLight& pl = pointLightData.pointLights[i];
-				pl.LightPosition = glm::vec4(s_PointLights[i].GetComponent<TransformComponent>().Translation, light.Radius);
-				pl.LightColor = glm::vec4(light.Color, light.Intensity);
+				pointLightData.pointLights[i] =
+				{
+					glm::vec4(s_PointLights[i].GetComponent<TransformComponent>().Translation, light.Radius),
+					glm::vec4(light.Color, light.Intensity)
+				};
 			}
-			s_Shader->UploadSRV("LightData", &pointLightData, lightDataSize, 0);
-			s_Shader->BindStructuredBuffer(0, lightDataGpuHandle);
+			s_Shader->UploadSRV("PointLightData", &pointLightData, pointLightDataSize, 0);
+			s_Shader->BindStructuredBuffer(1, pointLightDataGpuHandle);
 		}
 
 
@@ -173,13 +205,13 @@ namespace IlluminoEngine
 		for (auto& mesh : s_Meshes)
 		{
 			if (mesh.SubmeshData.Albedo)
-				mesh.SubmeshData.Albedo->Bind(1);
+				mesh.SubmeshData.Albedo->Bind(2);
 			
 			if (mesh.SubmeshData.Normal)
-				mesh.SubmeshData.Normal->Bind(2);
+				mesh.SubmeshData.Normal->Bind(3);
 			
-			s_Shader->BindConstantBuffer(4, meshGpuHandle + meshAlignedSize * index);
-			s_Shader->BindConstantBuffer(5, materialGpuHandle + materialAlignedSize * index);
+			s_Shader->BindConstantBuffer(5, meshGpuHandle + meshAlignedSize * index);
+			s_Shader->BindConstantBuffer(6, materialGpuHandle + materialAlignedSize * index);
 
 			RenderCommand::DrawIndexed(mesh.SubmeshData.Geometry);
 			++index;

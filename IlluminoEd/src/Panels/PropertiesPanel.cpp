@@ -101,6 +101,8 @@ namespace IlluminoEngine
 
 				ImGui::Separator();
 
+				UI::Property("Albedo", submesh.Albedo);
+
 				UI::Property("Roughness", submesh.Roughness, 0.0f, 1.0f);
 				UI::Property("Metalness", submesh.Metalness, 0.0f, 1.0f);
 			}
@@ -116,6 +118,14 @@ namespace IlluminoEngine
 			UI::EndProperties();
 		}, true);
 
+		DrawComponent<DirectionalLightComponent>("Directional Light", entity, [](DirectionalLightComponent& component)
+		{
+			UI::BeginProperties();
+			UI::Property("Intensity", component.Intensity);
+			UI::PropertyColor3("Color", component.Color);
+			UI::EndProperties();
+		}, true);
+
 		// AddComponent
 		ImVec2 buttonSize = { 150, 30 };
 		ImGui::SetCursorPos({ (ImGui::GetContentRegionMax().x - buttonSize.x) * 0.5f, ImGui::GetCursorPosY() + buttonSize.y * 0.5f });
@@ -125,6 +135,7 @@ namespace IlluminoEngine
 		if (ImGui::BeginPopup("AddComponentPopup"))
 		{
 			DisplayAddComponentEntry<PointLightComponent>("Point Light");
+			DisplayAddComponentEntry<DirectionalLightComponent>("Directional Light");
 
 			ImGui::EndPopup();
 		}

@@ -71,4 +71,13 @@ namespace IlluminoEngine
 		PointLightComponent() = default;
 		PointLightComponent(const PointLightComponent&) = default;
 	};
+
+	struct DirectionalLightComponent
+	{
+		float Intensity = 1.0f;
+		glm::vec3 Color = glm::vec3(1.0f);
+
+		DirectionalLightComponent() = default;
+		DirectionalLightComponent(const DirectionalLightComponent&) = default;
+	};
 }
