@@ -103,61 +103,49 @@ namespace IlluminoEngine
 		{
 			OPTICK_EVENT("LightData Upload");
 
+			// index 0 is reserved to check if data is present in Structured buffer or not.
+			// Fixes high GPU usage on AMD cards when nothing is bound
 
+			const size_t numDirectionalLights = s_DirectionalLights.size() + 1;
 			struct DirectionalLight
 			{
 				glm::vec4 Direction;
 				glm::vec4 Color;
 			};
 
-			struct DirectionalLightData
-			{
-				DirectionalLight directionalLights[3];
-				int directionalLightsSize;
-			} directionalLightData;
-
-			constexpr size_t dirLightDataSize = sizeof(directionalLightData);
+			const size_t dirLightDataSize = sizeof(DirectionalLight) * numDirectionalLights;
 			const uint64_t dirLightDataGpuHandle = s_Shader->CreateSRV("DirectionalLightData", dirLightDataSize);
-
-			directionalLightData.directionalLightsSize = s_DirectionalLights.size();
-			for (size_t i = 0; i < directionalLightData.directionalLightsSize; ++i)
+			eastl::vector<DirectionalLight> directionalLights;
+			directionalLights.reserve(numDirectionalLights);
+			directionalLights.push_back({});
+			for (size_t i = 1; i < numDirectionalLights; ++i)
 			{
-				auto& light = s_DirectionalLights[i].GetComponent<DirectionalLightComponent>();
-				glm::vec4 dir = s_DirectionalLights[i].GetComponent<TransformComponent>().GetTransform() * glm::vec4(0, 0, 1, 0);
-				directionalLightData.directionalLights[i] = { dir, glm::vec4(light.Color, light.Intensity) };
+				auto& light = s_DirectionalLights[i - 1].GetComponent<DirectionalLightComponent>();
+				glm::vec4 dir = s_DirectionalLights[i - 1].GetComponent<TransformComponent>().GetTransform() * glm::vec4(0, 0, 1, 0);
+				directionalLights.push_back({ dir, glm::vec4(light.Color, light.Intensity) });
 			}
-			s_Shader->UploadSRV("DirectionalLightData", &directionalLightData, dirLightDataSize, 0);
+			s_Shader->UploadSRV("DirectionalLightData", directionalLights.data(), dirLightDataSize, 0);
 			s_Shader->BindStructuredBuffer(0, dirLightDataGpuHandle);
 
-
-
-
+			const size_t numPointLights = s_PointLights.size() + 1;
 			struct PointLight
 			{
 				glm::vec4 Position;
 				glm::vec4 Color;
 			};
 
-			struct PointLightData
-			{
-				PointLight pointLights[63];
-				int pointLightsSize;
-			} pointLightData;
-
-			constexpr size_t pointLightDataSize = sizeof(pointLightData);
+			const size_t pointLightDataSize = sizeof(PointLight) * numPointLights;
 			const uint64_t pointLightDataGpuHandle = s_Shader->CreateSRV("PointLightData", pointLightDataSize);
-
-			pointLightData.pointLightsSize = s_PointLights.size();
-			for (size_t i = 0; i < pointLightData.pointLightsSize; ++i)
+			eastl::vector<PointLight> pointLights;
+			pointLights.reserve(numPointLights);
+			pointLights.push_back({});
+			for (size_t i = 1; i < numPointLights; ++i)
 			{
-				auto& light = s_PointLights[i].GetComponent<PointLightComponent>();
-				pointLightData.pointLights[i] =
-				{
-					glm::vec4(s_PointLights[i].GetComponent<TransformComponent>().Translation, light.Radius),
-					glm::vec4(light.Color, light.Intensity)
-				};
+				auto& light = s_PointLights[i - 1].GetComponent<PointLightComponent>();
+				glm::vec4 pos = glm::vec4(s_PointLights[i - 1].GetComponent<TransformComponent>().Translation, light.Radius);
+				pointLights.push_back({ pos, glm::vec4(light.Color, light.Intensity) });
 			}
-			s_Shader->UploadSRV("PointLightData", &pointLightData, pointLightDataSize, 0);
+			s_Shader->UploadSRV("PointLightData", pointLights.data(), pointLightDataSize, 0);
 			s_Shader->BindStructuredBuffer(1, pointLightDataGpuHandle);
 		}
 

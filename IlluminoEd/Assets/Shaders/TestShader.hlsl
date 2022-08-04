@@ -55,26 +55,14 @@ struct PointLight
 	float4 Color;				// rgb: color, a: intensity
 };
 
-struct PointLightData
-{
-	PointLight u_PointLights[63];
-	int u_PointLightsSize;
-};
-
 struct DirectionalLight
 {
 	float4 Direction;
 	float4 Color;				// rgb: color, a: intensity
 };
 
-struct DirectionalLightData
-{
-	DirectionalLight u_DirectionalLights[3];
-	int u_DirectionalLightsSize;
-};
-
-StructuredBuffer<DirectionalLightData> u_DirectionalLightData : register (t0);
-StructuredBuffer<PointLightData> u_PointLightData : register (t1);
+StructuredBuffer<DirectionalLight> u_DirectionalLights : register (t0);
+StructuredBuffer<PointLight> u_PointLights : register (t1);
 
 Texture2D u_Albedo : register(t2);
 Texture2D u_NormalMap : register(t3);
@@ -147,12 +135,18 @@ float4 PS_main(VertexOut input) : SV_TARGET
 	float k = (r * r) / 8.0;
 
 	float3 Lo = float3(0.0, 0.0, 0.0);
-
+	
+	// Lighting--------------------------------------------------------------------------------------------------
+	// index 0 is reserved to check if data is present in Structured buffer or not.
+	// Fixes high GPU usage on AMD cards when nothing is bound
+	
 	// Directional Light
-	int directionalLightsSize = u_DirectionalLightData[0].u_DirectionalLightsSize;
-	for (int i = 0; i < directionalLightsSize; i++)
+	uint lightCount;
+	uint lightStride;
+	u_DirectionalLights.GetDimensions(lightCount, lightStride);
+	for (uint i = 1; i < lightStride; ++i)
 	{
-		DirectionalLight light = u_DirectionalLightData[0].u_DirectionalLights[i];
+		DirectionalLight light = u_DirectionalLights.Load(i);
 		float3 L = -normalize(light.Direction.xyz);
 		float NdotL = max(dot(normal, L), 0.0);
 
@@ -172,10 +166,10 @@ float4 PS_main(VertexOut input) : SV_TARGET
 	}
 
 	// Point Lights
-	int pointLightsSize = u_PointLightData[0].u_PointLightsSize;
-	for (int i = 0; i < pointLightsSize; i++)
+	u_PointLights.GetDimensions(lightCount, lightStride);
+	for (uint i = 1; i < lightStride; ++i)
 	{
-		PointLight light = u_PointLightData[0].u_PointLights[i];
+		PointLight light = u_PointLights.Load(i);
 		float3 L = normalize(light.Position.xyz - input.WorldPosition.xyz);
 		float NdotL = max(dot(normal, L), 0.0);
 		float lightDistance2 = LengthSq(light.Position.xyz - input.WorldPosition.xyz);
@@ -198,7 +192,8 @@ float4 PS_main(VertexOut input) : SV_TARGET
 		float3 kD = (1.0 - F) * (1.0 - metalness);
 		Lo += (kD * (albedo.rgb / PI) + specular) * radiance * NdotL;
 	}
-
+	//-----------------------------------------------------------------------------------------------------------
+	
 	float ambient = 0.0f;
 
 	float3 color = Lo + ambient;
