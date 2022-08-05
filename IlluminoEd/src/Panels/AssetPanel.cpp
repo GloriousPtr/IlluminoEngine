@@ -29,11 +29,9 @@ namespace IlluminoEngine
 	
 #define BIT(x) (1 << x)
 
-	std::pair<bool, uint32_t> AssetPanel::DirectoryTreeViewRecursive(const std::filesystem::path& path, uint32_t* count, int* selectionMask)
+	std::pair<bool, uint32_t> AssetPanel::DirectoryTreeViewRecursive(const std::filesystem::path& path, uint32_t* count, int* selectionMask, ImGuiTreeNodeFlags flags)
 	{
 		OPTICK_EVENT();
-
-		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 
 		bool anyNodeClicked = false;
 		uint32_t nodeClicked = 0;
@@ -42,17 +40,25 @@ namespace IlluminoEngine
 		{
 			ImGuiTreeNodeFlags nodeFlags = flags;
 
-			const bool selected = (*selectionMask & BIT(*count)) != 0;
-			if (selected)
-				nodeFlags |= ImGuiTreeNodeFlags_Selected;
-
-			eastl::string name = StringUtils::GetNameWithExtension(entry.path().string().c_str());
-			
 			bool entryIsFile = !std::filesystem::is_directory(entry.path());
 			if (entryIsFile)
 				nodeFlags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
+			const bool selected = (*selectionMask & BIT(*count)) != 0;
+			if (selected)
+			{
+				nodeFlags |= ImGuiTreeNodeFlags_Selected;
+				ImGui::PushStyleColor(ImGuiCol_Header, EditorTheme::HeaderSelectedColor);
+				ImGui::PushStyleColor(ImGuiCol_HeaderHovered, EditorTheme::HeaderSelectedColor);
+			}
+			else
+			{
+				ImGui::PushStyleColor(ImGuiCol_HeaderHovered, EditorTheme::HeaderHoveredColor);
+			}
+
 			bool open = ImGui::TreeNodeEx((void*)(intptr_t)(*count), nodeFlags, "");
+			ImGui::PopStyleColor(selected ? 2 : 1);
+
 			if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 			{
 				if (!entryIsFile)
@@ -62,6 +68,7 @@ namespace IlluminoEngine
 				anyNodeClicked = true;
 			}
 
+			eastl::string name = StringUtils::GetNameWithExtension(entry.path().string().c_str());
 			const char* folderIcon;
 			if (entryIsFile)
 				folderIcon = GetFileIcon(StringUtils::GetExtension((eastl::string&&)name).c_str());
@@ -83,7 +90,7 @@ namespace IlluminoEngine
 			{
 				if (open)
 				{
-					auto clickState = DirectoryTreeViewRecursive(entry.path(), count, selectionMask);
+					auto clickState = DirectoryTreeViewRecursive(entry.path(), count, selectionMask, flags);
 
 					if (!anyNodeClicked)
 					{
@@ -111,6 +118,7 @@ namespace IlluminoEngine
 
 		m_DirectoryIcon = Texture2D::Create("Resources/Icons/ContentBrowser/DirectoryIcon.png");
 
+		m_CurrentDirectory = s_AssetPath;
 		UpdateDirectoryEntries(s_AssetPath);
 	}
 
@@ -118,12 +126,11 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		ImGui::Begin("Assets");
+		if (OnBegin(ICON_MDI_FOLDER, "Assets"))
 		{
 			RenderHeader();
-			ImGui::Separator();
-			ImGui::Spacing();
-			ImGui::Spacing();
+			
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 0, 0 });
 
 			ImGui::Columns(2, nullptr, true);
 			{
@@ -134,6 +141,9 @@ namespace IlluminoEngine
 				else
 					firstTime = false;
 				ImGui::SetColumnWidth(0, m_TreeViewColumnWidth);
+
+				float cursorPosY = ImGui::GetCursorPosY() + 10.0f;
+				ImGui::SetCursorPosY(cursorPosY);
 				ImGui::BeginChild("TreeView");
 				{
 					RenderSideView();
@@ -141,15 +151,18 @@ namespace IlluminoEngine
 				ImGui::EndChild();
 				ImGui::NextColumn();
 				ImGui::Separator();
+				ImGui::SetCursorPosY(cursorPosY);
 				ImGui::BeginChild("FolderView");
 				{
 					RenderBody();
 				}
 				ImGui::EndChild();
 			}
+			ImGui::PopStyleVar();
 			ImGui::Columns(1);
+
+			OnEnd();
 		}
-		ImGui::End();
 	}
 
 	void AssetPanel::RenderHeader()
@@ -160,7 +173,7 @@ namespace IlluminoEngine
 			ImGui::OpenPopup("SettingsPopup");
 		if (ImGui::BeginPopup("SettingsPopup"))
 		{
-			ImGui::SliderFloat("Thumbnail Size", &m_ThumbnailSize, 64.0f, 256.0f);
+			ImGui::SliderFloat("Thumbnail Size", &m_ThumbnailSize, 64.0f, 128.0f);
 			ImGui::EndPopup();
 		}
 
@@ -225,20 +238,33 @@ namespace IlluminoEngine
 
 		static int selectionMask = 0;
 
-		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-		if (m_CurrentDirectory == s_AssetPath && selectionMask == 0)
-			flags |= ImGuiTreeNodeFlags_Selected;
-		
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow
+			| ImGuiTreeNodeFlags_FramePadding
+			| ImGuiTreeNodeFlags_SpanFullWidth;
+
 		float x1 = ImGui::GetCurrentWindow()->WorkRect.Min.x;
 		float x2 = ImGui::GetCurrentWindow()->WorkRect.Max.x;
-		float itemSpacingY = ImGui::GetStyle().ItemSpacing.y;
-		float itemOffsetY = -itemSpacingY * 0.5f;
-		float lineHeight = ImGui::GetTextLineHeight() + itemSpacingY;
-		UI::DrawRowsBackground(m_CurrentlyVisibleItemsTreeView, lineHeight, x1, x2, itemOffsetY, 0, ImGui::GetColorU32(EditorTheme::WindowBgColor));
+		float line_height = ImGui::GetTextLineHeight() + ImGui::GetStyle().FramePadding.y * 2.0f;
+		UI::DrawRowsBackground(m_CurrentlyVisibleItemsTreeView, line_height, x1, x2, 0, 0, ImGui::GetColorU32(EditorTheme::WindowBgAlternativeColor));
 		
 		m_CurrentlyVisibleItemsTreeView = 1;
 
-		bool opened = ImGui::TreeNodeEx((void*)("Assets"), flags, "");
+		ImGuiTreeNodeFlags nodeFlags = flags;
+		const bool selected = m_CurrentDirectory == s_AssetPath && selectionMask == 0;
+		if (selected)
+		{
+			nodeFlags |= ImGuiTreeNodeFlags_Selected;
+			ImGui::PushStyleColor(ImGuiCol_Header, EditorTheme::HeaderSelectedColor);
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, EditorTheme::HeaderSelectedColor);
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, EditorTheme::HeaderHoveredColor);
+		}
+
+		bool opened = ImGui::TreeNodeEx((void*)("Assets"), nodeFlags, "");
+		ImGui::PopStyleColor(selected ? 2 : 1);
+
 		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 		{
 			UpdateDirectoryEntries(s_AssetPath);
@@ -259,7 +285,7 @@ namespace IlluminoEngine
 			for (const auto& entry : std::filesystem::recursive_directory_iterator(s_AssetPath))
 				count++;
 
-			auto clickState = DirectoryTreeViewRecursive(s_AssetPath, &count, &selectionMask);
+			auto clickState = DirectoryTreeViewRecursive(s_AssetPath, &count, &selectionMask, flags);
 
 			if (clickState.first)
 			{
@@ -293,12 +319,12 @@ namespace IlluminoEngine
 		if (columnCount < 1)
 			columnCount = 1;
 
-		uint32_t flags = ImGuiTableFlags_ContextMenuInBody;
-		flags |= ImGuiTableFlags_SizingStretchSame;
-		flags |= ImGuiTableFlags_NoClip;
+		uint32_t flags = ImGuiTableFlags_ContextMenuInBody
+			| ImGuiTableFlags_SizingStretchSame
+			| ImGuiTableFlags_PadOuterX
+			| ImGuiTableFlags_NoClip;
 
 		uint32_t i = 0;
-		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 0, 0 });
 		if (ImGui::BeginTable("BodyTable", columnCount, flags))
 		{
 			for (auto& file : m_DirectoryEntries)
@@ -326,15 +352,13 @@ namespace IlluminoEngine
 				ImVec2 textSize = ImGui::CalcTextSize(filename);
 				ImVec2 cursorPos = ImGui::GetCursorPos();
 				
-				ImGui::PushStyleColor(ImGuiCol_Button, { 0.0f, 0.0f, 0.0f, 0.0f });
-				ImGui::Button(("##" + std::to_string(i)).c_str(), { m_ThumbnailSize + padding * 2, m_ThumbnailSize + textSize.y + padding * 8 });
+				ImGui::InvisibleButton(("##" + std::to_string(i)).c_str(), { m_ThumbnailSize + padding * 2, m_ThumbnailSize + textSize.y + padding * 8 });
 				if (ImGui::BeginDragDropSource())
 				{
 					eastl::string itemPath = file.DirectoryEntry.path().string().c_str();
 					ImGui::SetDragDropPayload("CONTENT_BROWSER_ITEM", itemPath.c_str(), (strlen(itemPath.c_str()) + 1) * sizeof(char));
 					ImGui::EndDragDropSource();
 				}
-				ImGui::PopStyleColor();
 				
 				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 				{
@@ -350,23 +374,17 @@ namespace IlluminoEngine
 				ImVec2 rectMin = ImGui::GetItemRectMin();
 				ImVec2 rectSize = ImGui::GetItemRectSize();
 
-				ImGui::SetCursorPos({ cursorPos.x + thumbnailPadding * 0.75f, cursorPos.y + thumbnailPadding });
+				float f = m_ThumbnailSize + padding * 2;
+				ImGui::SetCursorPos(cursorPos);
 				ImGui::SetItemAllowOverlap();
 				if (fontIcon)
 				{
-					/*
-					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f });
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f });
-					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f });
-					ImGui::Button(fontIcon, { thumbnailSize, thumbnailSize });
-					ImGui::PopStyleColor(3);
-					*/
-					ImGui::InvisibleButton(fontIcon, { thumbnailSize, thumbnailSize });
+					ImGui::InvisibleButton(fontIcon, { f, f });
 					windowDrawList.AddText({ rectMin.x + rectSize.x * 0.5f - ImGui::CalcTextSize(fontIcon).x * 0.5f, rectMin.y + rectSize.y * 0.5f}, ImColor(1.0f, 1.0f, 1.0f), fontIcon);
 				}
 				else
 				{
-					ImGui::Image((ImTextureID)textureId, { thumbnailSize, thumbnailSize });
+					ImGui::Image((ImTextureID)textureId, { f, f });
 				}
 
 				rectMin = ImGui::GetItemRectMin();
@@ -397,7 +415,6 @@ namespace IlluminoEngine
 			}
 			ImGui::EndTable();
 		}
-		ImGui::PopStyleVar();
 
 		if (directoryOpened)
 			UpdateDirectoryEntries(directoryToOpen);

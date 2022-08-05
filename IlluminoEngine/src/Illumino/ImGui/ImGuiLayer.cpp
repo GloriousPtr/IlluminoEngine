@@ -40,8 +40,11 @@ namespace IlluminoEngine
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 		io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
+		io.ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
 
+		io.ConfigDockingTransparentPayload = true;
 		io.ConfigWindowsMoveFromTitleBarOnly = true;
+		io.ConfigDragClickToInputText = true;
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
@@ -86,6 +89,7 @@ namespace IlluminoEngine
 
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
+
 		ImGui::NewFrame();
 	}
 

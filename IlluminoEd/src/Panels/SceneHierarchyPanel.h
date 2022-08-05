@@ -2,9 +2,11 @@
 
 #include <IlluminoEngine.h>
 
+#include "BasePanel.h"
+
 namespace IlluminoEngine
 {
-	class SceneHierarchyPanel
+	class SceneHierarchyPanel : public BasePanel
 	{
 	public:
 		SceneHierarchyPanel() = default;
@@ -25,6 +27,7 @@ namespace IlluminoEngine
 		Scene* m_SelectionContext = nullptr;
 		Entity m_SelectedEntity = {};
 		Entity m_HoveredEntity = {};
+		Entity m_DeleteEntity = {};
 		uint32_t m_CurrentlyVisibleEntities = 0;
 	};
 }

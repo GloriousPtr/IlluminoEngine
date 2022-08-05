@@ -7,7 +7,7 @@
 #include "Panels/PropertiesPanel.h"
 #include "Panels/AssetPanel.h"
 #include "Panels/StatsPanel.h"
-#include "Utils/EditorCamera.h"
+#include "Panels/ViewportPanel.h"
 
 namespace IlluminoEngine
 {
@@ -27,21 +27,8 @@ namespace IlluminoEngine
 		PropertiesPanel m_PropertiesPanel;
 		AssetPanel m_AssetPanel;
 		StatsPanel m_StatsPanel;
-
-		Ref<EditorCamera> m_EditorCamera;
-		Ref<RenderTexture> m_RenderTexture;
+		ViewportPanel m_ViewportPanel;
+		
 		Ref<Scene> m_ActiveScene;
-
-		ImVec2 m_ViewportSizeMin = { 0, 0 };
-		ImVec2 m_ViewportSizeMax = { 0, 0 };
-		ImVec2 m_ViewportBounds[2] = { {0, 0}, {0, 0} };
-		bool m_ViewportHovered = false;
-		int m_GizmoType = -1;
-
-		glm::vec2 m_MousePosition = glm::vec2(0.0f);
-		glm::vec2 m_LastMousePosition = glm::vec2(0.0f);
-		float m_MouseSensitivity = 0.1f;
-
-		float m_MaxMoveSpeed = 10.0f;
 	};
 }

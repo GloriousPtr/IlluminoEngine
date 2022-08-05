@@ -4,6 +4,7 @@
 
 #include <Window.h>
 #include "../Utils/UI.h"
+#include "../Utils/EditorTheme.h"
 
 namespace IlluminoEngine
 {
@@ -26,22 +27,23 @@ namespace IlluminoEngine
 		
 		avg /= size;
 
-		ImGui::SetNextWindowSize(ImVec2(480, 640), ImGuiCond_FirstUseEver);
-		ImGui::Begin("Stats");
+		if (OnBegin(ICON_MDI_INFORMATION, "Stats"))
+		{
+			auto& graphicsContext = Application::GetApplication()->GetWindow()->GetGraphicsContext();
+			UI::BeginProperties();
+			bool vSync = graphicsContext->IsVsync();
+			if (UI::Property("VSync Enabled", vSync))
+				graphicsContext->SetVsync(vSync);
+			UI::EndProperties();
 
-		UI::BeginProperties();
-		bool vSync = Application::GetApplication()->GetWindow()->GetGraphicsContext()->IsVsync();
-		if (UI::Property("VSync Enabled", vSync))
-			Application::GetApplication()->GetWindow()->GetGraphicsContext()->SetVsync(vSync);
-		UI::EndProperties();
+			ImGui::Text("FPS");
+			ImGui::Separator();
+			ImGui::PlotLines("#FPS", m_FpsValues, size);
+			ImGui::Text("FPS: %f", avg);
+			const float fps = (1.0f / avg) * 1000.0f;
+			ImGui::Text("Frame time (ms): %f", fps);
 
-		ImGui::Text("FPS");
-		ImGui::Separator();
-		ImGui::PlotLines("#FPS", m_FpsValues, size);
-		ImGui::Text("FPS: %f", avg);
-		const float fps = (1.0f / avg) * 1000.0f;
-		ImGui::Text("Frame time (ms): %f", fps);
-
-		ImGui::End();
+			OnEnd();
+		}
 	}
 }

@@ -4,17 +4,19 @@
 #include <imgui/imgui_internal.h>
 
 #include "../Utils/UI.h"
+#include "../Utils/EditorTheme.h"
 
 namespace IlluminoEngine
 {
 	void PropertiesPanel::OnImGuiRender()
 	{
-		ImGui::Begin("Properties");
+		if (OnBegin(ICON_MDI_PEN, "Properties"))
+		{
+			if (m_SelectedEntity)
+				DrawComponents(m_SelectedEntity);
 
-		if (m_SelectedEntity)
-			DrawComponents(m_SelectedEntity);
-
-		ImGui::End();
+			OnEnd();
+		}
 	}
 
 	template<typename T, typename UIFunction>
@@ -38,7 +40,7 @@ namespace IlluminoEngine
 			if (removable)
 			{
 				ImGui::SameLine(ImGui::GetContentRegionMax().x - lineHeight);
-				if (ImGui::Button("o", { lineHeight, lineHeight }))
+				if (ImGui::Button(ICON_MDI_SETTINGS, { lineHeight, lineHeight }))
 					ImGui::OpenPopup("ComponentSettings");
 
 				if (ImGui::BeginPopup("ComponentSettings"))
@@ -53,6 +55,7 @@ namespace IlluminoEngine
 
 			if (opened)
 			{
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() - ImGui::GetStyle().IndentSpacing / 2);
 				fn(entity.GetComponent<T>());
 				ImGui::TreePop();
 			}
@@ -64,11 +67,15 @@ namespace IlluminoEngine
 
 	void PropertiesPanel::DrawComponents(Entity entity)
 	{
+		ImGui::Spacing();
+
 		// ID Component
 		{
 			UUID id = entity.GetComponent<IDComponent>().ID;
-			ImGui::Text("ID: %llu", (uint64_t)id);
+			ImGui::Text("UUID: %llu", (uint64_t)id);
 		}
+
+		ImGui::Spacing();
 
 		// TagComponent
 		{
@@ -76,10 +83,10 @@ namespace IlluminoEngine
 			char buffer[256];
 			strcpy(buffer, tagComponent.Tag.c_str());
 			if (ImGui::InputText("##Tag", buffer, 256))
-			{
 				tagComponent.Tag = buffer;
-			}
 		}
+
+		ImGui::Spacing();
 
 		DrawComponent<TransformComponent>("Transform", entity, [](TransformComponent& component)
 		{
@@ -99,9 +106,8 @@ namespace IlluminoEngine
 
 				Submesh& submesh = component.MeshGeometry->GetSubmesh(component.SubmeshIndex);
 
-				ImGui::Separator();
-
-				UI::Property("Albedo", submesh.Albedo);
+				UI::Property("Albedo Map", submesh.Albedo);
+				UI::Property("Normal Map", submesh.Normal);
 
 				UI::Property("Roughness", submesh.Roughness, 0.0f, 1.0f);
 				UI::Property("Metalness", submesh.Metalness, 0.0f, 1.0f);

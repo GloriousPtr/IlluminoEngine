@@ -9,6 +9,7 @@ namespace IlluminoEngine
 	ImVec4 EditorTheme::WindowBgColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 	ImVec4 EditorTheme::WindowBgAlternativeColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 	ImVec4 EditorTheme::AssetIconColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+	ImVec2 EditorTheme::UIFramePadding = ImVec2(1.0f, 1.0f);
 
 	static void AddIconFont(float fontSize)
 	{

@@ -43,7 +43,7 @@ namespace IlluminoEngine
 		static void PushID();
 		static void PopID();
 
-		static void BeginPropertyGrid(const char* label, float rowHeight = 0.0f, bool rightAlignNextColumn = true);
+		static void BeginPropertyGrid(const char* label, bool rightAlignNextColumn = true);
 		static void EndPropertyGrid();
 	};
 }

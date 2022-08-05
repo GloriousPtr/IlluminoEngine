@@ -2,9 +2,11 @@
 
 #include <IlluminoEngine.h>
 
+#include "BasePanel.h"
+
 namespace IlluminoEngine
 {
-	class StatsPanel
+	class StatsPanel : public BasePanel
 	{
 	public:
 		StatsPanel() = default;

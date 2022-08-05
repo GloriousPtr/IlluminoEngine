@@ -381,7 +381,7 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
-		for (size_t i = 0; i < g_QueueSlotCount; ++i)
+		for (size_t i = m_CurrentBackBuffer; i < g_QueueSlotCount; ++i)
 			WaitForFence(m_Fences[i], m_FenceValues[i], m_FenceEvents[i]);
 	}
 
