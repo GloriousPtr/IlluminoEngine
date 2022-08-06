@@ -11,10 +11,6 @@ namespace IlluminoEngine
 {
 	void SceneHierarchyPanel::OnUpdate(Timestep ts)
 	{
-	}
-
-	void SceneHierarchyPanel::OnImGuiRender()
-	{
 		if (m_DeleteEntity)
 		{
 			if (m_SelectedEntity == m_DeleteEntity)
@@ -23,7 +19,10 @@ namespace IlluminoEngine
 			m_SelectionContext->DeleteEntity(m_DeleteEntity);
 			m_DeleteEntity = {};
 		}
+	}
 
+	void SceneHierarchyPanel::OnImGuiRender()
+	{
 		if (OnBegin(ICON_MDI_VIEW_LIST, "Hierarchy"))
 		{
 			m_HoveredEntity = {};
