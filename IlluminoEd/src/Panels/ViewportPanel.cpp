@@ -29,34 +29,33 @@ namespace IlluminoEngine
 		}
 
 		m_MousePosition = *((glm::vec2*)&(ImGui::GetMousePos()));
-		const glm::vec3& position = m_EditorCamera->GetPosition();
-		float yaw = m_EditorCamera->GetYaw();
-		float pitch = m_EditorCamera->GetPitch();
-
 		if (m_ViewportHovered && ImGui::IsMouseDown(ImGuiMouseButton_Right))
 		{
-			const glm::vec2 change = (m_MousePosition - m_LastMousePosition) * m_MouseSensitivity;
+			glm::vec3 pos = m_EditorCamera->GetPosition();
+			float yaw = m_EditorCamera->GetYaw();
+			float pitch = m_EditorCamera->GetPitch();
+
+			const glm::vec2 change = (m_MousePosition - m_LastMousePosition) * m_MouseSensitivity * ts.GetSeconds();
 			yaw += change.x;
 			pitch = glm::clamp(pitch - change.y, -89.9f, 89.9f);
 
 			float maxMoveSpeed = m_MaxMoveSpeed * (ImGui::IsKeyDown(ImGuiKey_LeftShift) ? 3.0f : 1.0f);
-			glm::vec3 pos = position;
+			float deltaMultiplier = ts * m_MaxMoveSpeed;
 			if (ImGui::IsKeyDown(ImGuiKey_W))
-				pos += m_EditorCamera->GetForward() * m_MaxMoveSpeed * ts.GetSeconds();
+				pos += m_EditorCamera->GetForward() * deltaMultiplier;
 			else if (ImGui::IsKeyDown(ImGuiKey_S))
-				pos -= m_EditorCamera->GetForward() * m_MaxMoveSpeed * ts.GetSeconds();
+				pos -= m_EditorCamera->GetForward() * deltaMultiplier;
 			if (ImGui::IsKeyDown(ImGuiKey_D))
-				pos += m_EditorCamera->GetRight() * m_MaxMoveSpeed * ts.GetSeconds();
+				pos += m_EditorCamera->GetRight() * deltaMultiplier;
 			else if (ImGui::IsKeyDown(ImGuiKey_A))
-				pos -= m_EditorCamera->GetRight() * m_MaxMoveSpeed * ts.GetSeconds();
+				pos -= m_EditorCamera->GetRight() * deltaMultiplier;
 
 			m_EditorCamera->SetPosition(pos);
 			m_EditorCamera->SetYaw(yaw);
 			m_EditorCamera->SetPitch(pitch);
 		}
-
-		m_LastMousePosition = m_MousePosition;
 		m_EditorCamera->OnUpdate(ts);
+		m_LastMousePosition = m_MousePosition;
 
 		if (!ImGuizmo::IsUsing() && !ImGui::IsMouseDown(ImGuiMouseButton_Right))
 		{
