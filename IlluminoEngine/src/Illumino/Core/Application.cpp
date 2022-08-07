@@ -69,27 +69,29 @@ namespace IlluminoEngine
 			Timestep timestep = std::chrono::duration<float>(time - m_LastFrameTime).count();
 			m_LastFrameTime = time;
 			
-			m_Window->ProcessInput();
 			if (m_Window->ShouldClose())
 				break;
 
+			if (!m_Window->Minimized())
 			{
-				OPTICK_EVENT("LayerStack OnUpdate");
+				{
+					OPTICK_EVENT("LayerStack OnUpdate");
 
-				for (Layer* layer : m_LayerStack)
-					layer->OnUpdate(timestep);
+					for (Layer* layer : m_LayerStack)
+						layer->OnUpdate(timestep);
+				}
+
+				m_ImGuiLayer->Begin();
+				{
+					OPTICK_EVENT("LayerStack OnImGuiRender");
+
+					for (Layer* layer : m_LayerStack)
+						layer->OnImGuiRender();
+				}
+				m_ImGuiLayer->End();
 			}
 
-			m_ImGuiLayer->Begin();
-			{
-				OPTICK_EVENT("LayerStack OnImGuiRender");
-
-				for (Layer* layer : m_LayerStack)
-					layer->OnImGuiRender();
-			}
-			m_ImGuiLayer->End();
-
-			m_Window->Update();	
+			m_Window->Update();
 		}
 	}
 }

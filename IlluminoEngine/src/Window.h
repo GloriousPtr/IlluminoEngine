@@ -16,9 +16,8 @@ namespace IlluminoEngine
 
 		void Init();
 		void Update();
-		void ProcessInput();
-		void OnClosed();
 
+		bool Minimized() const { return m_Minimized; }
 		bool ShouldClose() const { return m_Closed; }
 		uint32_t GetWidth() const { return m_Width; }
 		uint32_t GetHeight() const { return m_Height; }
@@ -27,12 +26,15 @@ namespace IlluminoEngine
 		const Scope<GraphicsContext>& GetGraphicsContext() { return m_Context; }
 
 	private:
+		void ProcessInput();
+
 		static LRESULT HandleInput(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	private:
 		std::string m_Name;
 		uint32_t m_Width;
 		uint32_t m_Height;
+		bool m_Minimized;
 		bool m_Closed;
 		HINSTANCE m_HInstance;
 		HWND m_Hwnd;

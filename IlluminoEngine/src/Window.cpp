@@ -20,11 +20,17 @@ namespace IlluminoEngine
 		switch (uMsg)
 		{
 			case WM_CLOSE:
-				window->OnClosed();
+				window->m_Closed = true;
 				return true;
 			case WM_SIZE:
-				if (wParam != SIZE_MINIMIZED)
+				if (wParam == SIZE_MINIMIZED)
 				{
+					window->m_Minimized = true;
+				}
+				else
+				{
+					if (window->m_Minimized)
+					window->m_Minimized = false;
 					window->m_Width = LOWORD(lParam);
 					window->m_Height = HIWORD(lParam);
 					return true;
@@ -92,6 +98,7 @@ namespace IlluminoEngine
 	{
 		OPTICK_EVENT();
 
+		ProcessInput();
 		m_Context->SwapBuffers();
 	}
 
@@ -105,15 +112,5 @@ namespace IlluminoEngine
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-	}
-
-	void Window::OnClosed()
-	{
-		OPTICK_EVENT();
-
-		if (m_Closed)
-			return;
-
-		m_Closed = true;
 	}
 }
