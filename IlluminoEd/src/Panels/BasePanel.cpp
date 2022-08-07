@@ -15,7 +15,6 @@ namespace IlluminoEngine
 
 		ImGui::SetNextWindowSize(ImVec2(480, 640), ImGuiCond_FirstUseEver);
 
-
 		static eastl::string space = " ";
 		static eastl::string tabs = "				";
 
