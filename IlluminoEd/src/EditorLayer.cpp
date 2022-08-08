@@ -91,12 +91,21 @@ namespace IlluminoEngine
 			ImGui::PopStyleVar(2);
 
 		// Submit the DockSpace
+		ImGuiStyle& style = ImGui::GetStyle();
+		float minWinSizeX = style.WindowMinSize.x;
+		float minWinSizeY = style.WindowMinSize.y;
+		style.WindowMinSize.x = 370.0f;
+		style.WindowMinSize.y = 180.0f;
+
 		ImGuiIO& io = ImGui::GetIO();
 		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
 		{
 			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
 			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 		}
+
+		style.WindowMinSize.x = minWinSizeX;
+		style.WindowMinSize.y = minWinSizeY;
 	}
 
 	static void EndDockspace()
