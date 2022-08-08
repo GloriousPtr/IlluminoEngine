@@ -2,6 +2,7 @@
 #include "EditorLayer.h"
 
 #include <imgui/imgui.h>
+#include <imgui/imgui_internal.h>
 #include <glm/glm.hpp>
 #include <glm/glm/gtx/norm.hpp>
 #include <glm/glm/gtc/type_ptr.hpp>
