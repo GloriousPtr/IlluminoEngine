@@ -2,15 +2,17 @@ name: "CodeQL"
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths-ignore:
-      - '**/**.md'
+      - '.github/resources/**'
+      - '**.md'
+      - '**.txt'
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
     paths-ignore:
-      - '**/**.md'
+      - '.github/resources/**'
+      - '**.md'
+      - '**.txt'
   schedule:
     - cron: '23 17 * * 3'
   workflow_dispatch:
